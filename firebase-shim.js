@@ -80,7 +80,9 @@
     try { await fs.collection("faturas").limit(1).get(); }
     catch (e) { if (e && e.code === "permission-denied") return mostrarLogin(`A conta ${u.email} não tem acesso às faturas da família.`, true); }
     atual = u;
-    if (tela) tela.hidden = true; aberto = true; liberar();
+    if (tela) tela.hidden = true;
+    await portaPin();
+    aberto = true; liberar();
     addSair(u);
   });
   function addSair(u) {
@@ -90,6 +92,106 @@
     b.title = "Conectado como " + (u.email || ""); b.onclick = () => auth.signOut();
     st.after(b);
   }
+
+  /* ---------- PIN da família ---------- */
+  // Um PIN só para toda a família, guardado no Firestore como hash (PBKDF2). É uma trava de tela:
+  // a proteção dos dados continua sendo o login Google + as regras do Firestore.
+  const pinRef = () => fs.collection("faturas").doc("_pin");
+  const b64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf)));
+  async function pinHash(pin, saltB64, iter) {
+    const salt = Uint8Array.from(atob(saltB64), c => c.charCodeAt(0));
+    const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(pin), "PBKDF2", false, ["deriveBits"]);
+    return b64(await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt, iterations: iter }, key, 256));
+  }
+  const pinCss = `#fb-pin{position:fixed;inset:0;z-index:100000;background:#F3F5F8;background-image:radial-gradient(circle,#C7D0DE 1.1px,transparent 1.5px);background-size:9px 9px;display:flex;align-items:center;justify-content:center;padding:max(16px,env(safe-area-inset-top,0px)) 16px max(16px,env(safe-area-inset-bottom,0px));font-family:Inter,system-ui,sans-serif;color:#141C2B}
+  #fb-pin .box{background:#fff;border:1px solid #DCE1EA;border-radius:22px;padding:24px 22px;max-width:340px;width:100%;text-align:center;box-shadow:0 12px 40px rgba(20,28,43,.16)}
+  #fb-pin img{width:64px;height:64px;border-radius:16px}#fb-pin h2{font:700 22px "Bricolage Grotesque",Inter,sans-serif;margin:10px 0 2px;letter-spacing:-.01em}
+  #fb-pin p{color:#5A6577;font-size:14px;margin:0 0 14px;min-height:1.4em}
+  #fb-pin .dots{display:flex;gap:12px;justify-content:center;margin:6px 0 8px;height:16px}
+  #fb-pin .dots i{width:14px;height:14px;border-radius:50%;border:2px solid #2341C9;display:block}#fb-pin .dots i.on{background:#2341C9}
+  #fb-pin .dots.shake{animation:fbshake .35s}@keyframes fbshake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+  #fb-pin .err{color:#B42318;font-size:13px;min-height:1.3em;margin-bottom:6px}
+  #fb-pin .pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:6px}
+  #fb-pin .pad button{height:58px;border:1px solid #DCE1EA;border-radius:16px;background:#F3F5F8;font:600 22px Inter,sans-serif;color:#141C2B;cursor:pointer}
+  #fb-pin .pad button:active{background:#E6EBFC}#fb-pin .pad button.txt{font-size:13px;font-weight:600;color:#2341C9;background:none;border-color:transparent}
+  #fb-pin .ok{width:100%;margin-top:12px;border:0;border-radius:14px;padding:13px;font:600 16px Inter,sans-serif;background:#2341C9;color:#fff;cursor:pointer}#fb-pin .ok:disabled{opacity:.4}
+  #fb-pin .ok[hidden]{display:none}`;
+  let pinEl = null;
+  function telaPin({ titulo, texto, tamanho, criar, esqueci, cancelar }) {
+    return new Promise(resolve => {
+      if (!pinEl) { const st = document.createElement("style"); st.textContent = pinCss; document.head.appendChild(st); pinEl = document.createElement("div"); pinEl.id = "fb-pin"; pinEl.setAttribute("role", "dialog"); pinEl.setAttribute("aria-modal", "true"); document.body.appendChild(pinEl); }
+      const max = tamanho || 6;
+      pinEl.innerHTML = `<div class="box"><img src="icon-192.png" alt=""><h2></h2><p></p><div class="dots" aria-live="polite"></div><div class="err"></div>
+        <div class="pad">${[1,2,3,4,5,6,7,8,9].map(n => `<button type="button" data-n="${n}">${n}</button>`).join("")}
+        <button type="button" class="txt" data-x="${esqueci ? "esqueci" : cancelar ? "cancelar" : ""}">${esqueci ? "Esqueci" : cancelar ? "Cancelar" : ""}</button><button type="button" data-n="0">0</button><button type="button" data-x="apagar" aria-label="Apagar">⌫</button></div>
+        <button type="button" class="ok" ${criar ? "" : "hidden"} disabled>Continuar</button></div>`;
+      pinEl.querySelector("h2").textContent = titulo; pinEl.querySelector("p").textContent = texto || "";
+      pinEl.hidden = false;
+      let v = "", bloqueado = false;
+      const dots = pinEl.querySelector(".dots"), err = pinEl.querySelector(".err"), ok = pinEl.querySelector(".ok");
+      const desenha = () => { dots.innerHTML = Array.from({ length: tamanho || Math.max(4, v.length) }, (_, i) => `<i class="${i < v.length ? "on" : ""}"></i>`).join(""); ok.disabled = v.length < 4; };
+      const fim = r => { document.removeEventListener("keydown", tecla, true); resolve(r); };
+      const api = { erro: m => { err.textContent = m; v = ""; dots.classList.remove("shake"); void dots.offsetWidth; dots.classList.add("shake"); desenha(); },
+        travar: s => { bloqueado = true; let t = s; const tick = () => { err.textContent = "Muitas tentativas. Aguarde " + t + " s."; if (t-- <= 0) { bloqueado = false; err.textContent = ""; } else setTimeout(tick, 1000); }; tick(); } };
+      const envia = () => { if (bloqueado || v.length < 4) return; const pin = v; fim({ pin, api }); };
+      const digita = n => { if (bloqueado || v.length >= max) return; v += n; err.textContent = ""; desenha(); if (tamanho && v.length === tamanho) setTimeout(envia, 120); };
+      const tecla = e => { if (pinEl.hidden) return; if (/^[0-9]$/.test(e.key)) { digita(e.key); e.preventDefault(); } else if (e.key === "Backspace") { v = v.slice(0, -1); desenha(); e.preventDefault(); } else if (e.key === "Enter" && criar) { envia(); e.preventDefault(); } };
+      document.addEventListener("keydown", tecla, true);
+      pinEl.onclick = e => { const b = e.target.closest("button"); if (!b) return;
+        if (b.dataset.n != null) digita(b.dataset.n);
+        else if (b.dataset.x === "apagar") { v = v.slice(0, -1); desenha(); }
+        else if (b.dataset.x === "esqueci") fim({ esqueci: true });
+        else if (b.dataset.x === "cancelar") fim({ cancelar: true });
+        else if (b.classList.contains("ok")) envia(); };
+      desenha();
+      // reaproveita a mesma tela para a próxima chamada
+      telaPin.atual = api;
+    });
+  }
+  async function criarPin(textoInicio) {
+    for (;;) {
+      const a = await telaPin({ titulo: "Crie o PIN da família", texto: textoInicio || "De 4 a 6 números. Vale para todos os aparelhos.", criar: true });
+      const b = await telaPin({ titulo: "Repita o PIN", texto: "Digite o mesmo PIN de novo.", tamanho: a.pin.length });
+      if (a.pin !== b.pin) { textoInicio = "Os PINs não eram iguais. Comece de novo."; continue; }
+      const salt = b64(crypto.getRandomValues(new Uint8Array(16))), iter = 150000;
+      await pinRef().set({ kind: "pin", salt, iter, len: a.pin.length, hash: await pinHash(a.pin, salt, iter), criadoPor: atual && atual.email || "", criadoEm: new Date().toISOString() });
+      return;
+    }
+  }
+  async function pedirPin(cfg, opts) {
+    const base = Object.assign({ titulo: "Digite o PIN", texto: "Faturas da família Casagrande", tamanho: cfg.len, esqueci: true }, opts);
+    let erradas = 0, msg = "", trava = 0;
+    for (;;) {
+      const espera = telaPin(base);
+      const api = telaPin.atual;
+      if (msg) { api.erro(msg); if (trava) api.travar(trava); }
+      const r = await espera;
+      if (r.esqueci || r.cancelar) return r;
+      if (await pinHash(r.pin, cfg.salt, cfg.iter) === cfg.hash) return { ok: true };
+      erradas++; msg = "PIN incorreto."; trava = erradas % 5 === 0 ? 30 : 0;
+    }
+  }
+  async function portaPin(volta) {
+    let cfg = null;
+    try { const d = await pinRef().get(); cfg = d.exists ? d.data() : null; } catch {}
+    let reset = false; try { reset = sessionStorage.getItem("faturasPinReset") === "1"; sessionStorage.removeItem("faturasPinReset"); } catch {}
+    if (!cfg || !cfg.hash || reset) { await criarPin(reset ? "Você entrou de novo com o Google. Crie um PIN novo para a família." : null); pinEl.hidden = true; return; }
+    const r = await pedirPin(cfg);
+    if (r.esqueci) { try { sessionStorage.setItem("faturasPinReset", "1"); } catch {} pinEl.hidden = true; await auth.signOut(); location.reload(); return new Promise(() => {}); }
+    pinEl.hidden = true;
+  }
+  // Volta a pedir o PIN se o app ficou fechado/em segundo plano por mais de 3 minutos.
+  let escondidoEm = 0, pedindo = false;
+  document.addEventListener("visibilitychange", async () => {
+    if (document.hidden) { escondidoEm = Date.now(); return; }
+    if (!aberto || pedindo || !escondidoEm || Date.now() - escondidoEm < 3 * 60 * 1000) return;
+    pedindo = true; try { await portaPin(true); } finally { pedindo = false; }
+  });
+  window.__fbChangePin = async () => {
+    let cfg = null; try { const d = await pinRef().get(); cfg = d.exists ? d.data() : null; } catch {}
+    if (cfg && cfg.hash) { const r = await pedirPin(cfg, { titulo: "PIN atual", texto: "Para trocar, digite o PIN atual.", esqueci: false, cancelar: true }); if (!r.ok) { pinEl.hidden = true; return false; } }
+    await criarPin("Escolha o novo PIN (4 a 6 números)."); pinEl.hidden = true; return true;
+  };
 
   window.claude = { use: async name => { await pronto; return name === "db" ? db : name === "user" ? user : null; } };
   if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
