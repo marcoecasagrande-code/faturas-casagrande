@@ -247,6 +247,7 @@ textarea{width:100%;min-height:110px;font-family:var(--f-num);font-size:12px}
           <input type="password" id="pwd" autocomplete="off">
         </label>
         <button class="btn" type="button" id="pwdGo" style="flex:0 0 auto">Abrir PDF</button>
+        <label class="note" style="flex-basis:100%;display:flex;gap:6px;align-items:center"><input type="checkbox" id="pwdRemember" checked> Lembrar esta senha neste aparelho (as próximas faturas com a mesma senha abrem sozinhas)</label>
       </div>
       <details id="pasteBox">
         <summary>Ou cole o texto da fatura (uma compra por linha: data, descrição, valor)</summary>
@@ -832,7 +833,11 @@ function renderRules(v) {
   </div>
   <div class="panel c12"><h2>Backup dos dados</h2><p class="hint">Leve as faturas, regras e cartões de um lugar para outro (por exemplo, do app no Claude para o site da família). Importar junta com o que já existe: faturas iguais são substituídas.</p>
   <div class="row" style="align-items:center"><button class="btn" type="button" id="bkExport" style="flex:0 0 auto" ${STATE.statements.length ? "" : "disabled"}>Exportar backup</button>
-  <label class="btn" style="flex:0 0 auto">Importar backup<input type="file" id="bkImport" accept=".json,application/json" hidden></label><span class="note" id="bkMsg"></span></div></div>
+  <label class="btn" style="flex:0 0 auto">Importar backup<input type="file" id="bkImport" accept=".json,application/json" hidden></label><span class="note" id="bkMsg"></span></div>
+  </div>
+  <div class="panel c12"><h2>Senhas dos PDFs das faturas</h2><p class="hint">Alguns bancos protegem o PDF com senha (a XP, por exemplo). Digite aqui uma vez e o app abre essas faturas sozinho, inclusive na importação de várias de uma vez. As senhas ficam guardadas só neste aparelho; em outro celular, é preciso digitar de novo.</p>
+  <div class="row" style="align-items:center"><input type="password" id="pwdNew" autocomplete="off" inputmode="numeric" placeholder="Senha do PDF" style="flex:0 1 200px"><button class="btn" type="button" id="pwdAdd" style="flex:0 0 auto">Guardar senha</button>
+  <span class="note">${pdfSenhas.get().length ? pdfSenhas.get().length + (pdfSenhas.get().length === 1 ? " senha guardada" : " senhas guardadas") + ' <button class="btn small" type="button" id="pwdForget">Esquecer todas</button>' : "Nenhuma senha guardada ainda."}</span></div></div>
   ${window.__fbChangePin ? `<div class="panel c12"><h2>PIN e biometria</h2><p class="hint">O app pede o PIN da família ao abrir e ao voltar depois de 3 minutos fora. Trocar aqui muda o PIN em todos os aparelhos.</p><div class="row" style="align-items:center"><button class="btn" type="button" id="pinChange" style="flex:0 0 auto">Trocar PIN</button><button class="btn" type="button" id="bioToggle" style="flex:0 0 auto" hidden></button><span class="note" id="bioMsg"></span></div></div>` : ""}
   <div class="panel c4"><h2>Categorias</h2><p class="hint">Crie categorias próprias, como "Escola das crianças" ou "Viagem 2026".</p>
   <div class="row" style="margin-bottom:12px"><input type="text" id="newCat" placeholder="Nova categoria" maxlength="40"><button class="btn" type="button" id="addCat" style="flex:0 0 auto">Adicionar</button></div>
@@ -840,6 +845,10 @@ function renderRules(v) {
   </div></div>`;
   const add = () => { const i = $("#newCat"); const c = i.value.trim(); if (!c || allCats().includes(c)) return; STATE.settings.customCats = (STATE.settings.customCats || []).concat([c]); Store.saveSettings(); render(); };
   $("#bkExport").onclick = exportBackup;
+  const pf = $("#pwdForget"); if (pf) pf.onclick = () => { pdfSenhas.clear(); render(); toast("Senhas de PDF esquecidas neste aparelho."); };
+  const pa = $("#pwdAdd"), pn = $("#pwdNew");
+  const guarda = () => { const v = pn.value.trim(); if (!v) return; pdfSenhas.add(v); render(); toast("Senha guardada neste aparelho."); };
+  if (pa) pa.onclick = guarda; if (pn) pn.onkeydown = e => { if (e.key === "Enter") guarda(); };
   const pc = $("#pinChange"); if (pc) pc.onclick = async () => { if (await window.__fbChangePin()) toast("PIN da família trocado."); };
   const bt = $("#bioToggle");
   if (bt && window.__fbBio) window.__fbBio.disponivel().then(ok => {
@@ -1033,6 +1042,23 @@ function guessMeta(text) {
   return {card: matchCard(card), month};
 }
 
+/* ---------- senhas de PDF lembradas neste aparelho ---------- */
+// Ficam só no navegador deste aparelho (nunca no código do app nem no banco da família).
+const pdfSenhas = {
+  get() { try { const a = JSON.parse(localStorage.getItem("faturasPdfSenhas") || "[]"); return Array.isArray(a) ? a : []; } catch (e) { return []; } },
+  add(p) { if (!p) return; try { const a = pdfSenhas.get().filter(x => x !== p); a.unshift(p); localStorage.setItem("faturasPdfSenhas", JSON.stringify(a.slice(0, 10))); } catch (e) {} },
+  clear() { try { localStorage.removeItem("faturasPdfSenhas"); } catch (e) {} },
+};
+async function pdfLinesAuto(buf, password) {
+  const tries = password ? [password] : [undefined].concat(pdfSenhas.get());
+  let last = null;
+  for (const p of tries) {
+    try { const r = await pdfLines(buf.slice(0), p); if (password && p === password) { const rem = $("#pwdRemember"); if (!rem || rem.checked) pdfSenhas.add(p); } return r; }
+    catch (e) { last = e; if (!(e && e.name === "PasswordException")) throw e; }
+  }
+  throw last;
+}
+
 /* ---------- importação: fluxo ---------- */
 const IMP = {rows: [], file: null, buf: null, fileName: "", fullDates: false};
 const dlg = $("#dlg");
@@ -1061,7 +1087,7 @@ async function handleFile(file) {
 }
 async function readPdf(password) {
   try {
-    const {lines, pages} = await pdfLines(IMP.buf.slice(0), password);
+    const {lines, pages} = await pdfLinesAuto(IMP.buf, password);
     IMP.meta = guessMeta(lines.join("\n"));
     const iofm = /IOF Zero[^R]*R\$\s?([\d.]+,\d{2})/i.exec(lines.join(" "));
     IMP.meta.iofSaved = iofm ? parseAmount(iofm[1]) : null;
@@ -1133,7 +1159,7 @@ async function parseFileAny(item, password) {
   let rows, meta = {};
   if (ext === "pdf") {
     item.buf = item.buf || await item.file.arrayBuffer();
-    const {lines, pages} = await pdfLines(item.buf.slice(0), password);
+    const {lines, pages} = await pdfLinesAuto(item.buf, password);
     meta = guessMeta(lines.join("\n"));
     const iofm = /IOF Zero[^R]*R\$\s?([\d.]+,\d{2})/i.exec(lines.join(" "));
     meta.iofSaved = iofm ? parseAmount(iofm[1]) : null;
