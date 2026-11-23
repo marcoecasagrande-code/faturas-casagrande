@@ -92,7 +92,8 @@ header.top{position:relative;isolation:isolate;padding-top:20px}
 .ii-xp{background:#111;color:#fff;font-size:12px;box-shadow:inset 0 0 0 1px #333}
 .ii-btc{background:#F7931A;color:#fff;font-size:17px;border-radius:50%}
 .iiwrap{position:relative;display:inline-flex;flex:none}
-.ii-usd{position:absolute;right:-8px;bottom:-6px;background:var(--down);color:#fff;font:800 8.5px/1 var(--f-body);padding:2px 3px;border-radius:5px;box-shadow:0 0 0 2px var(--surface)}
+.ii-flag{position:absolute;right:-9px;bottom:-5px;width:20px;height:auto;border-radius:3px;box-shadow:0 0 0 2px var(--surface),0 1px 3px rgba(0,0,0,.35)}
+.pbar .ii-flag{width:15px;right:-7px;bottom:-4px}
 .assetlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,230px),1fr));gap:8px;margin-top:6px}
 .assetrow,.assetcell{display:flex;align-items:center;gap:10px;min-width:0}
 .assetrow{background:var(--surface-2);border-radius:10px;padding:8px 10px}
@@ -1495,7 +1496,7 @@ const PAT_INST = {BTG: "#1C3F94", XP: "var(--fg)", Bitcoin: "#F7931A"};
 // selo simples com as iniciais (não é o logotipo oficial do banco)
 function instIcon(inst, cur) {
   const b = inst === "BTG" ? '<span class="ii ii-btg" aria-hidden="true">btg</span>' : inst === "XP" ? '<span class="ii ii-xp" aria-hidden="true">XP</span>' : '<span class="ii ii-btc" aria-hidden="true">₿</span>';
-  return cur === "USD" ? '<span class="iiwrap">' + b + '<span class="ii-usd" aria-hidden="true">US$</span></span>' : b;
+  return cur === "USD" ? '<span class="iiwrap">' + b + '<svg class="ii-flag" viewBox="0 0 38 20" aria-hidden="true"><rect width="38" height="20" fill="#fff"/><rect y="0.000" width="38" height="1.538" fill="#B22234"/><rect y="3.077" width="38" height="1.538" fill="#B22234"/><rect y="6.154" width="38" height="1.538" fill="#B22234"/><rect y="9.231" width="38" height="1.538" fill="#B22234"/><rect y="12.308" width="38" height="1.538" fill="#B22234"/><rect y="15.385" width="38" height="1.538" fill="#B22234"/><rect y="18.462" width="38" height="1.538" fill="#B22234"/><rect width="15.2" height="10.77" fill="#3C3B6E"/><circle cx="1.60" cy="1.40" r=".55" fill="#fff"/><circle cx="4.50" cy="1.40" r=".55" fill="#fff"/><circle cx="7.40" cy="1.40" r=".55" fill="#fff"/><circle cx="10.30" cy="1.40" r=".55" fill="#fff"/><circle cx="13.20" cy="1.40" r=".55" fill="#fff"/><circle cx="3.05" cy="3.15" r=".55" fill="#fff"/><circle cx="5.95" cy="3.15" r=".55" fill="#fff"/><circle cx="8.85" cy="3.15" r=".55" fill="#fff"/><circle cx="11.75" cy="3.15" r=".55" fill="#fff"/><circle cx="1.60" cy="4.90" r=".55" fill="#fff"/><circle cx="4.50" cy="4.90" r=".55" fill="#fff"/><circle cx="7.40" cy="4.90" r=".55" fill="#fff"/><circle cx="10.30" cy="4.90" r=".55" fill="#fff"/><circle cx="13.20" cy="4.90" r=".55" fill="#fff"/><circle cx="3.05" cy="6.65" r=".55" fill="#fff"/><circle cx="5.95" cy="6.65" r=".55" fill="#fff"/><circle cx="8.85" cy="6.65" r=".55" fill="#fff"/><circle cx="11.75" cy="6.65" r=".55" fill="#fff"/><circle cx="1.60" cy="8.40" r=".55" fill="#fff"/><circle cx="4.50" cy="8.40" r=".55" fill="#fff"/><circle cx="7.40" cy="8.40" r=".55" fill="#fff"/><circle cx="10.30" cy="8.40" r=".55" fill="#fff"/><circle cx="13.20" cy="8.40" r=".55" fill="#fff"/><circle cx="3.05" cy="10.15" r=".55" fill="#fff"/><circle cx="5.95" cy="10.15" r=".55" fill="#fff"/><circle cx="8.85" cy="10.15" r=".55" fill="#fff"/><circle cx="11.75" cy="10.15" r=".55" fill="#fff"/></svg></span>' : b;
 }
 const patSorted = () => STATE.pats.slice().sort((a, b) => a.date.localeCompare(b.date));
 const fmtDate = d => d.slice(8, 10) + "/" + d.slice(5, 7) + "/" + d.slice(2, 4);
@@ -1511,6 +1512,7 @@ const patTotal = r => Object.values(patVals(r)).reduce((a, x) => a + (x || 0), 0
 
 function renderPat(v) {
   const recs = patSorted();
+  cotacaoHoje();
   if (!recs.length) {
     v.innerHTML = `<div class="panel pat-empty"><h2>Patrimônio da família</h2>
       <p class="hint">Registre quanto há em cada conta. A cada novo registro o app guarda o valor e mostra a evolução, quanto cada pessoa tem e a divisão entre BTG, XP e Bitcoin.</p>
@@ -1526,12 +1528,16 @@ function renderPat(v) {
   const byWho = sumBy("who"), byInst = sumBy("inst");
   const intl = (lv["btg-marco-us"] || 0) + (lv["btc"] || 0);
   const first = recs[0], dFirst = recs.length > 1 ? total - patTotal(first) : null;
+  // os mesmos saldos, somados com o dólar e o bitcoin de hoje
+  const hojeQ = COT.hoje && last.date < todayISO() ? COT.hoje : null;
+  const totalHoje = hojeQ ? patTotal(Object.assign({}, last, {fx: hojeQ.fx, btcPrice: hojeQ.btc})) : null;
   const bars = (obj, colorOf) => { const max = Math.max(...Object.values(obj), 1); return Object.entries(obj).sort((a, b) => b[1] - a[1]).map(([k, x]) =>
     `<div class="pbar"><span class="pk">${colorOf === PAT_INST ? instIcon(k) : '<i class="sw" style="background:' + (PAT_WHO[k] || "var(--c-outros)") + ';border-radius:50%"></i>'}${esc(k)}</span><span class="pv num">${BRL0.format(x)}</span>
       <span class="ptrack"><i style="width:${(x / max * 100).toFixed(1)}%;background:${colorOf === PAT_INST ? (PAT_INST[k] || "var(--accent)") : (PAT_WHO[k] || "var(--c-outros)")}"></i></span><span class="pp note">${(x / total * 100).toLocaleString("pt-BR", {maximumFractionDigits: 1})}%</span></div>`).join(""); };
   v.innerHTML = `<div class="grid">
     <section class="strip" aria-label="Resumo do patrimônio">
-      <div><div class="eyebrow">Patrimônio total</div><div class="v">${BRL0.format(total)}</div><div class="s">registro de ${fmtDate(last.date)}</div></div>
+      ${totalHoje != null ? `<div><div class="eyebrow">Patrimônio hoje</div><div class="v">${BRL0.format(totalHoje)}</div><div class="s">saldos de ${fmtDate(last.date)} com dólar ${BRL.format(hojeQ.fx)} e BTC ${BRL0.format(hojeQ.btc)} de agora · no registro: ${BRL0.format(total)}</div></div>`
+        : `<div><div class="eyebrow">Patrimônio total</div><div class="v">${BRL0.format(total)}</div><div class="s">registro de ${fmtDate(last.date)}${last.fx ? " · dólar " + BRL.format(last.fx) : ""}${last.btcPrice ? " · BTC " + BRL0.format(last.btcPrice) : ""}</div></div>`}
       <div><div class="eyebrow">Desde o registro anterior</div><div class="v ${d == null ? "" : d >= 0 ? "down" : "up"}">${d == null ? "—" : (d >= 0 ? "+" : "−") + BRL0.format(Math.abs(d))}</div><div class="s">${d == null ? "faça o próximo registro para comparar" : fmtPct(dp) + " desde " + fmtDate(prev.date)}</div></div>
       <div><div class="eyebrow">Fora do real</div><div class="v">${BRL0.format(intl)}</div><div class="s">${total ? (intl / total * 100).toLocaleString("pt-BR", {maximumFractionDigits: 1}) + "% · dólar e bitcoin" : ""}</div></div>
       <div><div class="eyebrow">Desde o início</div><div class="v ${dFirst == null ? "" : dFirst >= 0 ? "down" : "up"}">${dFirst == null ? "—" : (dFirst >= 0 ? "+" : "−") + BRL0.format(Math.abs(dFirst))}</div><div class="s">${recs.length} registro${recs.length > 1 ? "s" : ""} desde ${fmtDate(first.date)}</div></div>
@@ -1581,6 +1587,32 @@ function patSVG(recs) {
   return s2 + "</svg>";
 }
 
+/* cotações do dia (AwesomeAPI). No app dentro do Claude a busca é bloqueada: aí as cotações são digitadas. */
+const COT = {cache: {}, hoje: null, hojeErro: false};
+const isoMinus = (d, n) => { const x = new Date(d + "T12:00:00"); x.setDate(x.getDate() - n); return x.getFullYear() + "-" + pad(x.getMonth() + 1) + "-" + pad(x.getDate()); };
+async function getJSON(url) { const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 8000); try { const r = await fetch(url, {signal: ctl.signal, cache: "no-store"}); if (!r.ok) throw new Error("http " + r.status); return await r.json(); } finally { clearTimeout(t); } }
+async function cotacao(date) {
+  if (COT.cache[date]) return COT.cache[date];
+  let out;
+  if (date >= todayISO()) {
+    const j = await getJSON("https://economia.awesomeapi.com.br/json/last/USD-BRL,BTC-BRL");
+    out = {fx: +j.USDBRL.bid, btc: +j.BTCBRL.bid, quando: j.USDBRL.create_date, hoje: true};
+  } else {
+    const ds = isoMinus(date, 7).replace(/-/g, ""), de = date.replace(/-/g, "");
+    const [u, b] = await Promise.all(["USD-BRL", "BTC-BRL"].map(par => getJSON("https://economia.awesomeapi.com.br/json/daily/" + par + "/1?start_date=" + ds + "&end_date=" + de)));
+    if (!u[0] || !b[0]) throw new Error("sem dados");
+    out = {fx: +u[0].bid, btc: +b[0].bid, quando: u[0].create_date, hoje: false};
+  }
+  if (!(out.fx > 0) || !(out.btc > 0)) throw new Error("cotação inválida");
+  COT.cache[date] = out; return out;
+}
+function cotacaoHoje() {
+  if (COT.hoje || COT.hojeErro || COT.buscando) return;
+  COT.buscando = true;
+  cotacao(todayISO()).then(c => { COT.hoje = c; }).catch(() => { COT.hojeErro = true; }).finally(() => { COT.buscando = false; if (STATE.module === "patrimonio") render(); });
+}
+const fmtHora = q => q && q.quando ? q.quando.slice(8, 10) + "/" + q.quando.slice(5, 7) + " às " + q.quando.slice(11, 16) : "";
+
 /* formulário de registro */
 const patDlg = $("#patDlg");
 let PAT_EDIT = null;
@@ -1594,13 +1626,14 @@ function openPat(id) {
   $("#patTitle").textContent = id ? "Editar registro de " + fmtDate(base.date) : "Registrar patrimônio";
   const v = (base && base.v) || {};
   const row = a => `<label class="patin" for="pv-${a.id}">${instIcon(a.inst, a.cur)}<span class="pname"><b>${esc(a.nome)}</b>${a.sub ? '<span class="note">' + esc(a.sub) + "</span>" : ""}</span>
-      <span class="pfield"><span class="pcur">${a.cur === "USD" ? "US$" : a.cur === "BTC" ? "BTC" : "R$"}</span><input id="pv-${a.id}" data-pv="${a.id}" inputmode="decimal" autocomplete="off" value="${esc(numIn(v[a.id]))}" placeholder="0,00"></span></label>`;
+      <span class="pfield"><span class="pcur">${a.cur === "USD" ? "US$" : a.cur === "BTC" ? "qtd ₿" : "R$"}</span><input id="pv-${a.id}" data-pv="${a.id}" inputmode="decimal" autocomplete="off" value="${esc(numIn(v[a.id]))}" placeholder="0,00"></span></label>`;
   $("#patBody").innerHTML = `
     <div class="row">
       <label class="lbl">Data do registro<input type="date" id="patDate" value="${date}"></label>
-      <label class="lbl">Cotação do dólar (R$)<input id="patFx" inputmode="decimal" value="${esc(numIn(base ? base.fx : ""))}" placeholder="ex.: 5,40"></label>
-      <label class="lbl">Cotação do bitcoin (R$)<input id="patBtc" inputmode="decimal" value="${esc(numIn(base ? base.btcPrice : ""))}" placeholder="ex.: 520.000"></label>
+      <label class="lbl">Dólar do dia (R$)<input id="patFx" inputmode="decimal" data-auto="1" value="${esc(numIn(id && base ? base.fx : ""))}" placeholder="buscando…"></label>
+      <label class="lbl">Bitcoin do dia (R$ por BTC)<input id="patBtc" inputmode="decimal" data-auto="1" value="${esc(numIn(id && base ? base.btcPrice : ""))}" placeholder="buscando…"></label>
     </div>
+    <p class="note" id="patCot" style="margin:-6px 0 0"></p>
     <p class="note" style="margin:0">${base && !id ? "Já preenchido com o último registro (" + fmtDate(base.date) + "). Atualize só o que mudou." : "Deixe em branco o que não quiser registrar."}</p>
     <div class="patgrid">
       <div class="pgroup"><h3>BTG</h3>${PAT_ASSETS.filter(a => a.inst === "BTG").map(row).join("")}</div>
@@ -1610,6 +1643,25 @@ function openPat(id) {
     <label class="lbl">Observação (opcional)<input type="text" id="patNote" maxlength="120" value="${esc(id && base.note || "")}" placeholder="ex.: depois do bônus de fim de ano"></label>`;
   updPatSum();
   if (typeof patDlg.showModal === "function") patDlg.showModal(); else patDlg.setAttribute("open", "");
+  if (!id) puxaCotacao(); else $("#patCot").textContent = "Cotações gravadas neste registro. Mude a data para buscar as daquele dia.";
+}
+let cotSeq = 0;
+async function puxaCotacao() {
+  const date = $("#patDate").value, me = ++cotSeq, info = $("#patCot");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
+  info.textContent = "Buscando o dólar e o bitcoin de " + fmtDate(date) + "…";
+  try {
+    const c = await cotacao(date); if (me !== cotSeq) return;
+    const fx = $("#patFx"), bt = $("#patBtc");
+    if (fx.dataset.auto === "1") fx.value = numIn(Math.round(c.fx * 10000) / 10000);
+    if (bt.dataset.auto === "1") bt.value = numIn(Math.round(c.btc));
+    info.textContent = (c.hoje ? "Cotação de agora (" + fmtHora(c) + ")" : "Fechamento de " + fmtHora(c).slice(0, 5)) + ", fonte AwesomeAPI. Pode corrigir se quiser.";
+  } catch (e) {
+    if (me !== cotSeq) return;
+    $("#patFx").placeholder = "ex.: 5,40"; $("#patBtc").placeholder = "ex.: 520.000";
+    info.textContent = "Não consegui buscar as cotações agora" + (window.__fbLogin ? "" : " (no app dentro do Claude a busca é bloqueada; no site ela funciona)") + ". Digite o dólar e o bitcoin do dia.";
+  }
+  updPatSum();
 }
 function readPatForm() {
   const r = {kind: "patrimonio", date: $("#patDate").value, fx: parseNum($("#patFx").value), btcPrice: parseNum($("#patBtc").value), note: $("#patNote").value.trim(), v: {}};
@@ -1619,7 +1671,7 @@ function readPatForm() {
 function updPatSum() {
   const r = readPatForm(); const vals = patVals(r); const tot = Object.values(vals).reduce((a, x) => a + (x || 0), 0);
   const faltaFx = r.v["btg-marco-us"] != null && !(r.fx > 0), faltaBtc = r.v["btc"] != null && !(r.btcPrice > 0);
-  $("#patSum").innerHTML = "Total: <b class=\"num\">" + BRL.format(tot) + "</b>" + (faltaFx ? ' · <span class="up">informe a cotação do dólar</span>' : "") + (faltaBtc ? ' · <span class="up">informe a cotação do bitcoin</span>' : "");
+  $("#patSum").innerHTML = "Total: <b class=\"num\">" + BRL.format(tot) + "</b>" + (faltaFx ? ' · <span class="up">falta o dólar do dia</span>' : "") + (faltaBtc ? ' · <span class="up">falta o valor do bitcoin</span>' : "");
   $("#patSave").disabled = !/^\d{4}-\d{2}-\d{2}$/.test(r.date) || !Object.keys(r.v).length;
 }
 function savePat() {
@@ -1631,7 +1683,8 @@ function savePat() {
   STATE.module = "patrimonio"; render();
   toast((existed ? "Registro de " + fmtDate(r.date) + " substituído." : "Patrimônio de " + fmtDate(r.date) + " registrado: ") + (existed ? "" : BRL0.format(patTotal(r)) + "."));
 }
-patDlg.addEventListener("input", e => { if (e.target.matches("input")) updPatSum(); });
+patDlg.addEventListener("input", e => { if (!e.target.matches("input")) return; if (e.target.id === "patFx" || e.target.id === "patBtc") e.target.dataset.auto = "0"; updPatSum(); });
+patDlg.addEventListener("change", e => { if (e.target.id === "patDate") { $("#patFx").dataset.auto = "1"; $("#patBtc").dataset.auto = "1"; puxaCotacao(); } });
 $("#patSave").onclick = savePat;
 $("#patCancel").onclick = $("#patClose").onclick = () => patDlg.open && patDlg.close();
 
