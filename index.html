@@ -447,6 +447,14 @@ const isSpend = t => t.amount > 0 && !t.ign;
 const DEMO_CARDS = {"Nubank": {type: "cb", rate: 1}, "Itaú Visa": {type: "pts", rate: 2.5, unit: "usd", fx: 5.4, milheiro: 25}};
 // Configurações conhecidas de cartões (usadas enquanto a família não configurar o cartão).
 const CARD_PRESETS = [
+  {re: /XP.*PRIVILEGE/, nome: "XP Privilege", texto: "XP Visa Infinite Privilege (pontos): 5 pontos por US$ no Brasil e 11 no exterior. Confira a modalidade no app da XP.",
+   cfg: {type: "pts", rate: 5, rateIntl: 11, unit: "usd"}},
+  {re: /XP.*LEGACY/, nome: "XP Legacy", texto: "XP Legacy (pontos): 3 pontos por US$ no Brasil e 9,5 no exterior. Se usar investback: 1,5% no Brasil e 5,3% no exterior.",
+   cfg: {type: "pts", rate: 3, rateIntl: 9.5, unit: "usd"}},
+  {re: /XP.*\bONE\b/, nome: "XP One", texto: "XP One (investback): 1% com fatura a partir de R$ 3.000, 0,5% entre R$ 1.500 e R$ 3.000, zero abaixo disso.",
+   cfg: {type: "cb", rate: 1, tiers: [[3000, 1], [1500, 0.5], [0, 0]]}},
+  {re: /XP.*INFINITE|^XP\b/, nome: "XP Visa Infinite", texto: "XP Visa Infinite (pontos): 2,2 pontos por US$ (até 3 com Turbo Benefícios). Se usar investback, troque para cashback 1,5%.",
+   cfg: {type: "pts", rate: 2.2, unit: "usd"}},
   {re: /BTG|ULTRABLUE/, nome: "BTG UltraBlue", texto: "UltraBlue (modalidade pontos): 3 pontos por US$ no Brasil e 3,5 no exterior; dólar calculado pela própria fatura.",
    cfg: {type: "pts", rate: 3, rateIntl: 3.5, unit: "usd"}},
 ];
@@ -476,7 +484,8 @@ function rewardFor(st) {
   else if (type === "cb" && detected > 0) { value = detected; src = "fatura"; }
   const rI = cfg.rateIntl > 0 ? cfg.rateIntl : cfg.rate;
   let fx = null;
-  if (value == null && type === "cb" && cfg.rate > 0) value = (dom * cfg.rate + intl * rI) / 100;
+  if (value == null && type === "cb" && Array.isArray(cfg.tiers) && !(cfg.rateIntl > 0)) { const tr = cfg.tiers.find(x => spend >= x[0]); value = spend * (tr ? tr[1] : 0) / 100; }
+  else if (value == null && type === "cb" && cfg.rate > 0) value = (dom * cfg.rate + intl * rI) / 100;
   else if (value == null && type === "pts" && cfg.rate > 0) {
     if (cfg.unit === "usd") { fx = cfg.fx > 0 ? cfg.fx : autoFx(st); if (fx) value = (dom * cfg.rate + intl * rI) / fx; }
     else value = dom * cfg.rate + intl * rI;
@@ -1028,13 +1037,20 @@ function parsePdfColumns(pages) {
   });
   return rows;
 }
-const BANCOS = [["BTG", "BTG UltraBlue"], ["NUBANK|NU PAGAMENTOS", "Nubank"], ["ITAU|ITAÚ", "Itaú"], ["BRADESCO", "Bradesco"], ["SANTANDER", "Santander"], ["BANCO INTER|\\bINTER\\b", "Inter"], ["C6 BANK|\\bC6\\b", "C6 Bank"], ["XP INVESTIMENTOS|CARTAO XP|CARTÃO XP", "XP"], ["CAIXA ECON", "Caixa"], ["BANCO DO BRASIL|OUROCARD", "Banco do Brasil"], ["PORTO SEGURO|PORTO BANK", "Porto Bank"], ["MERCADO PAGO", "Mercado Pago"], ["PICPAY", "PicPay"], ["SICOOB", "Sicoob"], ["SICREDI", "Sicredi"]];
+const BANCOS = [["BTG", "BTG UltraBlue"], ["NUBANK|NU PAGAMENTOS", "Nubank"], ["ITAU|ITAÚ", "Itaú"], ["BRADESCO", "Bradesco"], ["SANTANDER", "Santander"], ["BANCO INTER|\\bINTER\\b", "Inter"], ["C6 BANK|\\bC6\\b", "C6 Bank"], ["XP INVESTIMENTOS|CARTAO XP|CARTÃO XP|BANCO XP|XP VISA|\\bXP (ONE|INFINITE|LEGACY|PRIVILEGE)", "XP"], ["CAIXA ECON", "Caixa"], ["BANCO DO BRASIL|OUROCARD", "Banco do Brasil"], ["PORTO SEGURO|PORTO BANK", "Porto Bank"], ["MERCADO PAGO", "Mercado Pago"], ["PICPAY", "PicPay"], ["SICOOB", "Sicoob"], ["SICREDI", "Sicredi"]];
 const MESES_LONGOS = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
 // liga o banco detectado ao cartão já cadastrado (ex.: "Itaú" -> "Itaú Azul")
 const matchCard = name => { if (!name) return name; const key = norm(name).split(" ")[0]; const hits = cardNames().filter(c => norm(c).split(/\s+/).includes(key) || norm(c).startsWith(key)); return hits.length === 1 ? hits[0] : (hits.find(c => norm(c) === norm(name)) || name); };
 function guessMeta(text) {
   const n = norm(text.slice(0, 6000));
   let card = null; for (const [re, name] of BANCOS) if (new RegExp(re).test(n)) { card = name; break; }
+  // tipo do cartão escrito na fatura
+  if (card === "XP") {
+    card = /PRIVILEGE/.test(n) ? "XP Privilege" : /LEGACY/.test(n) ? "XP Legacy" : /INFINITE ONE|XP ONE|CATEGORIA ONE|\bONE\b/.test(n) ? "XP One" : "XP Visa Infinite";
+  } else if (card && card !== "BTG UltraBlue") {
+    const tm = /\b(ULTRAVIOLETA|NANQUIM|THE ONE|PERSONNALITE|VISA INFINITE|MASTERCARD BLACK|INFINITE|BLACK|PLATINUM|SIGNATURE|GOLD)\b/.exec(n.slice(0, 2500));
+    if (tm) card = card + " " + tm[1].toLowerCase().replace(/\b\w/g, ch => ch.toUpperCase()).replace("Personnalite", "Personnalité");
+  }
   let month = null;
   const m = /FATURA DE (JANEIRO|FEVEREIRO|MARCO|ABRIL|MAIO|JUNHO|JULHO|AGOSTO|SETEMBRO|OUTUBRO|NOVEMBRO|DEZEMBRO)(?: DE)? (\d{4})/.exec(n);
   if (m) month = m[2] + "-" + pad(MESES_LONGOS.map(norm).indexOf(m[1]) + 1);
@@ -1312,6 +1328,7 @@ document.addEventListener("change", e => {
   if (t.dataset && t.dataset.cfg) {
     const card = t.closest("[data-card]").getAttribute("data-card"); const k = t.dataset.cfg;
     const cur = Object.assign({}, cardsCfg()[card] || {}); delete cur.preset;
+    if (k === "rate" || k === "rateIntl" || k === "type") delete cur.tiers;
     cur[k] = (k === "type" || k === "unit") ? t.value : parseNum(t.value);
     if (k === "type" && !t.value) delete cur.type;
     STATE.settings.cards = Object.assign({}, STATE.settings.cards || {}, {[card]: cur}); Store.saveSettings(); return render();
