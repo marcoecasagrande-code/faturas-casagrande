@@ -81,6 +81,37 @@ header.top{position:relative;isolation:isolate;padding-top:20px}
 .btn.danger{color:var(--up)}
 .btn.small{padding:4px 9px;font-size:13px}
 .btn:disabled{opacity:.5;cursor:not-allowed}
+[hidden]{display:none!important}
+.modsw{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:2px 0 12px}
+.modsw button{display:flex;align-items:center;justify-content:center;gap:10px;padding:12px 14px;border-radius:14px;border:1.5px solid var(--line);background:var(--surface);color:var(--muted);font-family:var(--f-display);font-weight:700;font-size:17px;letter-spacing:-.01em}
+.modsw button svg{width:22px;height:22px;flex:none}
+.modsw button:hover{border-color:var(--accent);color:var(--fg)}
+.modsw button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);box-shadow:0 6px 18px color-mix(in srgb,var(--accent) 30%,transparent)}
+.ii{display:inline-grid;place-items:center;flex:none;width:30px;height:30px;border-radius:9px;font:800 11px/1 var(--f-body);letter-spacing:-.02em}
+.ii-btg{background:#0D2240;color:#fff;text-transform:lowercase;font-size:11.5px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.22)}
+.ii-xp{background:#111;color:#fff;font-size:12px;box-shadow:inset 0 0 0 1px #333}
+.ii-btc{background:#F7931A;color:#fff;font-size:17px;border-radius:50%}
+.iiwrap{position:relative;display:inline-flex;flex:none}
+.ii-usd{position:absolute;right:-8px;bottom:-6px;background:var(--down);color:#fff;font:800 8.5px/1 var(--f-body);padding:2px 3px;border-radius:5px;box-shadow:0 0 0 2px var(--surface)}
+.assetlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,230px),1fr));gap:8px;margin-top:6px}
+.assetrow,.assetcell{display:flex;align-items:center;gap:10px;min-width:0}
+.assetrow{background:var(--surface-2);border-radius:10px;padding:8px 10px}
+.assetcell .note,.pname .note{display:block;font-size:11.5px}
+.pbars{display:flex;flex-direction:column;gap:10px}
+.pbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;align-items:center}
+.pbar .pk{display:flex;align-items:center;gap:8px;font-weight:500;min-width:0}
+.pbar .pk .ii{width:22px;height:22px;border-radius:7px;font-size:9px}
+.pbar .pk .ii-btc{font-size:13px;border-radius:50%}
+.pbar .ptrack{height:6px;background:var(--surface-2);border-radius:99px;overflow:hidden}
+.pbar .ptrack i{display:block;height:100%;border-radius:99px}
+tr.tot td{border-top:2px solid var(--line)}
+.patgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:14px}
+.pgroup{display:flex;flex-direction:column;gap:8px}
+.pgroup h3{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-family:var(--f-body);font-weight:600}
+.patin{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 10px;align-items:center;background:var(--surface-2);border-radius:12px;padding:10px}
+.patin .pfield{grid-column:1/-1;display:flex;align-items:center;gap:6px}
+.patin .pcur{font:600 13px var(--f-num);color:var(--muted);min-width:34px}
+.patin input{flex:1;min-width:0;font:600 16px var(--f-num);text-align:right}
 nav.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
 nav.tabs::-webkit-scrollbar{display:none}
 nav.tabs button{border:0;background:none;padding:10px 14px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
@@ -265,6 +296,10 @@ textarea{width:100%;min-height:110px;font-family:var(--f-num);font-size:12px}
       <span class="status" id="status"><span class="dot"></span><span>Carregando…</span></span>
       <span class="impwrap"><span class="dots" aria-hidden="true"><svg viewBox="0 0 300 330"><defs><pattern id="dotp" width="9" height="9" patternUnits="userSpaceOnUse"><circle cx="4.5" cy="4.5" r="2.1"/></pattern><mask id="dolm"><text x="150" y="282" text-anchor="middle" font-size="340" font-weight="700" font-family="Bricolage Grotesque, Inter, Arial, sans-serif" fill="#fff">$</text></mask></defs><rect width="300" height="330" fill="url(#dotp)" mask="url(#dolm)"/></svg></span><button class="btn primary" id="btnImport" type="button">+ Importar fatura</button></span>
     </div>
+    <div class="modsw" role="tablist" aria-label="Área do app">
+      <button type="button" role="tab" data-mod="cartoes" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6.5 15h4" stroke-linecap="round"/></svg>Cartões</button>
+      <button type="button" role="tab" data-mod="patrimonio" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 20h18M4 10h16M12 3l9 5H3l9-5zM6 10v7M10 10v7M14 10v7M18 10v7"/></svg>Patrimônio</button>
+    </div>
     <nav class="tabs" role="tablist" id="tabs">
       <button role="tab" data-view="overview" aria-selected="true" type="button">Visão geral</button>
       <button role="tab" data-view="tx" aria-selected="false" type="button">Lançamentos</button>
@@ -291,6 +326,18 @@ textarea{width:100%;min-height:110px;font-family:var(--f-num);font-size:12px}
   <div id="bannerArea"></div>
   <section id="view"></section>
 </main>
+
+<dialog id="patDlg">
+  <div class="dlg">
+    <header><h2 id="patTitle">Registrar patrimônio</h2><button class="btn small" type="button" id="patClose">Fechar</button></header>
+    <div class="body" id="patBody"></div>
+    <footer>
+      <span class="note" id="patSum" style="margin-right:auto"></span>
+      <button class="btn" type="button" id="patCancel">Cancelar</button>
+      <button class="btn primary" type="button" id="patSave">Salvar registro</button>
+    </footer>
+  </div>
+</dialog>
 
 <dialog id="dlg">
   <div class="dlg">
@@ -381,13 +428,13 @@ const PALETTE = ["#3B7DD8","#E07B39","#2E9E78","#C9485B","#8A63D2","#C9A227","#2
 const CARD_COLORS = ["#1D6B58","#D9822B","#5B6EE1","#C2416B","#2A9FB5","#8A63D2","#7D8C36","#A0522D"];
 
 let STATE = {
-  statements: [], settings: {rules: {}, customCats: [], cards: {}},
+  statements: [], pats: [], module: "cartoes", settings: {rules: {}, customCats: [], cards: {}},
   mode: "loading", demo: false,
   view: "overview", period: 6, card: "all", person: "all", focusCat: null,
   txSearch: "", txCat: "all", txMonth: "all", showCredits: false,
 };
-try { const v = localStorage.getItem("faturas.ui"); if (v) { const o = JSON.parse(v); if (o.period != null) STATE.period = o.period; if (o.view) STATE.view = o.view; } } catch (e) {}
-const saveUi = () => { try { localStorage.setItem("faturas.ui", JSON.stringify({period: STATE.period, view: STATE.view})); } catch (e) {} };
+try { const v = localStorage.getItem("faturas.ui"); if (v) { const o = JSON.parse(v); if (o.period != null) STATE.period = o.period; if (o.view) STATE.view = o.view; if (o.module) STATE.module = o.module; } } catch (e) {}
+const saveUi = () => { try { localStorage.setItem("faturas.ui", JSON.stringify({period: STATE.period, view: STATE.view, module: STATE.module})); } catch (e) {} };
 
 const allCats = () => { const extra = (STATE.settings.customCats || []).filter(c => !CAT_NAMES.includes(c)); return CAT_NAMES.slice(0, -1).concat(extra, ["Outros"]); };
 const CAT_TOKEN = {"Compras online": 0, "Lazer e viagem": 1, "Transporte": 2, "Alimentação": 3, "Assinaturas": 4, "Combustível": 5, "Educação": 6, "Pets": 7, "Saúde": 8, "Tarifas e juros": 9, "Vestuário": 10, "Mercado": 11, "Casa": 12, "Contas e serviços": 13, "Beleza e cuidados": 14};
@@ -417,9 +464,9 @@ const Store = {
     let first = true;
     const timer = setTimeout(() => { if (first) setStatus("warn", "Sem resposta do armazenamento ainda"); }, 10000);
     this.col.onSnapshot(snap => {
-      const sts = [], st = {rules: {}, customCats: [], cards: {}};
-      snap.docs.forEach(d => { const b = d.data(); if (!b) return; if (b.kind === "statement") sts.push(b); else if (b.kind === "settings") Object.assign(st, b); });
-      STATE.statements = sts; STATE.settings = {rules: st.rules || {}, customCats: st.customCats || [], cards: st.cards || {}};
+      const sts = [], pats = [], st = {rules: {}, customCats: [], cards: {}};
+      snap.docs.forEach(d => { const b = d.data(); if (!b) return; if (b.kind === "statement") sts.push(b); else if (b.kind === "patrimonio") pats.push(b); else if (b.kind === "settings") Object.assign(st, b); });
+      STATE.statements = sts; STATE.pats = pats; STATE.settings = {rules: st.rules || {}, customCats: st.customCats || [], cards: st.cards || {}};
       if (!snap.metadata.fromCache) { first = false; clearTimeout(timer); }
       STATE.mode = "cloud"; setStatus("ok", this.family ? "Salvo para a família" : "Salvo na sua conta (privado)");
       render();
@@ -427,11 +474,11 @@ const Store = {
   },
   initLocal() {
     this.local = true; STATE.mode = "local";
-    try { const raw = localStorage.getItem("faturas.data"); if (raw) { const o = JSON.parse(raw); STATE.statements = o.statements || []; STATE.settings = Object.assign({rules: {}, customCats: [], cards: {}}, o.settings || {}); } } catch (e) {}
+    try { const raw = localStorage.getItem("faturas.data"); if (raw) { const o = JSON.parse(raw); STATE.statements = o.statements || []; STATE.pats = o.pats || []; STATE.settings = Object.assign({rules: {}, customCats: [], cards: {}}, o.settings || {}); } } catch (e) {}
     setStatus("warn", "Salvando só neste navegador");
     render();
   },
-  persistLocal() { try { localStorage.setItem("faturas.data", JSON.stringify({statements: STATE.statements, settings: STATE.settings})); } catch (e) { toast("Não foi possível salvar neste navegador."); } },
+  persistLocal() { try { localStorage.setItem("faturas.data", JSON.stringify({statements: STATE.statements, settings: STATE.settings, pats: STATE.pats})); } catch (e) { toast("Não foi possível salvar neste navegador."); } },
   enqueue(id, fn) { this.queues[id] = (this.queues[id] || Promise.resolve()).then(fn).catch(e => { toast(e && e.code === "quota_exceeded" ? "Espaço de armazenamento cheio. Apague faturas antigas." : "Não foi possível salvar (" + ((e && e.code) || "erro") + ")."); }); },
   saveStatement(st) {
     const i = STATE.statements.findIndex(s => s.id === st.id);
@@ -442,6 +489,18 @@ const Store = {
   },
   deleteStatement(id) {
     STATE.statements = STATE.statements.filter(s => s.id !== id);
+    if (this.local) return this.persistLocal();
+    this.enqueue(id, () => this.col.doc(id).delete());
+  },
+  savePat(r) {
+    const i = STATE.pats.findIndex(x => x.id === r.id);
+    if (i >= 0) STATE.pats[i] = r; else STATE.pats.push(r);
+    if (this.local) return this.persistLocal();
+    const body = JSON.parse(JSON.stringify(r));
+    this.enqueue(r.id, () => this.col.doc(r.id).set(body));
+  },
+  deletePat(id) {
+    STATE.pats = STATE.pats.filter(x => x.id !== id);
     if (this.local) return this.persistLocal();
     this.enqueue(id, () => this.col.doc(id).delete());
   },
@@ -539,7 +598,10 @@ function autoFxCard(card) {
   const list = (STATE.demo ? DEMO : STATE.statements).filter(s => s.card === card).map(autoFx).filter(Boolean);
   return list.length ? list.reduce((a, b) => a + b, 0) / list.length : null;
 }
-const parseNum = v => { v = String(v == null ? "" : v).trim(); if (!v) return null; const n = v.includes(",") ? parseFloat(v.replace(/\./g, "").replace(",", ".")) : parseFloat(v); return isNaN(n) ? null : n; };
+const parseNum = v => { v = String(v == null ? "" : v).trim().replace(/^R\$\s*|^US\$\s*/i, "").replace(/\s/g, ""); if (!v) return null;
+  // padrão brasileiro: 1.234.567,89 · aceita também 1234,5 e 5.40 (decimal com ponto)
+  let n; if (v.includes(",")) n = parseFloat(v.replace(/\./g, "").replace(",", ".")); else if (/^-?\d{1,3}(\.\d{3})+$/.test(v)) n = parseFloat(v.replace(/\./g, "")); else n = parseFloat(v);
+  return isNaN(n) ? null : n; };
 const numStr = v => v == null || v === "" ? "" : String(v).replace(".", ",");
 function rewardFor(st) {
   const cfg = cardsCfg()[st.card] || {};
@@ -573,6 +635,15 @@ function sumBy(txs, keyFn) { const o = {}; txs.forEach(t => { const k = keyFn(t)
 let DEMO = null;
 function render() {
   STATE.demo = STATE.mode !== "loading" && STATE.statements.length === 0;
+  const isPat = STATE.module === "patrimonio";
+  document.querySelectorAll(".modsw button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.mod === STATE.module)));
+  $("#tabs").hidden = isPat; $("#btnImport").textContent = isPat ? "+ Registrar patrimônio" : "+ Importar fatura";
+  if (isPat) {
+    $("#filters").hidden = true; $("#bannerArea").innerHTML = "";
+    const v = $("#view");
+    if (STATE.mode === "loading") { v.innerHTML = '<div class="panel empty">Carregando o patrimônio…</div>'; return; }
+    return renderPat(v);
+  }
   if (STATE.demo && !DEMO) DEMO = demoStatements();
   // filtros
   const cards = STATE.demo ? ["Nubank", "Itaú Visa"] : cardNames();
@@ -981,7 +1052,7 @@ function renderRules(v) {
 
 /* ---------- backup ---------- */
 async function exportBackup() {
-  const data = JSON.stringify({app: "faturas-casagrande", versao: 1, exportadoEm: new Date().toISOString(), statements: STATE.statements, settings: STATE.settings});
+  const data = JSON.stringify({app: "faturas-casagrande", versao: 1, exportadoEm: new Date().toISOString(), statements: STATE.statements, settings: STATE.settings, pats: STATE.pats});
   const filename = "faturas-casagrande-backup-" + new Date().toISOString().slice(0, 10) + ".json";
   const msgEl = $("#bkMsg");
   if (!window.__fbLogin && window.claude && window.claude.use) {
@@ -1000,7 +1071,9 @@ async function importBackup(file) {
   try {
     const j = JSON.parse(await file.text());
     const sts = (j.statements || []).filter(s => s && s.kind === "statement" && s.id && s.card && /^\d{4}-\d{2}$/.test(s.month) && Array.isArray(s.tx));
-    if (!sts.length && !j.settings) throw new Error("vazio");
+    const pats = (j.pats || []).filter(r => r && r.kind === "patrimonio" && r.id && r.date && r.v);
+    if (!sts.length && !j.settings && !pats.length) throw new Error("vazio");
+    pats.forEach(r => Store.savePat(r));
     sts.forEach(s => { const dup = STATE.statements.find(x => x.card === s.card && x.month === s.month && x.id !== s.id); if (dup) Store.deleteStatement(dup.id); Store.saveStatement(s); });
     if (j.settings) {
       STATE.settings.rules = Object.assign({}, STATE.settings.rules, j.settings.rules || {});
@@ -1405,6 +1478,163 @@ Responda somente um objeto JSON que mapeia cada estabelecimento à categoria mai
   }
 }
 
+
+/* ---------- patrimônio ---------- */
+const PAT_ASSETS = [
+  {id: "btg-marco-br", inst: "BTG", who: "Marco", nome: "BTG · Marco", sub: "Nacional", cur: "BRL"},
+  {id: "btg-marco-us", inst: "BTG", who: "Marco", nome: "BTG · Marco", sub: "Internacional", cur: "USD"},
+  {id: "btg-alice", inst: "BTG", who: "Alice", nome: "BTG · Alice", cur: "BRL"},
+  {id: "btg-moema", inst: "BTG", who: "Moema", nome: "BTG · Moema", cur: "BRL"},
+  {id: "btc", inst: "Bitcoin", who: "Família", nome: "Bitcoin", cur: "BTC"},
+  {id: "xp-moema", inst: "XP", who: "Moema", nome: "XP · Moema", cur: "BRL"},
+  {id: "xp-alice", inst: "XP", who: "Alice", nome: "XP · Alice", cur: "BRL"},
+  {id: "xp-marco", inst: "XP", who: "Marco", nome: "XP · Marco", cur: "BRL"},
+];
+const PAT_WHO = {Marco: "var(--c13)", Moema: "var(--c3)", Alice: "var(--c2)", "Família": "var(--c9)"};
+const PAT_INST = {BTG: "#1C3F94", XP: "var(--fg)", Bitcoin: "#F7931A"};
+// selo simples com as iniciais (não é o logotipo oficial do banco)
+function instIcon(inst, cur) {
+  const b = inst === "BTG" ? '<span class="ii ii-btg" aria-hidden="true">btg</span>' : inst === "XP" ? '<span class="ii ii-xp" aria-hidden="true">XP</span>' : '<span class="ii ii-btc" aria-hidden="true">₿</span>';
+  return cur === "USD" ? '<span class="iiwrap">' + b + '<span class="ii-usd" aria-hidden="true">US$</span></span>' : b;
+}
+const patSorted = () => STATE.pats.slice().sort((a, b) => a.date.localeCompare(b.date));
+const fmtDate = d => d.slice(8, 10) + "/" + d.slice(5, 7) + "/" + d.slice(2, 4);
+function patVals(r) {
+  const out = {};
+  PAT_ASSETS.forEach(a => {
+    const x = r.v && r.v[a.id]; if (x == null || x === "") { out[a.id] = null; return; }
+    out[a.id] = a.cur === "USD" ? (r.fx > 0 ? x * r.fx : null) : a.cur === "BTC" ? (r.btcPrice > 0 ? x * r.btcPrice : null) : x;
+  });
+  return out;
+}
+const patTotal = r => Object.values(patVals(r)).reduce((a, x) => a + (x || 0), 0);
+
+function renderPat(v) {
+  const recs = patSorted();
+  if (!recs.length) {
+    v.innerHTML = `<div class="panel pat-empty"><h2>Patrimônio da família</h2>
+      <p class="hint">Registre quanto há em cada conta. A cada novo registro o app guarda o valor e mostra a evolução, quanto cada pessoa tem e a divisão entre BTG, XP e Bitcoin.</p>
+      <div class="assetlist">${PAT_ASSETS.map(a => `<div class="assetrow">${instIcon(a.inst, a.cur)}<span><b>${esc(a.nome)}</b>${a.sub ? ' <span class="note">' + esc(a.sub) + (a.cur === "USD" ? " · em dólar" : "") + "</span>" : ""}${a.cur === "BTC" ? ' <span class="note">quantidade em BTC</span>' : ""}</span></div>`).join("")}</div>
+      <button class="btn primary" type="button" data-act="newPat" style="margin-top:14px">Fazer o primeiro registro</button></div>`;
+    return;
+  }
+  const last = recs[recs.length - 1], prev = recs.length > 1 ? recs[recs.length - 2] : null;
+  const lv = patVals(last), pv = prev ? patVals(prev) : null;
+  const total = patTotal(last), ptotal = prev ? patTotal(prev) : null;
+  const d = ptotal != null ? total - ptotal : null, dp = ptotal ? d / ptotal * 100 : null;
+  const sumBy = key => { const o = {}; PAT_ASSETS.forEach(a => { if (lv[a.id] != null) o[a[key]] = (o[a[key]] || 0) + lv[a.id]; }); return o; };
+  const byWho = sumBy("who"), byInst = sumBy("inst");
+  const intl = (lv["btg-marco-us"] || 0) + (lv["btc"] || 0);
+  const first = recs[0], dFirst = recs.length > 1 ? total - patTotal(first) : null;
+  const bars = (obj, colorOf) => { const max = Math.max(...Object.values(obj), 1); return Object.entries(obj).sort((a, b) => b[1] - a[1]).map(([k, x]) =>
+    `<div class="pbar"><span class="pk">${colorOf === PAT_INST ? instIcon(k) : '<i class="sw" style="background:' + (PAT_WHO[k] || "var(--c-outros)") + ';border-radius:50%"></i>'}${esc(k)}</span><span class="pv num">${BRL0.format(x)}</span>
+      <span class="ptrack"><i style="width:${(x / max * 100).toFixed(1)}%;background:${colorOf === PAT_INST ? (PAT_INST[k] || "var(--accent)") : (PAT_WHO[k] || "var(--c-outros)")}"></i></span><span class="pp note">${(x / total * 100).toLocaleString("pt-BR", {maximumFractionDigits: 1})}%</span></div>`).join(""); };
+  v.innerHTML = `<div class="grid">
+    <section class="strip" aria-label="Resumo do patrimônio">
+      <div><div class="eyebrow">Patrimônio total</div><div class="v">${BRL0.format(total)}</div><div class="s">registro de ${fmtDate(last.date)}</div></div>
+      <div><div class="eyebrow">Desde o registro anterior</div><div class="v ${d == null ? "" : d >= 0 ? "down" : "up"}">${d == null ? "—" : (d >= 0 ? "+" : "−") + BRL0.format(Math.abs(d))}</div><div class="s">${d == null ? "faça o próximo registro para comparar" : fmtPct(dp) + " desde " + fmtDate(prev.date)}</div></div>
+      <div><div class="eyebrow">Fora do real</div><div class="v">${BRL0.format(intl)}</div><div class="s">${total ? (intl / total * 100).toLocaleString("pt-BR", {maximumFractionDigits: 1}) + "% · dólar e bitcoin" : ""}</div></div>
+      <div><div class="eyebrow">Desde o início</div><div class="v ${dFirst == null ? "" : dFirst >= 0 ? "down" : "up"}">${dFirst == null ? "—" : (dFirst >= 0 ? "+" : "−") + BRL0.format(Math.abs(dFirst))}</div><div class="s">${recs.length} registro${recs.length > 1 ? "s" : ""} desde ${fmtDate(first.date)}</div></div>
+    </section>
+    <div class="panel c8"><div class="ph"><div><h2>Evolução do patrimônio</h2><p class="hint">Total em reais a cada registro, por pessoa</p></div><button class="btn small primary" type="button" data-act="newPat">+ Novo registro</button></div>
+      ${patSVG(recs)}
+      <div class="legend">${Object.keys(PAT_WHO).filter(k => recs.some(r => PAT_ASSETS.some(a => a.who === k && patVals(r)[a.id]))).map(k => '<span><i class="sw" style="background:' + PAT_WHO[k] + ';border-radius:50%"></i>' + esc(k) + "</span>").join("")}<span><i class="sw" style="background:var(--fg);height:3px;border-radius:2px"></i>Total</span></div>
+    </div>
+    <div class="panel c4"><h2>Por pessoa</h2><p class="hint">Bitcoin conta como da família</p><div class="pbars">${bars(byWho, PAT_WHO)}</div>
+      <h2 style="margin-top:18px">Por instituição</h2><p class="hint">Onde está guardado</p><div class="pbars">${bars(byInst, PAT_INST)}</div></div>
+    <div class="panel c12"><h2>Ativos</h2><p class="hint">Valores do registro de ${fmtDate(last.date)}${last.fx ? " · dólar a " + BRL.format(last.fx) : ""}${last.btcPrice ? " · bitcoin a " + BRL0.format(last.btcPrice) : ""}</p>
+      <div class="tablewrap" style="border:0"><table><thead><tr><th>Ativo</th><th>Pessoa</th><th class="r">Saldo</th><th class="r">Em reais</th><th class="r">Variação</th><th class="r">% do total</th></tr></thead><tbody>
+      ${PAT_ASSETS.map(a => { const x = lv[a.id], raw = last.v[a.id], px = pv ? pv[a.id] : null, dd = x != null && px != null ? x - px : null;
+        const rawTxt = raw == null || raw === "" ? "—" : a.cur === "USD" ? "US$ " + Number(raw).toLocaleString("pt-BR", {minimumFractionDigits: 2, maximumFractionDigits: 2}) : a.cur === "BTC" ? Number(raw).toLocaleString("pt-BR", {maximumFractionDigits: 8}) + " BTC" : BRL.format(raw);
+        return `<tr><td><span class="assetcell">${instIcon(a.inst, a.cur)}<span><b>${esc(a.nome)}</b>${a.sub ? '<span class="note">' + esc(a.sub) + "</span>" : ""}</span></span></td><td>${esc(a.who)}</td>
+        <td class="r num">${rawTxt}</td><td class="r num">${x == null ? "—" : BRL.format(x)}</td>
+        <td class="r num">${dd == null ? '<span class="note">—</span>' : Math.abs(dd) < 0.5 ? '<span class="note">sem mudança</span>' : '<span class="' + (dd > 0 ? "down" : "up") + '">' + (dd > 0 ? "+" : "−") + BRL0.format(Math.abs(dd)) + "</span>"}</td>
+        <td class="r num">${x == null || !total ? "—" : (x / total * 100).toLocaleString("pt-BR", {maximumFractionDigits: 1}) + "%"}</td></tr>`; }).join("")}
+      <tr class="tot"><td colspan="3"><b>Total</b></td><td class="r num"><b>${BRL.format(total)}</b></td><td class="r num">${d == null ? "" : '<span class="' + (d >= 0 ? "down" : "up") + '">' + (d >= 0 ? "+" : "−") + BRL0.format(Math.abs(d)) + "</span>"}</td><td class="r num">100%</td></tr>
+      </tbody></table></div></div>
+    <div class="panel c12"><h2>Histórico de registros</h2><p class="hint">Cada registro guarda os saldos daquele dia</p>
+      <div class="cards-list">${recs.slice().reverse().map((r, i, arr) => { const t = patTotal(r), pr = arr[i + 1], dt = pr ? t - patTotal(pr) : null;
+        return `<div class="st" style="--tc:var(--accent)"><i class="sw"></i><div><div class="t">${fmtDate(r.date)}</div><div class="m">${r.fx ? "dólar " + BRL.format(r.fx) : "sem cotação do dólar"}${r.btcPrice ? " · BTC " + BRL0.format(r.btcPrice) : ""}${r.note ? " · " + esc(r.note) : ""}</div></div>
+          <div class="num">${BRL0.format(t)}${dt == null ? "" : '<div class="m ' + (dt >= 0 ? "down" : "up") + '">' + (dt >= 0 ? "+" : "−") + BRL0.format(Math.abs(dt)) + "</div>"}</div>
+          <div class="rw lbl" style="flex-direction:row;gap:6px;align-items:center">${pendingDelete === r.id ? `<button class="btn small danger" type="button" data-patdel="${r.id}">Confirmar exclusão</button><button class="btn small" type="button" data-undel="1">Cancelar</button>` : `<button class="btn small" type="button" data-patedit="${r.id}">Editar</button><button class="btn small" type="button" data-patask="${r.id}">Excluir</button>`}</div><div></div></div>`; }).join("")}</div></div>
+  </div>`;
+}
+
+function patSVG(recs) {
+  const phone = window.innerWidth < 600;
+  const W = phone ? 420 : 720, H = phone ? 280 : 330, L = phone ? 84 : 92, R = 14, T = 14, B = 30;
+  const whos = Object.keys(PAT_WHO);
+  const series = {}; whos.forEach(w => series[w] = recs.map(r => { const v = patVals(r); return PAT_ASSETS.filter(a => a.who === w).reduce((s2, a) => s2 + (v[a.id] || 0), 0); }));
+  const totals = recs.map(patTotal);
+  const max = niceMax(Math.max(...totals, 1)), n = recs.length, iw = W - L - R, ih = H - T - B;
+  const x = i => n === 1 ? L + iw / 2 : L + i * iw / (n - 1), y = val => T + ih - val / max * ih;
+  let s2 = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Evolução do patrimônio">`;
+  for (let i = 0; i <= 4; i++) { const val = max * i / 4; s2 += `<line class="grid" x1="${L}" x2="${W - R}" y1="${y(val)}" y2="${y(val)}"/><text class="ax" x="${L - 8}" y="${y(val) + 4}" text-anchor="end">${shortBRL(val)}</text>`; }
+  const step = n > 8 ? Math.ceil(n / 8) : 1;
+  recs.forEach((r, i) => { if (i % step === 0 || i === n - 1) s2 += `<text class="ax" x="${x(i)}" y="${H - 8}" text-anchor="middle">${fmtDate(r.date).slice(0, 5)}</text>`; });
+  s2 += `<path d="M${x(0)},${y(0)} ${totals.map((t, i) => "L" + x(i).toFixed(1) + "," + y(t).toFixed(1)).join(" ")} L${x(n - 1)},${y(0)} Z" style="fill:var(--accent);opacity:.08"/>`;
+  s2 += `<polyline points="${totals.map((t, i) => x(i).toFixed(1) + "," + y(t).toFixed(1)).join(" ")}" fill="none" style="stroke:var(--fg)" stroke-width="2.6" stroke-linejoin="round"/>`;
+  totals.forEach((t, i) => s2 += `<circle cx="${x(i).toFixed(1)}" cy="${y(t).toFixed(1)}" r="${i === n - 1 ? 5 : 3.2}" style="fill:var(--fg);stroke:var(--surface);stroke-width:1.5" data-tip="${esc(fmtDate(recs[i].date) + " · total " + BRL.format(t))}"/>`);
+  whos.forEach(w => { if (!series[w].some(Boolean)) return;
+    s2 += `<polyline points="${series[w].map((t, i) => x(i).toFixed(1) + "," + y(t).toFixed(1)).join(" ")}" fill="none" style="stroke:${PAT_WHO[w]}" stroke-width="2" stroke-dasharray="${n === 1 ? "" : ""}" stroke-linejoin="round"/>`;
+    series[w].forEach((t, i) => s2 += `<circle cx="${x(i).toFixed(1)}" cy="${y(t).toFixed(1)}" r="3" style="fill:${PAT_WHO[w]};stroke:var(--surface);stroke-width:1.2" data-tip="${esc(w + " · " + fmtDate(recs[i].date) + ": " + BRL.format(t))}"/>`); });
+  return s2 + "</svg>";
+}
+
+/* formulário de registro */
+const patDlg = $("#patDlg");
+let PAT_EDIT = null;
+const todayISO = () => { const d = new Date(); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); };
+const numIn = x => x == null || x === "" ? "" : Number(x).toLocaleString("pt-BR", {maximumFractionDigits: 8});
+function openPat(id) {
+  const recs = patSorted();
+  const base = id ? STATE.pats.find(r => r.id === id) : recs[recs.length - 1];
+  PAT_EDIT = id || null;
+  const date = id ? base.date : todayISO();
+  $("#patTitle").textContent = id ? "Editar registro de " + fmtDate(base.date) : "Registrar patrimônio";
+  const v = (base && base.v) || {};
+  const row = a => `<label class="patin" for="pv-${a.id}">${instIcon(a.inst, a.cur)}<span class="pname"><b>${esc(a.nome)}</b>${a.sub ? '<span class="note">' + esc(a.sub) + "</span>" : ""}</span>
+      <span class="pfield"><span class="pcur">${a.cur === "USD" ? "US$" : a.cur === "BTC" ? "BTC" : "R$"}</span><input id="pv-${a.id}" data-pv="${a.id}" inputmode="decimal" autocomplete="off" value="${esc(numIn(v[a.id]))}" placeholder="0,00"></span></label>`;
+  $("#patBody").innerHTML = `
+    <div class="row">
+      <label class="lbl">Data do registro<input type="date" id="patDate" value="${date}"></label>
+      <label class="lbl">Cotação do dólar (R$)<input id="patFx" inputmode="decimal" value="${esc(numIn(base ? base.fx : ""))}" placeholder="ex.: 5,40"></label>
+      <label class="lbl">Cotação do bitcoin (R$)<input id="patBtc" inputmode="decimal" value="${esc(numIn(base ? base.btcPrice : ""))}" placeholder="ex.: 520.000"></label>
+    </div>
+    <p class="note" style="margin:0">${base && !id ? "Já preenchido com o último registro (" + fmtDate(base.date) + "). Atualize só o que mudou." : "Deixe em branco o que não quiser registrar."}</p>
+    <div class="patgrid">
+      <div class="pgroup"><h3>BTG</h3>${PAT_ASSETS.filter(a => a.inst === "BTG").map(row).join("")}</div>
+      <div class="pgroup"><h3>XP</h3>${PAT_ASSETS.filter(a => a.inst === "XP").map(row).join("")}</div>
+      <div class="pgroup"><h3>Bitcoin</h3>${PAT_ASSETS.filter(a => a.inst === "Bitcoin").map(row).join("")}</div>
+    </div>
+    <label class="lbl">Observação (opcional)<input type="text" id="patNote" maxlength="120" value="${esc(id && base.note || "")}" placeholder="ex.: depois do bônus de fim de ano"></label>`;
+  updPatSum();
+  if (typeof patDlg.showModal === "function") patDlg.showModal(); else patDlg.setAttribute("open", "");
+}
+function readPatForm() {
+  const r = {kind: "patrimonio", date: $("#patDate").value, fx: parseNum($("#patFx").value), btcPrice: parseNum($("#patBtc").value), note: $("#patNote").value.trim(), v: {}};
+  document.querySelectorAll("[data-pv]").forEach(i => { const n = parseNum(i.value); if (n != null) r.v[i.dataset.pv] = n; });
+  r.id = "pat-" + r.date; return r;
+}
+function updPatSum() {
+  const r = readPatForm(); const vals = patVals(r); const tot = Object.values(vals).reduce((a, x) => a + (x || 0), 0);
+  const faltaFx = r.v["btg-marco-us"] != null && !(r.fx > 0), faltaBtc = r.v["btc"] != null && !(r.btcPrice > 0);
+  $("#patSum").innerHTML = "Total: <b class=\"num\">" + BRL.format(tot) + "</b>" + (faltaFx ? ' · <span class="up">informe a cotação do dólar</span>' : "") + (faltaBtc ? ' · <span class="up">informe a cotação do bitcoin</span>' : "");
+  $("#patSave").disabled = !/^\d{4}-\d{2}-\d{2}$/.test(r.date) || !Object.keys(r.v).length;
+}
+function savePat() {
+  const r = readPatForm();
+  if (PAT_EDIT && PAT_EDIT !== r.id) Store.deletePat(PAT_EDIT);
+  const existed = STATE.pats.some(x => x.id === r.id) && PAT_EDIT !== r.id;
+  Store.savePat(r);
+  if (patDlg.open) patDlg.close();
+  STATE.module = "patrimonio"; render();
+  toast((existed ? "Registro de " + fmtDate(r.date) + " substituído." : "Patrimônio de " + fmtDate(r.date) + " registrado: ") + (existed ? "" : BRL0.format(patTotal(r)) + "."));
+}
+patDlg.addEventListener("input", e => { if (e.target.matches("input")) updPatSum(); });
+$("#patSave").onclick = savePat;
+$("#patCancel").onclick = $("#patClose").onclick = () => patDlg.open && patDlg.close();
+
 /* ---------- toast e tooltip ---------- */
 let toastT;
 function toast(text, actLabel, act) {
@@ -1424,9 +1654,14 @@ $("#monthSel").onchange = e => { STATE.pickMonth = e.target.value || null; STATE
 document.addEventListener("keydown", e => { if ((e.key === "Enter" || e.key === " ") && e.target.matches && e.target.matches(".tap[data-act]")) { e.preventDefault(); e.target.click(); } });
 $("#cardSel").onchange = e => { STATE.card = e.target.value; STATE.txMonth = "all"; render(); };
 $("#personSeg").addEventListener("click", e => { const b = e.target.closest("button[data-person]"); if (!b) return; STATE.person = b.getAttribute("data-person"); render(); });
-$("#btnImport").onclick = openImport;
+$("#btnImport").onclick = () => STATE.module === "patrimonio" ? openPat() : openImport();
+document.querySelector(".modsw").addEventListener("click", e => { const b = e.target.closest("button[data-mod]"); if (!b || b.dataset.mod === STATE.module) return; STATE.module = b.dataset.mod; saveUi(); render(); window.scrollTo({top: 0}); });
 document.addEventListener("click", e => {
-  const t = e.target.closest("[data-act],[data-cat],[data-ign],[data-askdel],[data-del],[data-undel],[data-delrule],[data-delcat],[data-delcard],#aiBtn"); if (!t) return;
+  const t = e.target.closest("[data-act],[data-cat],[data-ign],[data-askdel],[data-del],[data-undel],[data-delrule],[data-delcat],[data-delcard],[data-patedit],[data-patask],[data-patdel],#aiBtn"); if (!t) return;
+  if (t.dataset.act === "newPat") return openPat();
+  if (t.dataset.patedit) return openPat(t.dataset.patedit);
+  if (t.dataset.patask) { pendingDelete = t.dataset.patask; return render(); }
+  if (t.dataset.patdel) { const r = STATE.pats.find(x => x.id === t.dataset.patdel); Store.deletePat(t.dataset.patdel); pendingDelete = null; render(); if (r) toast("Registro de " + fmtDate(r.date) + " excluído."); return; }
   if (t.id === "aiBtn") return aiClassify(t);
   const a = t.dataset.act;
   if (a === "import") return openImport();
