@@ -238,9 +238,9 @@ textarea{width:100%;min-height:110px;font-family:var(--f-num);font-size:12px}
     <header><h2>Importar fatura</h2><button class="btn small" type="button" id="dlgClose">Fechar</button></header>
     <div class="body">
       <div class="drop" id="drop" tabindex="0" role="button" aria-label="Escolher arquivo da fatura">
-        <strong>Arraste a fatura aqui</strong> ou clique para escolher<br>
-        <span class="note">PDF, CSV, OFX ou TXT. O arquivo é lido só no seu navegador.</span>
-        <input type="file" id="file" accept=".pdf,.csv,.ofx,.qfx,.txt" hidden>
+        <strong>Arraste uma ou várias faturas aqui</strong> ou clique para escolher<br>
+        <span class="note">PDF, CSV, OFX ou TXT. Pode escolher vários meses de uma vez. Os arquivos são lidos só no seu navegador.</span>
+        <input type="file" id="file" accept=".pdf,.csv,.ofx,.qfx,.txt" multiple hidden>
       </div>
       <div id="pwdRow" class="row" hidden>
         <label class="lbl">Senha do PDF (muitos bancos usam os primeiros dígitos do CPF)
@@ -253,7 +253,7 @@ textarea{width:100%;min-height:110px;font-family:var(--f-num);font-size:12px}
         <textarea id="pasteTxt" placeholder="03/10 IFOOD *RESTAURANTE 54,90&#10;05/10 POSTO SHELL 210,00&#10;07/10 MAGAZINE LUIZA PARC 02/10 189,90"></textarea>
         <div style="margin-top:8px"><button class="btn small" type="button" id="pasteGo">Ler texto colado</button></div>
       </details>
-      <div class="row">
+      <div class="row" id="singleMeta">
         <label class="lbl">Cartão
           <input type="text" id="impCard" list="cardList" placeholder="Ex.: Nubank, Itaú Visa">
           <datalist id="cardList"></datalist>
@@ -336,9 +336,9 @@ const merchantKey = d => norm(d).replace(/PARC(ELA)?\.?\s*\d{1,2}\s*(\/|DE)\s*\d
 const autoCat = d => { const n = " " + norm(d) + " "; for (const [c, re] of BASE_CATS) if (re.test(n)) return c; return "Outros"; };
 const isCreditDesc = d => /PAGAMENTO|ESTORNO|CREDITO|CR[EÉ]DITO|DEVOLU|REEMBOLSO|CASHBACK/.test(norm(d));
 const effCat = t => t.cat || STATE.settings.rules[merchantKey(t.desc)] || autoCat(t.desc);
-const cardNames = () => [...new Set(STATE.statements.map(s => s.card))].sort((a, b) => a.localeCompare(b, "pt-BR"));
+const cardNames = () => [...new Set(STATE.statements.map(s => s.card).concat(Object.keys(STATE.settings.cards || {})))].sort((a, b) => a.localeCompare(b, "pt-BR"));
 const CARD_TOK = [0, 1, 4, 2, 3, 5, 7, 6];
-const cardColor = c => { const list = STATE.demo ? ["Itaú Visa", "Nubank"] : cardNames(); return "var(--c" + CARD_TOK[Math.max(0, list.indexOf(c)) % CARD_TOK.length] + ")"; };
+const cardColor = c => { const list = STATE.demo ? ["Itaú Visa", "Nubank"].concat(cardNames()) : cardNames(); return "var(--c" + CARD_TOK[Math.max(0, list.indexOf(c)) % CARD_TOK.length] + ")"; };
 
 /* ---------- armazenamento ---------- */
 const Store = {
@@ -450,8 +450,7 @@ const CARD_PRESETS = [
    cfg: {type: "pts", rate: 3, rateIntl: 3.5, unit: "usd"}},
 ];
 const cardsCfg = () => {
-  if (STATE.demo) return DEMO_CARDS;
-  const saved = STATE.settings.cards || {}, out = Object.assign({}, saved);
+  const saved = STATE.settings.cards || {}, out = Object.assign({}, STATE.demo ? DEMO_CARDS : {}, saved);
   cardNames().forEach(c => { if (saved[c] && saved[c].type) return; const pr = CARD_PRESETS.find(x => x.re.test(norm(c))); if (pr) out[c] = Object.assign({}, pr.cfg, saved[c] || {}, {preset: pr.texto}); });
   return out;
 };
@@ -791,9 +790,11 @@ function toggleIgnore(stId, txId) {
 let pendingDelete = null;
 function renderStatements(v) {
   const sts = (STATE.demo ? DEMO : STATE.statements).slice().sort((a, b) => b.month.localeCompare(a.month) || a.card.localeCompare(b.card));
-  const cfgs = cardsCfg(); const cardsList = STATE.demo ? Object.keys(DEMO_CARDS) : cardNames(); const dis = STATE.demo ? "disabled" : "";
-  const cfgHTML = cardsList.length ? `<div class="panel" style="margin-bottom:16px"><h2>Cartões e recompensas</h2><p class="hint">Como cada cartão rende. Use para estimar pontos e cashback quando a fatura não traz o valor.</p><div class="cfgs">${cardsList.map(c => { const g = cfgs[c] || {}; const t = g.type || "";
-    return `<div class="cfg" data-card="${esc(c)}"><span class="cname"><i class="sw" style="background:${cardColor(c)}"></i>${esc(c)}</span>
+  const ownCards = Object.keys(STATE.settings.cards || {}).length > 0;
+  const cfgs = cardsCfg(); const showDemo = STATE.demo && !ownCards; const cardsList = showDemo ? Object.keys(DEMO_CARDS) : cardNames(); const dis = showDemo ? "disabled" : "";
+  const cfgHTML = (cardsList.length || !STATE.demo) ? `<div class="panel" style="margin-bottom:16px"><h2>Cartões e recompensas</h2><div class="row" style="margin:-4px 0 10px;align-items:center"><input type="text" id="newCard" maxlength="40" placeholder="Nome do cartão (ex.: Itaú Azul, XP Visa)" style="flex:1 1 220px"><button class="btn" type="button" id="addCard" style="flex:0 0 auto">Adicionar cartão</button></div><p class="hint">Como cada cartão rende. Use para estimar pontos e cashback quando a fatura não traz o valor.</p><div class="cfgs">${cardsList.map(c => { const g = cfgs[c] || {}; const t = g.type || "";
+    const semFatura = !showDemo && !STATE.statements.some(x => x.card === c);
+    return `<div class="cfg" data-card="${esc(c)}"><span class="cname"><i class="sw" style="background:${cardColor(c)}"></i>${esc(c)}${semFatura ? ' <span class="note" style="font-family:var(--f-body);font-weight:400">· sem faturas ainda</span>' : ""}</span>
     <select data-cfg="type" aria-label="Tipo de recompensa" ${dis}><option value="" ${!t ? "selected" : ""}>Não configurado</option><option value="pts" ${t === "pts" ? "selected" : ""}>Pontos</option><option value="cb" ${t === "cb" ? "selected" : ""}>Cashback</option><option value="none" ${t === "none" ? "selected" : ""}>Sem recompensa</option></select>
     ${g.preset ? `<span class="chip" title="${esc(g.preset)}">padrão do cartão</span>` : ""}
     ${t === "pts" ? `<label class="inl"><input data-cfg="rate" inputmode="decimal" value="${esc(numStr(g.rate))}" placeholder="2,5" ${dis}> pontos por</label><select data-cfg="unit" aria-label="Moeda" ${dis}><option value="usd" ${g.unit !== "brl" ? "selected" : ""}>US$ 1 gasto</option><option value="brl" ${g.unit === "brl" ? "selected" : ""}>R$ 1 gasto</option></select>
@@ -801,8 +802,18 @@ function renderStatements(v) {
       ${g.unit !== "brl" ? `<label class="inl">cotação US$ <input data-cfg="fx" inputmode="decimal" value="${esc(numStr(g.fx))}" placeholder="da fatura" ${dis}></label>` : ""}
       <label class="inl">milheiro vale R$ <input data-cfg="milheiro" inputmode="decimal" value="${esc(numStr(g.milheiro))}" placeholder="opcional" ${dis}></label>` : ""}
     ${t === "cb" ? `<label class="inl"><input data-cfg="rate" inputmode="decimal" value="${esc(numStr(g.rate))}" placeholder="1" ${dis}> % de cashback</label><label class="inl">no exterior <input data-cfg="rateIntl" inputmode="decimal" value="${esc(numStr(g.rateIntl))}" placeholder="igual" ${dis}> %</label>` : ""}
+    ${semFatura ? `<button class="btn small" type="button" data-delcard="${esc(c)}">Remover</button>` : ""}
     ${g.preset ? `<span class="note" style="flex-basis:100%">${esc(g.preset)}</span>` : ""}
     </div>`; }).join("")}</div></div>` : "";
+  setTimeout(() => {
+    const add = () => { const i = $("#newCard"); if (!i) return; const c = i.value.trim().replace(/\s+/g, " "); if (!c) return;
+      if (cardNames().some(x => norm(x) === norm(c))) { toast("Esse cartão já existe."); return; }
+      const pr = CARD_PRESETS.find(x => x.re.test(norm(c)));
+      STATE.settings.cards = Object.assign({}, STATE.settings.cards || {}, {[c]: {}}); Store.saveSettings(); render();
+      toast("Cartão " + c + " adicionado." + (pr ? " Regra do " + pr.nome + " aplicada." : " Configure como ele rende."));
+    };
+    const b = $("#addCard"); if (b) b.onclick = add; const i = $("#newCard"); if (i) i.onkeydown = e => { if (e.key === "Enter") add(); };
+  });
   v.innerHTML = cfgHTML + `<div class="toolbar"><span class="note grow">${sts.length} fatura${sts.length === 1 ? "" : "s"} importada${sts.length === 1 ? "" : "s"}. Importar de novo o mesmo cartão e mês substitui a fatura anterior.</span></div>
   <div class="cards-list">${sts.map(s => { const sp = s.tx.filter(isSpend); const t = sp.reduce((a, x) => a + x.amount, 0);
     const r = rewardFor(s); const est = r && r.src !== "informado" && r.value != null ? fmtReward(Object.assign({}, r)) + (r.src === "fatura" ? " (fatura)" : " (estimado)") : "";
@@ -1010,6 +1021,8 @@ function parsePdfColumns(pages) {
 }
 const BANCOS = [["BTG", "BTG UltraBlue"], ["NUBANK|NU PAGAMENTOS", "Nubank"], ["ITAU|ITAÚ", "Itaú"], ["BRADESCO", "Bradesco"], ["SANTANDER", "Santander"], ["BANCO INTER|\\bINTER\\b", "Inter"], ["C6 BANK|\\bC6\\b", "C6 Bank"], ["XP INVESTIMENTOS|CARTAO XP|CARTÃO XP", "XP"], ["CAIXA ECON", "Caixa"], ["BANCO DO BRASIL|OUROCARD", "Banco do Brasil"], ["PORTO SEGURO|PORTO BANK", "Porto Bank"], ["MERCADO PAGO", "Mercado Pago"], ["PICPAY", "PicPay"], ["SICOOB", "Sicoob"], ["SICREDI", "Sicredi"]];
 const MESES_LONGOS = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+// liga o banco detectado ao cartão já cadastrado (ex.: "Itaú" -> "Itaú Azul")
+const matchCard = name => { if (!name) return name; const key = norm(name).split(" ")[0]; const hits = cardNames().filter(c => norm(c).split(/\s+/).includes(key) || norm(c).startsWith(key)); return hits.length === 1 ? hits[0] : (hits.find(c => norm(c) === norm(name)) || name); };
 function guessMeta(text) {
   const n = norm(text.slice(0, 6000));
   let card = null; for (const [re, name] of BANCOS) if (new RegExp(re).test(n)) { card = name; break; }
@@ -1017,14 +1030,15 @@ function guessMeta(text) {
   const m = /FATURA DE (JANEIRO|FEVEREIRO|MARCO|ABRIL|MAIO|JUNHO|JULHO|AGOSTO|SETEMBRO|OUTUBRO|NOVEMBRO|DEZEMBRO)(?: DE)? (\d{4})/.exec(n);
   if (m) month = m[2] + "-" + pad(MESES_LONGOS.map(norm).indexOf(m[1]) + 1);
   else { const v = /VENCIMENTO:?\s*(\d{2})\/(\d{2})\/(\d{4})/.exec(n); if (v) month = v[3] + "-" + v[2]; }
-  return {card, month};
+  return {card: matchCard(card), month};
 }
 
 /* ---------- importação: fluxo ---------- */
 const IMP = {rows: [], file: null, buf: null, fileName: "", fullDates: false};
 const dlg = $("#dlg");
 function openImport() {
-  Object.assign(IMP, {rows: [], file: null, buf: null, fileName: "", fullDates: false, meta: null});
+  Object.assign(IMP, {rows: [], file: null, buf: null, fileName: "", fullDates: false, meta: null, batch: null});
+  $("#singleMeta").hidden = false; $("#pasteBox").hidden = false; $("#impSave").textContent = "Salvar fatura";
   $("#impMsg").innerHTML = ""; $("#impPreview").innerHTML = ""; $("#impSum").textContent = ""; $("#impSave").disabled = true;
   $("#pwdRow").hidden = true; $("#pwd").value = ""; $("#pasteTxt").value = ""; $("#file").value = "";
   $("#impMonth").value = curMonth();
@@ -1113,6 +1127,99 @@ function saveImport() {
   toast("Fatura " + card + " de " + monthLabel(ref) + " salva com " + tx.length + " lançamentos.");
 }
 
+/* ---------- várias faturas de uma vez ---------- */
+async function parseFileAny(item, password) {
+  const ext = (item.file.name.split(".").pop() || "").toLowerCase();
+  let rows, meta = {};
+  if (ext === "pdf") {
+    item.buf = item.buf || await item.file.arrayBuffer();
+    const {lines, pages} = await pdfLines(item.buf.slice(0), password);
+    meta = guessMeta(lines.join("\n"));
+    const iofm = /IOF Zero[^R]*R\$\s?([\d.]+,\d{2})/i.exec(lines.join(" "));
+    meta.iofSaved = iofm ? parseAmount(iofm[1]) : null;
+    rows = isTwoColumn(pages) ? parsePdfColumns(pages) : parseTextLines(lines);
+  } else {
+    const t = await readText(item.file);
+    rows = (ext === "ofx" || ext === "qfx" || /<OFX>|OFXHEADER/i.test(t)) ? parseOFX(t) : (ext === "csv" ? parseCSV(t) : parseTextLines(t.split(/\r?\n/)));
+    if (!rows.length && ext !== "csv") rows = parseCSV(t);
+    meta = guessMeta(t);
+  }
+  const neg = rows.filter(r => r.amount < 0).length;
+  if (neg > rows.length - neg) rows.forEach(r => r.amount = -r.amount);
+  rows.forEach(r => { if (r.amount > 0 && isCreditDesc(r.desc) && /PAGAMENTO|ESTORNO|DEVOLU|REEMBOLSO/.test(norm(r.desc))) r.amount = -r.amount; r.keep = true; r.inst = parseInst(r.desc); });
+  item.rows = rows; item.meta = meta;
+  item.card = item.card || meta.card || "";
+  const full = rows.length && rows.every(r => /\d{4}/.test(r.d));
+  item.month = item.month || meta.month || (full ? addMonth(rows.map(r => toISO(r.d, curMonth())).sort().pop().slice(0, 7), 1) : "");
+  item.status = rows.length ? "ok" : "vazio";
+}
+async function handleFiles(list) {
+  const files = [...list];
+  if (files.length === 1) return handleFile(files[0]);
+  if (!files.length) return;
+  $("#singleMeta").hidden = true; $("#pasteBox").hidden = true; $("#pwdRow").hidden = true;
+  const defCard = $("#impCard").value.trim();
+  IMP.batch = files.map(f => ({file: f, name: f.name, status: "lendo", card: "", month: "", rows: []}));
+  renderBatch();
+  for (const it of IMP.batch) {
+    try { await parseFileAny(it); }
+    catch (e) { it.status = e && e.name === "PasswordException" ? "senha" : "erro"; }
+    if (!it.card && defCard) it.card = defCard;
+    renderBatch();
+  }
+  // cartão em branco: usa o mais comum do lote
+  const common = Object.entries(IMP.batch.reduce((o, it) => { if (it.card) o[it.card] = (o[it.card] || 0) + 1; return o; }, {})).sort((a, b) => b[1] - a[1])[0];
+  IMP.batch.forEach(it => { if (!it.card && common && it.status === "ok") it.card = common[0]; });
+  if (IMP.batch.some(it => it.status === "senha")) { $("#pwdRow").hidden = false; msg("Alguns PDFs têm senha. Digite a senha (vale para todos) e toque em Abrir PDF.", "note"); }
+  renderBatch();
+}
+async function retryBatchPassword(pw) {
+  for (const it of IMP.batch.filter(x => x.status === "senha")) {
+    try { await parseFileAny(it, pw); } catch (e) { it.status = e && e.name === "PasswordException" ? "senha" : "erro"; }
+  }
+  const still = IMP.batch.some(it => it.status === "senha");
+  $("#pwdRow").hidden = !still; msg(still ? "Senha incorreta para algum arquivo. Tente de novo." : "", still ? "err" : "note");
+  renderBatch();
+}
+function batchKeyDupes() {
+  const seen = {}; IMP.batch.forEach((it, i) => { it.dupInBatch = false; if (it.status !== "ok" || !it.card || !it.month) return; const k = it.card + "|" + it.month; if (seen[k] != null) it.dupInBatch = true; else seen[k] = i; });
+}
+function renderBatch() {
+  batchKeyDupes();
+  const B = IMP.batch;
+  const okItems = B.filter(it => it.status === "ok" && it.card.trim() && /^\d{4}-\d{2}$/.test(it.month) && !it.dupInBatch);
+  const stLabel = it => it.status === "lendo" ? '<span class="note">lendo…</span>' : it.status === "senha" ? '<span class="up">com senha</span>' : it.status === "erro" ? '<span class="up">não consegui ler</span>' : it.status === "vazio" ? '<span class="up">sem lançamentos</span>'
+    : it.dupInBatch ? '<span class="up">mês repetido no lote</span>' : !it.card.trim() || !it.month ? '<span class="up">informe cartão e mês</span>'
+    : STATE.statements.some(s => s.card === it.card.trim() && s.month === it.month) ? '<span class="note">substitui a atual</span>' : '<span class="down">pronta</span>';
+  $("#impPreview").innerHTML = `<div class="prevwrap"><table><thead><tr><th>Arquivo</th><th>Cartão</th><th>Mês da fatura</th><th class="r">Lançamentos</th><th class="r">Compras</th><th>Situação</th></tr></thead><tbody>${B.map((it, i) => {
+    const sp = it.rows.filter(r => r.keep && r.amount > 0).reduce((a, r) => a + r.amount, 0);
+    const people = [...new Set(it.rows.map(r => r.who).filter(Boolean))];
+    return `<tr><td><span class="desc" title="${esc(it.name)}">${esc(it.name)}</span>${people.length > 1 ? '<span class="note">' + esc(people.join(" · ")) + "</span>" : ""}</td>
+      <td><input type="text" list="cardList" data-bcard="${i}" value="${esc(it.card)}" placeholder="Cartão" style="width:140px" ${it.status !== "ok" ? "disabled" : ""}></td>
+      <td><input type="month" data-bmonth="${i}" value="${esc(it.month)}" ${it.status !== "ok" ? "disabled" : ""}></td>
+      <td class="r num">${it.rows.length || "—"}</td><td class="r num">${it.rows.length ? BRL.format(sp) : "—"}</td><td>${stLabel(it)}</td></tr>`; }).join("")}</tbody></table></div>`;
+  const tot = okItems.reduce((a, it) => a + it.rows.filter(r => r.keep && r.amount > 0).reduce((x, r) => x + r.amount, 0), 0);
+  $("#impSum").innerHTML = okItems.length + " de " + B.length + " faturas prontas · compras " + BRL.format(tot);
+  $("#impSave").disabled = !okItems.length || B.some(it => it.status === "lendo");
+  $("#impSave").textContent = okItems.length > 1 ? "Salvar " + okItems.length + " faturas" : "Salvar fatura";
+}
+function saveBatch() {
+  batchKeyDupes();
+  const ok = IMP.batch.filter(it => it.status === "ok" && it.card.trim() && /^\d{4}-\d{2}$/.test(it.month) && !it.dupInBatch);
+  let n = 0, lanc = 0;
+  ok.forEach(it => {
+    const card = it.card.trim(), ref = it.month;
+    const tx = it.rows.filter(r => r.keep).map(r => ({id: uid(), date: toISO(r.d, ref), desc: r.desc.slice(0, 120), amount: Math.round(r.amount * 100) / 100, inst: r.inst || null, orig: r.orig || null, who: r.who || null, final: r.final || null, cat: null, ign: false})).filter(t => t.date).sort((a, b) => a.date.localeCompare(b.date));
+    const dup = STATE.statements.find(s => s.card === card && s.month === ref);
+    const st = {kind: "statement", id: dup ? dup.id : "st-" + uid(), card, month: ref, fileName: it.name, importedAt: new Date().toISOString(), tx};
+    if (it.meta && it.meta.iofSaved) st.iofSaved = it.meta.iofSaved;
+    if (JSON.stringify(st).length > 240000) return;
+    Store.saveStatement(st); n++; lanc += tx.length;
+  });
+  closeImport(); STATE.card = "all"; STATE.view = "overview"; render();
+  toast(n + " fatura" + (n === 1 ? "" : "s") + " salva" + (n === 1 ? "" : "s") + " com " + lanc + " lançamentos.");
+}
+
 /* ---------- classificação com Claude ---------- */
 const sampleReady = (window.claude && window.claude.use) ? window.claude.use("sample").catch(() => null) : Promise.resolve(null);
 async function aiClassify(btn) {
@@ -1155,7 +1262,7 @@ $("#cardSel").onchange = e => { STATE.card = e.target.value; STATE.txMonth = "al
 $("#personSeg").addEventListener("click", e => { const b = e.target.closest("button[data-person]"); if (!b) return; STATE.person = b.getAttribute("data-person"); render(); });
 $("#btnImport").onclick = openImport;
 document.addEventListener("click", e => {
-  const t = e.target.closest("[data-act],[data-cat],[data-ign],[data-askdel],[data-del],[data-undel],[data-delrule],[data-delcat],#aiBtn"); if (!t) return;
+  const t = e.target.closest("[data-act],[data-cat],[data-ign],[data-askdel],[data-del],[data-undel],[data-delrule],[data-delcat],[data-delcard],#aiBtn"); if (!t) return;
   if (t.id === "aiBtn") return aiClassify(t);
   const a = t.dataset.act;
   if (a === "import") return openImport();
@@ -1168,6 +1275,7 @@ document.addEventListener("click", e => {
   if (t.dataset.askdel) { pendingDelete = t.dataset.askdel; return render(); }
   if (t.dataset.undel) { pendingDelete = null; return render(); }
   if (t.dataset.del) { const s = STATE.statements.find(x => x.id === t.dataset.del); Store.deleteStatement(t.dataset.del); pendingDelete = null; render(); if (s) toast("Fatura " + s.card + " de " + monthLabel(s.month) + " excluída."); return; }
+  if (t.dataset.delcard) { const c = t.dataset.delcard; const o = Object.assign({}, STATE.settings.cards || {}); delete o[c]; STATE.settings.cards = o; Store.saveSettings(); return render(); }
   if (t.dataset.delrule) { delete STATE.settings.rules[t.dataset.delrule]; Store.saveSettings(); return render(); }
   if (t.dataset.delcat) { const c = t.dataset.delcat; STATE.settings.customCats = STATE.settings.customCats.filter(x => x !== c); Object.keys(STATE.settings.rules).forEach(k => { if (STATE.settings.rules[k] === c) delete STATE.settings.rules[k]; }); Store.saveSettings(); return render(); }
 });
@@ -1187,22 +1295,24 @@ document.addEventListener("change", e => {
     const n = parseNum(t.value); const nst = Object.assign({}, st); if (n == null) delete nst.reward; else nst.reward = n;
     Store.saveStatement(nst); return render();
   }
+  if (t.dataset && t.dataset.bcard != null && IMP.batch) { IMP.batch[+t.dataset.bcard].card = t.value; return renderBatch(); }
+  if (t.dataset && t.dataset.bmonth != null && IMP.batch) { IMP.batch[+t.dataset.bmonth].month = t.value; return renderBatch(); }
   if (t.dataset && t.dataset.keep != null) { IMP.rows[+t.dataset.keep].keep = t.checked; return renderPreview(); }
 });
 // diálogo
 const drop = $("#drop"), fileIn = $("#file");
 drop.onclick = () => fileIn.click();
 drop.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileIn.click(); } };
-fileIn.onchange = () => { if (fileIn.files[0]) handleFile(fileIn.files[0]); };
+fileIn.onchange = () => { if (fileIn.files.length) handleFiles(fileIn.files); };
 ["dragenter", "dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
 ["dragleave", "drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
-drop.addEventListener("drop", e => { const f = e.dataTransfer.files[0]; if (f) handleFile(f); });
-$("#pwdGo").onclick = async () => { const rows = await readPdf($("#pwd").value); if (rows) { $("#pwdRow").hidden = true; setRows(rows); } };
+drop.addEventListener("drop", e => { if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files); });
+$("#pwdGo").onclick = async () => { if (IMP.batch) return retryBatchPassword($("#pwd").value); const rows = await readPdf($("#pwd").value); if (rows) { $("#pwdRow").hidden = true; setRows(rows); } };
 $("#pwd").onkeydown = e => { if (e.key === "Enter") $("#pwdGo").click(); };
 $("#pasteGo").onclick = () => { const t = $("#pasteTxt").value; if (!t.trim()) return; IMP.fileName = "texto colado"; let rows = parseTextLines(t.split(/\r?\n/)); if (!rows.length) rows = parseCSV(t); setRows(rows); };
 $("#impMonth").onchange = () => IMP.rows.length && renderPreview();
 $("#impCard").oninput = () => IMP.rows.length && renderPreview();
-$("#impSave").onclick = saveImport;
+$("#impSave").onclick = () => IMP.batch ? saveBatch() : saveImport();
 $("#impCancel").onclick = closeImport; $("#dlgClose").onclick = closeImport;
 
 render();
