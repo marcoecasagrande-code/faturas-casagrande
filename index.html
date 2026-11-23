@@ -773,7 +773,7 @@ function renderRules(v) {
   <div class="panel c12"><h2>Backup dos dados</h2><p class="hint">Leve as faturas, regras e cartões de um lugar para outro (por exemplo, do app no Claude para o site da família). Importar junta com o que já existe: faturas iguais são substituídas.</p>
   <div class="row" style="align-items:center"><button class="btn" type="button" id="bkExport" style="flex:0 0 auto" ${STATE.statements.length ? "" : "disabled"}>Exportar backup</button>
   <label class="btn" style="flex:0 0 auto">Importar backup<input type="file" id="bkImport" accept=".json,application/json" hidden></label><span class="note" id="bkMsg"></span></div></div>
-  ${window.__fbChangePin ? `<div class="panel c12"><h2>PIN de entrada</h2><p class="hint">O app pede o PIN da família ao abrir e ao voltar depois de 3 minutos fora. Trocar aqui muda o PIN em todos os aparelhos.</p><button class="btn" type="button" id="pinChange">Trocar PIN</button></div>` : ""}
+  ${window.__fbChangePin ? `<div class="panel c12"><h2>PIN e biometria</h2><p class="hint">O app pede o PIN da família ao abrir e ao voltar depois de 3 minutos fora. Trocar aqui muda o PIN em todos os aparelhos.</p><div class="row" style="align-items:center"><button class="btn" type="button" id="pinChange" style="flex:0 0 auto">Trocar PIN</button><button class="btn" type="button" id="bioToggle" style="flex:0 0 auto" hidden></button><span class="note" id="bioMsg"></span></div></div>` : ""}
   <div class="panel c4"><h2>Categorias</h2><p class="hint">Crie categorias próprias, como "Escola das crianças" ou "Viagem 2026".</p>
   <div class="row" style="margin-bottom:12px"><input type="text" id="newCat" placeholder="Nova categoria" maxlength="40"><button class="btn" type="button" id="addCat" style="flex:0 0 auto">Adicionar</button></div>
   <div style="display:flex;flex-wrap:wrap;gap:6px">${cats.map(c => `<span class="chip"><i class="sw" style="background:${catColor(c)}"></i>${esc(c)}${(STATE.settings.customCats || []).includes(c) ? ` <button class="btn small" style="padding:0 5px;border:0" type="button" data-delcat="${esc(c)}" aria-label="Remover ${esc(c)}">×</button>` : ""}</span>`).join("")}</div>
@@ -781,6 +781,17 @@ function renderRules(v) {
   const add = () => { const i = $("#newCat"); const c = i.value.trim(); if (!c || allCats().includes(c)) return; STATE.settings.customCats = (STATE.settings.customCats || []).concat([c]); Store.saveSettings(); render(); };
   $("#bkExport").onclick = exportBackup;
   const pc = $("#pinChange"); if (pc) pc.onclick = async () => { if (await window.__fbChangePin()) toast("PIN da família trocado."); };
+  const bt = $("#bioToggle");
+  if (bt && window.__fbBio) window.__fbBio.disponivel().then(ok => {
+    if (!ok) { $("#bioMsg").textContent = "Este aparelho não tem digital ou Face ID disponível para o app."; return; }
+    const pinta = () => { bt.textContent = window.__fbBio.ativa() ? "Desativar digital/Face ID neste aparelho" : "Usar digital/Face ID neste aparelho"; };
+    bt.hidden = false; pinta();
+    bt.onclick = async () => {
+      if (window.__fbBio.ativa()) { window.__fbBio.desativar(); pinta(); toast("Biometria desativada neste aparelho."); return; }
+      try { await window.__fbBio.ativar(); pinta(); toast("Pronto: na próxima entrada, use a digital ou o Face ID."); }
+      catch (e) { $("#bioMsg").textContent = "Não foi possível ativar a biometria agora."; }
+    };
+  });
   $("#bkImport").onchange = e => { if (e.target.files[0]) importBackup(e.target.files[0]); e.target.value = ""; };
   $("#addCat").onclick = add; $("#newCat").onkeydown = e => { if (e.key === "Enter") add(); };
 }

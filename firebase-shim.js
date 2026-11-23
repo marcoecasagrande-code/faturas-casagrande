@@ -115,13 +115,23 @@
   #fb-pin .pad button{height:58px;border:1px solid #DCE1EA;border-radius:16px;background:#F3F5F8;font:600 22px Inter,sans-serif;color:#141C2B;cursor:pointer}
   #fb-pin .pad button:active{background:#E6EBFC}#fb-pin .pad button.txt{font-size:13px;font-weight:600;color:#2341C9;background:none;border-color:transparent}
   #fb-pin .ok{width:100%;margin-top:12px;border:0;border-radius:14px;padding:13px;font:600 16px Inter,sans-serif;background:#2341C9;color:#fff;cursor:pointer}#fb-pin .ok:disabled{opacity:.4}
-  #fb-pin .ok[hidden]{display:none}`;
+  #fb-pin .ok[hidden]{display:none}#fb-pin .bio{display:flex;align-items:center;justify-content:center;gap:8px;margin:0 0 12px;background:#141C2B}
+  #fb-pin .sec{background:#ECEFF4;color:#141C2B}`;
+  const ICONE_BIO = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 11v3a8 8 0 0 1-1.2 4.2M8.5 8.8A4 4 0 0 1 16 11v1.5M7.8 20A11 11 0 0 0 8 11a4 4 0 0 1 .2-1.3M16 15.5a15 15 0 0 1-.9 4.5M4.5 15.5A12 12 0 0 0 5 11a7 7 0 0 1 12.6-4.2M19 10.5c.2 2 .1 4-.3 6"/></svg>`;
+  function escolha(titulo, texto, sim, nao) {
+    return new Promise(resolve => {
+      pinEl.innerHTML = `<div class="box"><img src="icon-192.png" alt=""><h2></h2><p></p><button type="button" class="ok" data-r="1"></button><button type="button" class="ok sec" data-r="0"></button></div>`;
+      pinEl.querySelector("h2").textContent = titulo; pinEl.querySelector("p").textContent = texto;
+      const [a, b] = pinEl.querySelectorAll("button"); a.textContent = sim; b.textContent = nao; pinEl.hidden = false;
+      pinEl.onclick = e => { const x = e.target.closest("button"); if (x) resolve(x.dataset.r === "1"); };
+    });
+  }
   let pinEl = null;
-  function telaPin({ titulo, texto, tamanho, criar, esqueci, cancelar }) {
+  function telaPin({ titulo, texto, tamanho, criar, esqueci, cancelar, bio }) {
     return new Promise(resolve => {
       if (!pinEl) { const st = document.createElement("style"); st.textContent = pinCss; document.head.appendChild(st); pinEl = document.createElement("div"); pinEl.id = "fb-pin"; pinEl.setAttribute("role", "dialog"); pinEl.setAttribute("aria-modal", "true"); document.body.appendChild(pinEl); }
       const max = tamanho || 6;
-      pinEl.innerHTML = `<div class="box"><img src="icon-192.png" alt=""><h2></h2><p></p><div class="dots" aria-live="polite"></div><div class="err"></div>
+      pinEl.innerHTML = `<div class="box"><img src="icon-192.png" alt=""><h2></h2><p></p>${bio ? `<button type="button" class="ok bio" data-x="bio">${ICONE_BIO} Usar digital ou Face ID</button>` : ""}<div class="dots" aria-live="polite"></div><div class="err"></div>
         <div class="pad">${[1,2,3,4,5,6,7,8,9].map(n => `<button type="button" data-n="${n}">${n}</button>`).join("")}
         <button type="button" class="txt" data-x="${esqueci ? "esqueci" : cancelar ? "cancelar" : ""}">${esqueci ? "Esqueci" : cancelar ? "Cancelar" : ""}</button><button type="button" data-n="0">0</button><button type="button" data-x="apagar" aria-label="Apagar">⌫</button></div>
         <button type="button" class="ok" ${criar ? "" : "hidden"} disabled>Continuar</button></div>`;
@@ -142,6 +152,7 @@
         else if (b.dataset.x === "apagar") { v = v.slice(0, -1); desenha(); }
         else if (b.dataset.x === "esqueci") fim({ esqueci: true });
         else if (b.dataset.x === "cancelar") fim({ cancelar: true });
+        else if (b.dataset.x === "bio") fim({ bio: true });
         else if (b.classList.contains("ok")) envia(); };
       desenha();
       // reaproveita a mesma tela para a próxima chamada
@@ -158,8 +169,32 @@
       return;
     }
   }
+  /* ---------- biometria do aparelho (digital / Face ID) ---------- */
+  // Credencial do próprio celular (WebAuthn). Fica só neste aparelho; o PIN continua valendo.
+  const BIO = "faturasBio", BIO_NAO = "faturasBioNao";
+  const deB64 = t => Uint8Array.from(atob(t), c => c.charCodeAt(0));
+  const ls = { get: k => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} } };
+  async function bioDisponivel() { try { return !!(window.PublicKeyCredential && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()); } catch { return false; } }
+  async function bioAtivar() {
+    const u = atual || {};
+    const cred = await navigator.credentials.create({ publicKey: {
+      challenge: crypto.getRandomValues(new Uint8Array(32)), rp: { name: "Faturas Casagrande" },
+      user: { id: new TextEncoder().encode(String(u.uid || "familia").slice(0, 64)), name: u.email || "familia", displayName: u.displayName || u.email || "Família Casagrande" },
+      pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
+      authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required", residentKey: "discouraged" },
+      timeout: 60000, attestation: "none" } });
+    ls.set(BIO, b64(cred.rawId)); ls.set(BIO_NAO, null);
+  }
+  async function bioConferir() {
+    const id = ls.get(BIO); if (!id) return false;
+    try { await navigator.credentials.get({ publicKey: { challenge: crypto.getRandomValues(new Uint8Array(32)), allowCredentials: [{ type: "public-key", id: deB64(id), transports: ["internal"] }], userVerification: "required", timeout: 60000 } }); return true; }
+    catch (e) { if (e && e.name === "InvalidStateError") ls.set(BIO, null); return false; }
+  }
+
   async function pedirPin(cfg, opts) {
-    const base = Object.assign({ titulo: "Digite o PIN", texto: "Faturas da família Casagrande", tamanho: cfg.len, esqueci: true }, opts);
+    const temBio = !!ls.get(BIO) && !(opts && opts.semBio);
+    const base = Object.assign({ titulo: "Digite o PIN", texto: "Faturas da família Casagrande", tamanho: cfg.len, esqueci: true, bio: temBio }, opts);
+    if (temBio && await bioConferir()) return { ok: true, bio: true };
     let erradas = 0, msg = "", trava = 0;
     for (;;) {
       const espera = telaPin(base);
@@ -167,6 +202,7 @@
       if (msg) { api.erro(msg); if (trava) api.travar(trava); }
       const r = await espera;
       if (r.esqueci || r.cancelar) return r;
+      if (r.bio) { if (await bioConferir()) return { ok: true, bio: true }; msg = "Não deu para usar a biometria. Use o PIN."; trava = 0; continue; }
       if (await pinHash(r.pin, cfg.salt, cfg.iter) === cfg.hash) return { ok: true };
       erradas++; msg = "PIN incorreto."; trava = erradas % 5 === 0 ? 30 : 0;
     }
@@ -175,11 +211,23 @@
     let cfg = null;
     try { const d = await pinRef().get(); cfg = d.exists ? d.data() : null; } catch {}
     let reset = false; try { reset = sessionStorage.getItem("faturasPinReset") === "1"; sessionStorage.removeItem("faturasPinReset"); } catch {}
-    if (!cfg || !cfg.hash || reset) { await criarPin(reset ? "Você entrou de novo com o Google. Crie um PIN novo para a família." : null); pinEl.hidden = true; return; }
+    if (!cfg || !cfg.hash || reset) { await criarPin(reset ? "Você entrou de novo com o Google. Crie um PIN novo para a família." : null); await oferecerBio(); pinEl.hidden = true; return; }
     const r = await pedirPin(cfg);
     if (r.esqueci) { try { sessionStorage.setItem("faturasPinReset", "1"); } catch {} pinEl.hidden = true; await auth.signOut(); location.reload(); return new Promise(() => {}); }
+    await oferecerBio();
     pinEl.hidden = true;
   }
+  async function oferecerBio() {
+    if (ls.get(BIO) || ls.get(BIO_NAO) || !(await bioDisponivel())) return;
+    const sim = await escolha("Entrar com digital ou Face ID?", "Neste aparelho, você pode destravar o app com a biometria do celular. O PIN continua valendo.", "Usar biometria", "Agora não");
+    if (!sim) { ls.set(BIO_NAO, "1"); return; }
+    try { await bioAtivar(); } catch { ls.set(BIO_NAO, "1"); }
+  }
+  window.__fbBio = {
+    disponivel: bioDisponivel, ativa: () => !!ls.get(BIO),
+    ativar: async () => { await bioAtivar(); return true; },
+    desativar: () => { ls.set(BIO, null); ls.set(BIO_NAO, "1"); }
+  };
   // Volta a pedir o PIN se o app ficou fechado/em segundo plano por mais de 3 minutos.
   let escondidoEm = 0, pedindo = false;
   document.addEventListener("visibilitychange", async () => {
