@@ -203,6 +203,51 @@ textarea{width:100%;min-height:110px;font-family:var(--f-num);font-size:12px}
 @media (prefers-reduced-motion:no-preference){.rrow .fill{transition:width .35s ease}.rrow,.btn{transition:border-color .15s,background .15s}}
 </style>
 
+<div id="intro" aria-hidden="true">
+  <div class="intro-logo">
+    <svg viewBox="0 0 34 34" fill="none"><rect x="3" y="7" width="28" height="20" rx="3.5" stroke="#8EA2FF" stroke-width="2"/><path d="M3 13h28" stroke="#8EA2FF" stroke-width="3"/><path d="M8 21.5h7" stroke="#8EA2FF" stroke-width="2" stroke-linecap="round"/><circle cx="25" cy="21.5" r="2.2" fill="#FF9A4D"/></svg>
+    <div><b>Financeiro</b> <span>Casagrande</span></div>
+  </div>
+</div>
+<style>
+/* Abertura: $, R$ e ₿ atravessando a tela; visual escuro fixo de propósito */
+#intro{position:fixed;inset:0;z-index:100001;background:radial-gradient(ellipse at 50% 45%,#18213A 0%,#0E131D 70%);overflow:hidden;display:grid;place-items:center;transition:opacity .55s ease;cursor:pointer}
+#intro.out{opacity:0;pointer-events:none}
+#intro .sym{position:absolute;left:0;top:0;font-family:"Bricolage Grotesque",Inter,system-ui,sans-serif;font-weight:700;line-height:1;white-space:nowrap;will-change:transform;animation:introFly linear both}
+@keyframes introFly{from{transform:translate3d(var(--x0),var(--y),0) rotate(var(--r0))}to{transform:translate3d(var(--x1),calc(var(--y) + var(--dy)),0) rotate(var(--r1))}}
+#intro .intro-logo{position:relative;z-index:2;display:flex;align-items:center;gap:14px;padding:18px 26px;border-radius:20px;background:rgba(14,19,29,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);animation:introLogo .9s .35s cubic-bezier(.2,.8,.2,1) both}
+#intro .intro-logo svg{width:46px;height:46px;flex:none}
+#intro .intro-logo div{font-family:"Bricolage Grotesque",Inter,system-ui,sans-serif;font-weight:700;font-size:clamp(26px,7vw,40px);letter-spacing:-.02em;color:#E8ECF4;white-space:nowrap}
+#intro .intro-logo span{color:#FF9A4D}
+@keyframes introLogo{from{opacity:0;transform:scale(.92) translateY(8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){#intro .sym{display:none}#intro .intro-logo{animation:none}}
+</style>
+<script>
+(() => {
+  const el = document.getElementById("intro"); if (!el) return;
+  let visto = false; try { visto = sessionStorage.getItem("introVisto") === "1"; sessionStorage.setItem("introVisto", "1"); } catch (e) {}
+  if (visto) { el.remove(); return; }
+  const reduz = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const W = innerWidth, H = innerHeight;
+  const tipos = [["$", "#8EA2FF"], ["R$", "#FF9A4D"], ["₿", "#F7B23B"], ["$", "#C9D3FF"], ["R$", "#FFB98A"]];
+  if (!reduz) {
+    const n = Math.round(Math.min(70, Math.max(40, W * H / 14000)));
+    for (let i = 0; i < n; i++) {
+      const [txt, cor] = tipos[i % tipos.length];
+      const z = Math.random();                       // profundidade: perto = maior, mais rápido, mais nítido
+      const size = 22 + z * z * 130, dur = 2.4 - z * 1.1, dir = Math.random() < .5 ? 1 : -1;
+      const s = document.createElement("span"); s.className = "sym"; s.textContent = txt;
+      s.style.cssText = `font-size:${size.toFixed(0)}px;color:${cor};opacity:${(.35 + z * .65).toFixed(2)};animation-duration:${dur.toFixed(2)}s;animation-delay:${(-Math.random() * dur * .9).toFixed(2)}s;` +
+        `--x0:${dir > 0 ? -0.2 * W - size * 2 : W * 1.1}px;--x1:${dir > 0 ? W * 1.1 : -0.2 * W - size * 2}px;--y:${(Math.random() * (H + size) - size).toFixed(0)}px;--dy:${((Math.random() - .5) * 120).toFixed(0)}px;--r0:${((Math.random() - .5) * 50).toFixed(0)}deg;--r1:${((Math.random() - .5) * 90).toFixed(0)}deg;` +
+        (z < .35 ? "filter:blur(1.5px);" : "");
+      el.appendChild(s);
+    }
+  }
+  const sai = () => { if (el.classList.contains("out")) return; el.classList.add("out"); setTimeout(() => el.remove(), 600); };
+  el.addEventListener("click", sai);
+  setTimeout(sai, reduz ? 900 : 2500);
+})();
+</script>
 <header class="top">
   <div class="wrap">
     <div class="bar">
