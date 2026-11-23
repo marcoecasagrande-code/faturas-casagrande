@@ -93,6 +93,7 @@ nav.tabs button[aria-selected="true"]{color:var(--orange);border-bottom-color:va
 .seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
 select,input[type=text],input[type=month],input[type=password],input[type=search],textarea,input:not([type]){background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 10px;min-width:0;font-size:14px}
 .filters select{border-radius:999px;padding:5px 12px;font-size:13px;font-weight:500}
+.filters select.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
 label.lbl{font-size:12.5px;color:var(--muted);display:flex;flex-direction:column;gap:4px;font-weight:500}
 .eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.09em;font-weight:600;color:var(--muted)}
 .banner{border-radius:10px;padding:10px 14px;background:var(--orange-soft);color:var(--fg);display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;font-size:13.5px;border:1px solid color-mix(in srgb,var(--orange) 35%,transparent)}
@@ -221,11 +222,13 @@ textarea{width:100%;min-height:110px;font-family:var(--f-num);font-size:12px}
 <main class="wrap">
   <div class="filters" id="filters">
     <div class="seg" id="periodSeg" aria-label="Período">
+      <button type="button" data-p="1" aria-pressed="false">Último mês</button>
       <button type="button" data-p="3" aria-pressed="false">3 meses</button>
       <button type="button" data-p="6" aria-pressed="true">6 meses</button>
       <button type="button" data-p="12" aria-pressed="false">12 meses</button>
       <button type="button" data-p="0" aria-pressed="false">Tudo</button>
     </div>
+    <select id="monthSel" aria-label="Escolher mês"><option value="">Escolher mês…</option></select>
     <select id="cardSel" aria-label="Cartão"><option value="all">Todos os cartões</option></select>
     <div class="seg" id="personSeg" aria-label="Pessoa" hidden></div>
     <span class="note" id="rangeNote"></span>
@@ -461,7 +464,13 @@ const CARD_PRESETS = [
 ];
 const cardsCfg = () => {
   const saved = STATE.settings.cards || {}, out = Object.assign({}, STATE.demo ? DEMO_CARDS : {}, saved);
-  cardNames().forEach(c => { if (saved[c] && saved[c].type) return; const pr = CARD_PRESETS.find(x => x.re.test(norm(c))); if (pr) out[c] = Object.assign({}, pr.cfg, saved[c] || {}, {preset: pr.texto}); });
+  cardNames().forEach(c => {
+    const pr = CARD_PRESETS.find(x => x.re.test(norm(c))); if (!pr) return;
+    const sv = Object.fromEntries(Object.entries(saved[c] || {}).filter(([, v]) => v !== null && v !== "" && v !== undefined));
+    if (sv.type && sv.type !== pr.cfg.type) return;               // a família escolheu outra modalidade
+    const usaPadrao = !(sv.rate > 0);
+    out[c] = Object.assign({}, pr.cfg, sv, usaPadrao ? {preset: pr.texto} : {});
+  });
   return out;
 };
 function autoFx(st) {
@@ -520,7 +529,13 @@ function render() {
   if (STATE.person !== "all" && !people.includes(STATE.person)) STATE.person = "all";
   const ps = $("#personSeg"); ps.hidden = people.length < 2;
   ps.innerHTML = people.length < 2 ? "" : ['<button type="button" data-person="all" aria-pressed="' + (STATE.person === "all") + '">Todos</button>'].concat(people.map(n => '<button type="button" data-person="' + esc(n) + '" aria-pressed="' + (STATE.person === n) + '"><i class="sw" style="background:' + personColor(n) + ';margin-right:6px;border-radius:50%"></i>' + esc(n) + '</button>')).join("");
-  document.querySelectorAll("#periodSeg button").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.p === STATE.period)));
+  document.querySelectorAll("#periodSeg button").forEach(b => b.setAttribute("aria-pressed", String(!STATE.pickMonth && +b.dataset.p === STATE.period)));
+  const mlist = [...new Set((STATE.demo ? DEMO : STATE.statements).filter(x => STATE.card === "all" || x.card === STATE.card).map(x => x.month))].sort().reverse();
+  if (STATE.pickMonth && !mlist.includes(STATE.pickMonth)) STATE.pickMonth = null;
+  const msel = $("#monthSel");
+  msel.innerHTML = '<option value="">Escolher mês…</option>' + mlist.map(m => '<option value="' + m + '">' + monthLong(m).replace(/^./, c => c.toUpperCase()) + "</option>").join("");
+  msel.value = STATE.pickMonth || "";
+  msel.classList.toggle("on", !!STATE.pickMonth);
   document.querySelectorAll("#tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.view === STATE.view)));
   $("#filters").hidden = STATE.view === "statements" || STATE.view === "rules";
   // banner
@@ -545,6 +560,10 @@ function scopeTx() {
   const range0 = monthRange(txs);
   if (STATE.person !== "all") txs = txs.filter(t => t.who === STATE.person);
   const range = range0;
+  if (STATE.pickMonth && range.includes(STATE.pickMonth)) {
+    const i = range.indexOf(STATE.pickMonth);
+    return {txs, range, months: [STATE.pickMonth], prevMonths: i > 0 ? [range[i - 1]] : []};
+  }
   const months = STATE.period ? range.slice(-STATE.period) : range;
   const prevMonths = STATE.period ? range.slice(-2 * STATE.period, -STATE.period) : [];
   return {txs, range, months, prevMonths};
@@ -557,7 +576,7 @@ function renderOverview(v) {
   const inPrev = spend.filter(t => prevMonths.includes(t.month));
   $("#rangeNote").textContent = months.length ? monthLabel(months[0]) + " a " + monthLabel(months[months.length - 1]) + " · mês da fatura" : "";
   const fora = [...new Set((STATE.demo ? DEMO : STATE.statements).filter(s => (STATE.card === "all" || s.card === STATE.card) && !months.includes(s.month)).map(s => s.month))].sort();
-  if (fora.length && STATE.period) { const b = document.createElement("button"); b.type = "button"; b.className = "btn small"; b.dataset.act = "verTudo"; b.textContent = (fora.length === 1 ? "1 mês fora do período (" + monthLabel(fora[0]) + ")" : fora.length + " meses fora do período") + " · Ver tudo"; $("#rangeNote").append(" ", b); }
+  if (fora.length && STATE.period && !STATE.pickMonth) { const b = document.createElement("button"); b.type = "button"; b.className = "btn small"; b.dataset.act = "verTudo"; b.textContent = (fora.length === 1 ? "1 mês fora do período (" + monthLabel(fora[0]) + ")" : fora.length + " meses fora do período") + " · Ver tudo"; $("#rangeNote").append(" ", b); }
   if (!months.length) { v.innerHTML = '<div class="panel empty">Nenhuma fatura para este filtro.</div>'; return; }
 
   const byMonth = {}; months.forEach(m => byMonth[m] = 0); inP.forEach(t => byMonth[t.month] += t.amount);
@@ -565,7 +584,9 @@ function renderOverview(v) {
   const lastM = months[months.length - 1];
   const prevAvgMonths = months.slice(0, -1).filter(m => byMonth[m] > 0);
   const avgPrev = prevAvgMonths.length ? prevAvgMonths.reduce((a, m) => a + byMonth[m], 0) / prevAvgMonths.length : 0;
-  const avg = total / months.length;
+  const comDados = months.filter(m => byMonth[m] > 0);
+  const nFat = (STATE.demo ? DEMO : STATE.statements).filter(x => (STATE.card === "all" || x.card === STATE.card) && months.includes(x.month)).length;
+  const avg = total / Math.max(1, comDados.length);
   const dLast = pct(byMonth[lastM], avgPrev);
   // parcelas futuras: da fatura mais recente de cada cartão
   const latestByCard = {};
@@ -600,9 +621,9 @@ function renderOverview(v) {
   const others = catTot["Outros"]; if (others && others / total > 0.15) ins.push(["Classificar", Math.round(others / total * 100) + '% dos gastos estão em "Outros". <button class="btn small" type="button" data-act="goOthers">Revisar</button>']);
 
   // regressão (tendência)
-  const ys = months.map(m => focus ? (focusData[m][focus] || 0) : byMonth[m]);
-  const n = ys.length, xm = (n - 1) / 2, ym = ys.reduce((a, b) => a + b, 0) / n;
-  let num = 0, den = 0; ys.forEach((y, i) => { num += (i - xm) * (y - ym); den += (i - xm) ** 2; });
+  const pts = months.map((m, i) => [i, focus ? (focusData[m][focus] || 0) : byMonth[m]]).filter(p => byMonth[months[p[0]]] > 0);
+  const n = pts.length, xm = n ? pts.reduce((a, p) => a + p[0], 0) / n : 0, ym = n ? pts.reduce((a, p) => a + p[1], 0) / n : 0;
+  let num = 0, den = 0; pts.forEach(([i, y]) => { num += (i - xm) * (y - ym); den += (i - xm) ** 2; });
   const slope = den ? num / den : 0;
 
   // top estabelecimentos
@@ -625,7 +646,7 @@ function renderOverview(v) {
   v.innerHTML = `
   <div class="grid">
     <section class="strip" aria-label="Resumo">
-    <div><div class="eyebrow">Total no período</div><div class="v">${BRL0.format(total)}</div><div class="s">${STATE.person !== "all" ? "só " + esc(STATE.person) + " · " : ""}${months.length} ${months.length > 1 ? "faturas" : "fatura"}${STATE.card === "all" && cardsIn.length > 1 ? " · " + cardsIn.length + " cartões" : ""}</div></div>
+    <div><div class="eyebrow">Total no período</div><div class="v">${BRL0.format(total)}</div><div class="s">${STATE.person !== "all" ? "só " + esc(STATE.person) + " · " : ""}${nFat} ${nFat === 1 ? "fatura" : "faturas"}${STATE.card === "all" && cardsIn.length > 1 ? " · " + cardsIn.length + " cartões" : ""}</div></div>
     <div><div class="eyebrow">Média mensal</div><div class="v">${BRL0.format(avg)}</div><div class="s">Tendência: <span class="${slope > 0 ? "up" : "down"}">${slope >= 0 ? "+" : "−"}${BRL0.format(Math.abs(slope))}/mês</span></div></div>
     <div><div class="eyebrow">Fatura de ${monthLabel(lastM)}</div><div class="v">${BRL0.format(byMonth[lastM])}</div><div class="s">${dLast == null ? "sem meses anteriores" : '<span class="' + (dLast > 0 ? "up" : "down") + '">' + fmtPct(dLast) + "</span> vs média anterior"}</div></div>
     <div><div class="eyebrow">Parcelas a vencer</div><div class="v">${BRL0.format(future)}</div><div class="s">${futureN ? futureN + " compra" + (futureN > 1 ? "s" : "") + " parcelada" + (futureN > 1 ? "s" : "") + " em aberto" : "nenhum parcelamento em aberto"}</div></div>
@@ -1326,7 +1347,8 @@ document.addEventListener("scroll", () => tip.hidden = true, true);
 
 /* ---------- eventos ---------- */
 $("#tabs").addEventListener("click", e => { const b = e.target.closest("button[data-view]"); if (!b) return; STATE.view = b.dataset.view; pendingDelete = null; saveUi(); render(); });
-$("#periodSeg").addEventListener("click", e => { const b = e.target.closest("button[data-p]"); if (!b) return; STATE.period = +b.dataset.p; STATE.txMonth = "all"; saveUi(); render(); });
+$("#periodSeg").addEventListener("click", e => { const b = e.target.closest("button[data-p]"); if (!b) return; STATE.period = +b.dataset.p; STATE.pickMonth = null; STATE.txMonth = "all"; saveUi(); render(); });
+$("#monthSel").onchange = e => { STATE.pickMonth = e.target.value || null; STATE.txMonth = "all"; render(); };
 $("#cardSel").onchange = e => { STATE.card = e.target.value; STATE.txMonth = "all"; render(); };
 $("#personSeg").addEventListener("click", e => { const b = e.target.closest("button[data-person]"); if (!b) return; STATE.person = b.getAttribute("data-person"); render(); });
 $("#btnImport").onclick = openImport;
