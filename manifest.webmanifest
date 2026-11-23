@@ -1,6 +1,6 @@
 {
-  "name": "Faturas Casagrande",
-  "short_name": "Faturas",
+  "name": "Financeiro Casagrande",
+  "short_name": "Financeiro",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

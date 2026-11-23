@@ -2,10 +2,10 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<title>Faturas Casagrande</title>
+<title>Financeiro Casagrande</title>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#2341C9"><meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Faturas"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Financeiro"><meta name="mobile-web-app-capable" content="yes">
 <link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -26,7 +26,7 @@
   --up:#B42318; --down:#14794A; --warn:#9A5B00; --warn-soft:#FDF0D8;
   --c0:#2341C9; --c1:#C2410C; --c2:#0F7A6E; --c3:#B4235A; --c4:#7A3EC2; --c5:#8A6400; --c6:#36577A; --c7:#4D6B12;
   --c8:#1D86B8; --c9:#C9720A; --c10:#9B3F8A; --c11:#23824F; --c12:#7A5630; --c13:#5664D2; --c14:#C0563A;
-  --c-outros:#7C869A; --c-rest:#AEB6C4;
+  --c-outros:#7C869A; --c-rest:#AEB6C4; --dollar:#A9B7D6;
   --f-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
   --f-body:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-num:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
@@ -39,7 +39,7 @@
   --up:#FF8A80; --down:#5BD49A; --warn:#F2B866; --warn-soft:#33260E;
   --c0:#8EA2FF; --c1:#FF9F6B; --c2:#5FD3C3; --c3:#FF8DB8; --c4:#C9A3F5; --c5:#F0C75E; --c6:#9DBCE0; --c7:#B5D66A;
   --c8:#6CC6F0; --c9:#FBBF5A; --c10:#E59AD6; --c11:#6FD49B; --c12:#D2AE84; --c13:#A7B2FF; --c14:#F39C82;
-  --c-outros:#8D96A8; --c-rest:#4A5466; color-scheme:dark}}
+  --c-outros:#8D96A8; --c-rest:#4A5466; --dollar:#33415C; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0E131D; --surface:#161D2A; --surface-2:#1F2735; --fg:#E8ECF4; --muted:#9AA4B6; --line:#283244; --dots:#222C3D;
   --accent:#8EA2FF; --accent-fg:#0E131D; --accent-soft:#1E2747;
@@ -47,7 +47,7 @@
   --up:#FF8A80; --down:#5BD49A; --warn:#F2B866; --warn-soft:#33260E;
   --c0:#8EA2FF; --c1:#FF9F6B; --c2:#5FD3C3; --c3:#FF8DB8; --c4:#C9A3F5; --c5:#F0C75E; --c6:#9DBCE0; --c7:#B5D66A;
   --c8:#6CC6F0; --c9:#FBBF5A; --c10:#E59AD6; --c11:#6FD49B; --c12:#D2AE84; --c13:#A7B2FF; --c14:#F39C82;
-  --c-outros:#8D96A8; --c-rest:#4A5466; color-scheme:dark}
+  --c-outros:#8D96A8; --c-rest:#4A5466; --dollar:#33415C; color-scheme:dark}
 *{box-sizing:border-box}
 html,body{background:var(--bg);color:var(--fg);overflow-x:clip}
 body{font-family:var(--f-body);font-size:14.5px;line-height:1.5}
@@ -60,7 +60,8 @@ h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;letter-spacing:
 
 /* topo */
 header.top{position:relative;isolation:isolate;padding-top:20px}
-header.top .dots{position:absolute;right:max(0px,env(safe-area-inset-right,0px));top:-18px;width:clamp(170px,30vw,300px);z-index:-1;pointer-events:none;-webkit-mask-image:linear-gradient(#000 45%,transparent 100%);mask-image:linear-gradient(#000 45%,transparent 100%)}
+header.top .dots{position:absolute;right:max(0px,env(safe-area-inset-right,0px));top:-18px;width:clamp(190px,32vw,320px);z-index:-1;pointer-events:none;-webkit-mask-image:linear-gradient(#000 60%,transparent 100%);mask-image:linear-gradient(#000 60%,transparent 100%)}
+header.top .dots circle{fill:var(--dollar)}
 header.top .dots svg{display:block;width:100%;height:auto}
 .bar{display:flex;align-items:center;gap:12px 16px;flex-wrap:wrap;padding-block:4px 14px}
 .brand{display:flex;align-items:center;gap:12px;margin-right:auto;min-width:0;font-family:var(--f-display);font-weight:700;font-size:clamp(24px,5vw,30px);letter-spacing:-.02em;line-height:1}
@@ -200,9 +201,9 @@ textarea{width:100%;min-height:110px;font-family:var(--f-num);font-size:12px}
 
 <header class="top">
   <div class="wrap">
-    <div class="dots" aria-hidden="true"><svg viewBox="0 0 300 330"><defs><pattern id="dotp" width="9" height="9" patternUnits="userSpaceOnUse"><circle cx="4.5" cy="4.5" r="1.7" style="fill:var(--dots)"/></pattern><mask id="dolm"><text x="150" y="282" text-anchor="middle" font-size="340" font-weight="700" font-family="Bricolage Grotesque, Inter, Arial, sans-serif" fill="#fff">$</text></mask></defs><rect width="300" height="330" fill="url(#dotp)" mask="url(#dolm)"/></svg></div>
+    <div class="dots" aria-hidden="true"><svg viewBox="0 0 300 330"><defs><pattern id="dotp" width="9" height="9" patternUnits="userSpaceOnUse"><circle cx="4.5" cy="4.5" r="2.1"/></pattern><mask id="dolm"><text x="150" y="282" text-anchor="middle" font-size="340" font-weight="700" font-family="Bricolage Grotesque, Inter, Arial, sans-serif" fill="#fff">$</text></mask></defs><rect width="300" height="330" fill="url(#dotp)" mask="url(#dolm)"/></svg></div>
     <div class="bar">
-      <div class="brand"><svg viewBox="0 0 34 34" fill="none" aria-hidden="true"><rect x="3" y="7" width="28" height="20" rx="3.5" stroke="currentColor" stroke-width="2"/><path d="M3 13h28" stroke="currentColor" stroke-width="3"/><path d="M8 21.5h7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="25" cy="21.5" r="2.2" fill="#C2410C"/></svg><h1><span class="b1">Faturas</span> <span class="b2">Casagrande</span></h1></div>
+      <div class="brand"><svg viewBox="0 0 34 34" fill="none" aria-hidden="true"><rect x="3" y="7" width="28" height="20" rx="3.5" stroke="currentColor" stroke-width="2"/><path d="M3 13h28" stroke="currentColor" stroke-width="3"/><path d="M8 21.5h7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="25" cy="21.5" r="2.2" fill="#C2410C"/></svg><h1><span class="b1">Financeiro</span> <span class="b2">Casagrande</span></h1></div>
       <span class="status" id="status"><span class="dot"></span><span>Carregando…</span></span>
       <button class="btn primary" id="btnImport" type="button">+ Importar fatura</button>
     </div>
@@ -298,18 +299,18 @@ const niceMax = v => { if (v <= 0) return 100; const p = Math.pow(10, Math.floor
 /* ---------- categorias ---------- */
 const BASE_CATS = [
   ["Tarifas e juros", /\bIOF\b|ANUIDADE|JUROS|ENCARGO|MULTA|TARIFA|SEGURO CARTAO|ROTATIVO/],
-  ["Assinaturas", /NETFLIX|SPOTIFY|DISNEY|HBO|\bMAX\b|PRIME VIDEO|AMAZON ?PRIME|AMAZONPRIME|YOUTUBE|APPLE\.COM|APPLE COM|ICLOUD|GOOGLE ?(ONE|PLAY|STORAGE)|DEEZER|GLOBOPLAY|PARAMOUNT|CHATGPT|OPENAI|ANTHROPIC|CLAUDE\.AI|MICROSOFT|ADOBE|CANVA|DROPBOX|CRUNCHYROLL|TWITCH|STAR\+|SMART ?FIT|TOTALPASS|WELLHUB|GYMPASS/],
-  ["Transporte", /\bUBER\b|UBER ?TRIP|UBR\*|\b99\b|99APP|99 ?POP|99TAXI|CABIFY|METRO|SPTRANS|BILHETE ?UNICO|ESTACION|SEM ?PARAR|CONECTCAR|VELOE|PEDAGIO|ZUL ?DIGITAL|\bTAXI\b|ESTAPAR|INDIGO|MULTIPARK/],
-  ["Combustível", /\bPOSTO\b|AUTO ?POSTO|SHELL|IPIRANGA|PETROBRAS|BR ?MANIA|\bALE\b|COMBUST|RAIZEN|GNV/],
-  ["Alimentação", /IFOOD|IFD\*|RAPPI|RESTAUR|\bREST\b|LANCHON|PIZZ|BURGER|BURGUER|MC ?DONALD|MCDONALDS|OUTBACK|PADARIA|PANIFIC|\bCAFE\b|CAFETERIA|STARBUCKS|SUSHI|\bBAR\b|CHOPP|CHURRASC|COCO BAMBU|SUBWAY|HABIB|SPOLETO|GIRAFFAS|\bBK\b|DOCERIA|SORVET|AÇAI|ACAI|LANCHE|COZINHA|GASTRO|BISTRO|TRATTORIA|PASTEL|ZE DELIVERY|ZEDELIVERY|AIQFOME/],
+  ["Assinaturas", /AMAZON (MUSIC|AD FREE|DIGITAL)|JUSBRASIL|NETFLIX|SPOTIFY|DISNEY|HBO|\bMAX\b|PRIME VIDEO|AMAZON ?PRIME|AMAZONPRIME|YOUTUBE|APPLE\.COM|APPLE COM|ICLOUD|GOOGLE ?(ONE|PLAY|STORAGE)|DEEZER|GLOBOPLAY|PARAMOUNT|CHATGPT|OPENAI|ANTHROPIC|CLAUDE\.AI|MICROSOFT|ADOBE|CANVA|DROPBOX|CRUNCHYROLL|TWITCH|STAR\+|SMART ?FIT|TOTALPASS|WELLHUB|GYMPASS/],
+  ["Transporte", /PARKING|ALLPARK|\bPARK\b|\bMTA\b|NYCT|PAYGO|\bUBER\b|UBER ?TRIP|UBR\*|\b99\b|99APP|99 ?POP|99TAXI|CABIFY|METRO|SPTRANS|BILHETE ?UNICO|ESTACION|SEM ?PARAR|CONECTCAR|VELOE|PEDAGIO|ZUL ?DIGITAL|\bTAXI\b|ESTAPAR|INDIGO|MULTIPARK/],
+  ["Combustível", /PETRO CANADA|\bESSO\b|\bPOSTO\b|AUTO ?POSTO|SHELL|IPIRANGA|PETROBRAS|BR ?MANIA|\bALE\b|COMBUST|RAIZEN|GNV/],
+  ["Alimentação", /BAKERY|EATERY|EATALY|BEER|TABERNA|REI DO MATE|PAO DE QUEIJO|FOOD SERVICE|DINER|GRILL|PUB\b|IFOOD|IFD\*|RAPPI|RESTAUR|\bREST\b|LANCHON|PIZZ|BURGER|BURGUER|MC ?DONALD|MCDONALDS|OUTBACK|PADARIA|PANIFIC|\bCAFE\b|CAFETERIA|STARBUCKS|SUSHI|\bBAR\b|CHOPP|CHURRASC|COCO BAMBU|SUBWAY|HABIB|SPOLETO|GIRAFFAS|\bBK\b|DOCERIA|SORVET|AÇAI|ACAI|LANCHE|COZINHA|GASTRO|BISTRO|TRATTORIA|PASTEL|ZE DELIVERY|ZEDELIVERY|AIQFOME/],
   ["Compras online", /AMAZON|MERCADO ?LIVRE|MERCADOLIVRE|MLIVRE|SHOPEE|SHEIN|ALIEXPRESS|MAGALU|MAGAZINE ?LUIZA|AMERICANAS|CASAS ?BAHIA|KABUM|NETSHOES|SUBMARINO|PONTO ?FRIO|FAST ?SHOP|TEMU|DAFITI|ZATTINI/],
-  ["Mercado", /SUPERMERC|\bMERCADO\b|MERCADINHO|CARREFOUR|PAO DE ACUCAR|\bEXTRA\b|ASSAI|ATACAD|HORTIFRUTI|HORTI FRUTI|\bOBA\b|ST ?MARCHE|\bDIA\b|SAMS ?CLUB|MAKRO|EMPORIO|SACOLAO|QUITANDA|ACOUGUE|DAIGO|ZAFFARI|GUANABARA|BIG ?BOMPRECO|NAGUMO|HIROTA|MAMBO|DALBEN/],
-  ["Saúde", /DROGASIL|DROGA ?RAIA|\bRAIA\b|DROGARIA|FARMAC|PACHECO|PANVEL|PAGUE ?MENOS|HOSPITAL|CLINIC|LABORAT|FLEURY|\bDASA\b|UNIMED|\bAMIL\b|ODONTO|SULAMERICA SAUDE|BRADESCO SAUDE|HAPVIDA|MEDIC|EINSTEIN|SIRIO|PSICOL|FISIOTER|OTICA/],
-  ["Casa", /LEROY|TELHANORTE|TOK ?STOK|\bETNA\b|CAMICADO|C ?& ?C|\bIKEA\b|FERRAGEN|MADEIRA ?MADEIRA|MOBLY|CASA ?SHOW|DPASCHOAL|ELETRO|MATERIAIS? DE CONSTR|LAVANDERIA|CONDOMIN/],
+  ["Mercado", /SUPER NOSSO|VERDEMAR|EPA\b|HORTIPLUS|FRUTAS|CONVENIENCE|MAISON FRESH|COMERCIO DE ALIM|SUPERMERC|\bMERCADO\b|MERCADINHO|CARREFOUR|PAO DE ACUCAR|\bEXTRA\b|ASSAI|ATACAD|HORTIFRUTI|HORTI FRUTI|\bOBA\b|ST ?MARCHE|\bDIA\b|SAMS ?CLUB|MAKRO|EMPORIO|SACOLAO|QUITANDA|ACOUGUE|DAIGO|ZAFFARI|GUANABARA|BIG ?BOMPRECO|NAGUMO|HIROTA|MAMBO|DALBEN/],
+  ["Saúde", /ARAUJO|PHARMACY|TERAPEUT|DROGASIL|DROGA ?RAIA|\bRAIA\b|DROGARIA|FARMAC|PACHECO|PANVEL|PAGUE ?MENOS|HOSPITAL|CLINIC|LABORAT|FLEURY|\bDASA\b|UNIMED|\bAMIL\b|ODONTO|SULAMERICA SAUDE|BRADESCO SAUDE|HAPVIDA|MEDIC|EINSTEIN|SIRIO|PSICOL|FISIOTER|OTICA/],
+  ["Casa", /PARAFUZO|LIMPEZA|ELETRICA|LEROY|TELHANORTE|TOK ?STOK|\bETNA\b|CAMICADO|C ?& ?C|\bIKEA\b|FERRAGEN|MADEIRA ?MADEIRA|MOBLY|CASA ?SHOW|DPASCHOAL|ELETRO|MATERIAIS? DE CONSTR|LAVANDERIA|CONDOMIN/],
   ["Educação", /ESCOLA|COLEGIO|FACULDADE|UNIVERSIDADE|\bCURSO|UDEMY|ALURA|COURSERA|LIVRARIA|SARAIVA|LIVRARIA CULTURA|DUOLINGO|PAPELARIA|KALUNGA|MENSALIDADE/],
-  ["Lazer e viagem", /CINEMA|CINEMARK|KINOPLEX|INGRESSO|SYMPLA|EVENTIM|TICKET|HOTEL|POUSADA|AIRBNB|BOOKING|EXPEDIA|LATAM|\bGOL\b|AZUL ?(LINHAS|VIAGENS)|DECOLAR|123 ?MILHAS|SMILES|LIVELO|TEATRO|PARQUE|MUSEU|STEAM|PLAYSTATION|NINTENDO|XBOX/],
+  ["Lazer e viagem", /HOTE|HTEL|HOTEIS|AIR CAN|AIRLINES|AIRWAYS|ENTERPRISE|HERTZ|LOCALIZA|MOVIDA|LOUNGE|TOWER|GALLERY|SUMMIT|FERRY|NIAGARA|CASA LOMA|TABLE ROCK|HOLAFLY|HARD ROCK|FAO SCHWARZ|HERSHEY|CINEMA|CINEMARK|KINOPLEX|INGRESSO|SYMPLA|EVENTIM|TICKET|HOTEL|POUSADA|AIRBNB|BOOKING|EXPEDIA|LATAM|\bGOL\b|AZUL ?(LINHAS|VIAGENS)|DECOLAR|123 ?MILHAS|SMILES|LIVELO|TEATRO|PARQUE|MUSEU|STEAM|PLAYSTATION|NINTENDO|XBOX/],
   ["Vestuário", /RENNER|RIACHUELO|\bC ?& ?A\b|\bCEA\b|\bZARA\b|HERING|\bNIKE\b|ADIDAS|CENTAURO|AREZZO|MARISA|DECATHLON|YOUCOM|FARM\b|CALCAD|SAPAT|MODA|BOUTIQUE|OSKLEN|RESERVA/],
-  ["Contas e serviços", /\bVIVO\b|\bCLARO\b|\bTIM\b|\bOI\b|\bNET\b|\bSKY\b|ENEL|SABESP|COMGAS|\bLIGHT\b|CPFL|CEMIG|COPEL|PORTO ?SEGURO|SEGURO|DETRAN|IPVA|PREFEITURA|CARTORIO|CORREIOS/],
+  ["Contas e serviços", /ALLIANZ|\bVIVO\b|\bCLARO\b|\bTIM\b|\bOI\b|\bNET\b|\bSKY\b|ENEL|SABESP|COMGAS|\bLIGHT\b|CPFL|CEMIG|COPEL|PORTO ?SEGURO|SEGURO|DETRAN|IPVA|PREFEITURA|CARTORIO|CORREIOS/],
   ["Pets", /PETZ|COBASI|\bPET\b|PETSHOP|PET SHOP|VETERIN|AGROPET/],
   ["Beleza e cuidados", /SALAO|BARBEAR|BELEZA|NATURA|BOTICARIO|SEPHORA|ESTETIC|MANICURE|CABELEIR|DEPILA|EUDORA|QUEM DISSE BERENICE|SPA\b/],
 ];
@@ -705,7 +706,7 @@ function renderTx(v) {
   <p class="note" style="margin:0 0 10px">${list.length} lançamento${list.length === 1 ? "" : "s"} · ${BRL.format(tot)} em compras${list.length > shown.length ? " · mostrando os 400 mais recentes" : ""}</p>
   <div class="tablewrap"><table><thead><tr><th>Data</th><th>Descrição</th><th>Cartão</th><th>Fatura</th><th>Categoria</th><th class="r">Valor</th><th></th></tr></thead><tbody>
   ${shown.map(t => `<tr class="${isSpend(t) ? "" : "muted"}"><td class="num">${t.date.slice(8, 10)}/${t.date.slice(5, 7)}/${t.date.slice(2, 4)}</td>
-    <td><span class="desc" title="${esc(t.desc)}">${esc(t.desc)}${t.inst ? '<span class="badge">' + t.inst[0] + "/" + t.inst[1] + "</span>" : ""}</span></td>
+    <td><span class="desc" title="${esc(t.desc)}">${esc(t.desc)}${t.inst ? '<span class="badge">' + t.inst[0] + "/" + t.inst[1] + "</span>" : ""}${t.orig ? '<span class="badge">' + esc(t.orig) + "</span>" : ""}</span></td>
     <td>${esc(t.card)}</td><td class="num">${monthLabel(t.month)}</td>
     <td>${t.amount < 0 ? '<span class="note">Crédito</span>' : `<select data-tx="${t.id}" data-st="${t.stId}" aria-label="Categoria" ${STATE.demo ? "disabled" : ""}>${cats.map(c => `<option ${c === t.c ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>`}</td>
     <td class="r num">${BRL.format(t.amount)}</td>
@@ -894,21 +895,83 @@ function loadPdfJs() {
 async function pdfLines(buf, password) {
   const lib = await loadPdfJs();
   const doc = await lib.getDocument({data: buf, password: password || undefined, isEvalSupported: false, useSystemFonts: true}).promise;
-  const lines = [];
+  const lines = [], pages = [];
   for (let p = 1; p <= doc.numPages; p++) {
     const page = await doc.getPage(p); const tc = await page.getTextContent();
+    pages.push({width: page.view[2] - page.view[0], items: tc.items.filter(it => it.str && it.str.trim()).map(it => ({x: it.transform[4], y: it.transform[5], s: it.str, w: it.width || 0}))});
     const rows = [];
     tc.items.forEach(it => { if (!it.str || !it.str.trim()) return; const x = it.transform[4], y = it.transform[5]; let r = rows.find(r => Math.abs(r.y - y) < 2.5); if (!r) { r = {y, items: []}; rows.push(r); } r.items.push({x, s: it.str, w: it.width || 0}); });
     rows.sort((a, b) => b.y - a.y).forEach(r => { r.items.sort((a, b) => a.x - b.x); let out = "", lastEnd = null; r.items.forEach(i => { if (lastEnd != null && i.x - lastEnd > 1) out += " "; out += i.s; lastEnd = i.x + i.w; }); lines.push(out); });
   }
-  return lines;
+  return {lines, pages};
+}
+/* Leitura de PDF por colunas (faturas em duas colunas, como a do BTG Pactual).
+   pages: [{width, items:[{x, y, s, w}]}], y cresce para cima (como no pdf.js). */
+const MES_RE = "(?:JAN|FEV|MAR|ABR|MAI|JUN|JUL|AGO|SET|OUT|NOV|DEZ)[A-Za-zç]*";
+const COL_TX_RE = new RegExp("^(\\d{1,2}\\/\\d{1,2}(?:\\/\\d{2,4})?|\\d{1,2}\\s?" + MES_RE + ")\\s+(.+?)\\s+(-\\s?)?(R\\$|US\\$|U\\$|CAD|EUR|€|GBP|£|ARS|CLP|MXN|JPY|CHF|AUD|[A-Z]{3})\\s?(-?\\s?\\d{1,3}(?:\\.\\d{3})*,\\d{2})(-?)$", "i");
+const CONV_RE = /Convers[aã]o para Real\s*-?\s*(-?\s?R\$\s?-?\s?[\d.]+,\d{2})/i;
+const BAND_RE = /Lan[cç]amentos do cart[aã]o|Total de cr[eé]ditos|Pagamentos feitos|Taxas e encargos|Total de compras e despesas/i;
+
+function linesOf(items, tol) {
+  const rows = [];
+  items.forEach(it => { let r = rows.find(r => Math.abs(r.y - it.y) < tol); if (!r) { r = {y: it.y, items: []}; rows.push(r); } r.items.push(it); });
+  rows.sort((a, b) => b.y - a.y);
+  return rows.map(r => { r.items.sort((a, b) => a.x - b.x); let out = "", end = null; r.items.forEach(i => { if (end != null && i.x - end > 1) out += " "; out += i.s; end = i.x + (i.w || 0); }); return {y: r.y, x: r.items[0].x, text: out.replace(/\s+/g, " ").trim()}; });
+}
+function isTwoColumn(pages) {
+  let n = 0;
+  pages.forEach(p => { const mid = p.width / 2; linesOf(p.items.filter(i => i.x > mid * 0.9), 2.5).forEach(l => { if (new RegExp("^\\d{1,2}(\\s?" + MES_RE + "|\\/\\d{1,2})\\b", "i").test(l.text)) n++; }); });
+  return n >= 3;
+}
+function parsePdfColumns(pages) {
+  const rows = [], pendCol = [null, null];  // compra estrangeira à espera da conversão, por coluna (pode cruzar a página)
+  pages.forEach(p => {
+    const mid = p.width / 2;
+    const all = linesOf(p.items, 2.5);
+    // faixas horizontais: cabeçalhos de seção cortam a página em blocos
+    const cuts = all.filter(l => l.x < mid && BAND_RE.test(l.text)).map(l => l.y);
+    const bounds = [Infinity].concat(cuts, [-Infinity]);
+    for (let b = 0; b < bounds.length - 1; b++) {
+      const top = bounds[b], bot = bounds[b + 1];
+      const band = p.items.filter(i => i.y < top - 0.1 && i.y >= bot - 0.1);
+      [band.filter(i => i.x < mid), band.filter(i => i.x >= mid)].forEach((colItems, ci) => {
+        let pend = pendCol[ci];
+        linesOf(colItems, 2.5).forEach(l => {
+          const t = l.text;
+          let m;
+          if ((m = CONV_RE.exec(t))) { if (pend) { const a = parseAmount(m[1]); if (a != null) rows.push({d: pend.d, desc: pend.desc, amount: pend.neg ? -Math.abs(a) : a, orig: pend.orig}); pend = null; } return; }
+          if (/Cota[cç][aã]o da moeda/i.test(t)) return;
+          if ((m = COL_TX_RE.exec(t))) {
+            const cur = m[4].toUpperCase(), neg = !!m[3] || !!m[6] || /^-/.test(m[5].trim());
+            const desc = m[2].replace(/\s+-\s*$/, "").trim();
+            if (SKIP_RE.test(desc)) return;
+            if (cur === "R$") { const a = parseAmount(m[5]); if (a != null && a !== 0) rows.push({d: m[1], desc, amount: neg ? -Math.abs(a) : a}); pend = null; }
+            else pend = {d: m[1], desc, neg, orig: cur + " " + m[5].trim()};
+          }
+        });
+        pendCol[ci] = pend;
+      });
+    }
+  });
+  return rows;
+}
+const BANCOS = [["BTG", "BTG Pactual"], ["NUBANK|NU PAGAMENTOS", "Nubank"], ["ITAU|ITAÚ", "Itaú"], ["BRADESCO", "Bradesco"], ["SANTANDER", "Santander"], ["BANCO INTER|\\bINTER\\b", "Inter"], ["C6 BANK|\\bC6\\b", "C6 Bank"], ["XP INVESTIMENTOS|CARTAO XP|CARTÃO XP", "XP"], ["CAIXA ECON", "Caixa"], ["BANCO DO BRASIL|OUROCARD", "Banco do Brasil"], ["PORTO SEGURO|PORTO BANK", "Porto Bank"], ["MERCADO PAGO", "Mercado Pago"], ["PICPAY", "PicPay"], ["SICOOB", "Sicoob"], ["SICREDI", "Sicredi"]];
+const MESES_LONGOS = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+function guessMeta(text) {
+  const n = norm(text.slice(0, 6000));
+  let card = null; for (const [re, name] of BANCOS) if (new RegExp(re).test(n)) { card = name; break; }
+  let month = null;
+  const m = /FATURA DE (JANEIRO|FEVEREIRO|MARCO|ABRIL|MAIO|JUNHO|JULHO|AGOSTO|SETEMBRO|OUTUBRO|NOVEMBRO|DEZEMBRO)(?: DE)? (\d{4})/.exec(n);
+  if (m) month = m[2] + "-" + pad(MESES_LONGOS.map(norm).indexOf(m[1]) + 1);
+  else { const v = /VENCIMENTO:?\s*(\d{2})\/(\d{2})\/(\d{4})/.exec(n); if (v) month = v[3] + "-" + v[2]; }
+  return {card, month};
 }
 
 /* ---------- importação: fluxo ---------- */
 const IMP = {rows: [], file: null, buf: null, fileName: "", fullDates: false};
 const dlg = $("#dlg");
 function openImport() {
-  Object.assign(IMP, {rows: [], file: null, buf: null, fileName: "", fullDates: false});
+  Object.assign(IMP, {rows: [], file: null, buf: null, fileName: "", fullDates: false, meta: null});
   $("#impMsg").innerHTML = ""; $("#impPreview").innerHTML = ""; $("#impSum").textContent = ""; $("#impSave").disabled = true;
   $("#pwdRow").hidden = true; $("#pwd").value = ""; $("#pasteTxt").value = ""; $("#file").value = "";
   $("#impMonth").value = curMonth();
@@ -930,7 +993,11 @@ async function handleFile(file) {
   } catch (e) { msg("Não consegui ler este arquivo. Tente exportar a fatura em CSV ou OFX pelo app do banco, ou cole o texto abaixo.", "err"); }
 }
 async function readPdf(password) {
-  try { const lines = await pdfLines(IMP.buf.slice(0), password); return parseTextLines(lines); }
+  try {
+    const {lines, pages} = await pdfLines(IMP.buf.slice(0), password);
+    IMP.meta = guessMeta(lines.join("\n"));
+    return isTwoColumn(pages) ? parsePdfColumns(pages) : parseTextLines(lines);
+  }
   catch (e) {
     if (e && e.name === "PasswordException") { $("#pwdRow").hidden = false; msg(password ? "Senha incorreta. Tente de novo." : "Este PDF tem senha.", password ? "err" : "note"); $("#pwd").focus(); return null; }
     if (e && e.message === "load") { msg("Não foi possível carregar o leitor de PDF. Verifique a conexão ou use CSV/OFX.", "err"); return null; }
@@ -944,6 +1011,7 @@ function setRows(rows) {
   rows.forEach(r => { if (r.amount > 0 && isCreditDesc(r.desc) && /PAGAMENTO|ESTORNO|DEVOLU|REEMBOLSO/.test(norm(r.desc))) r.amount = -r.amount; r.keep = true; r.inst = parseInst(r.desc); });
   IMP.rows = rows;
   IMP.fullDates = rows.length && rows.every(r => /\d{4}/.test(r.d));
+  if (IMP.meta) { if (IMP.meta.card && !$("#impCard").value.trim()) $("#impCard").value = IMP.meta.card; if (IMP.meta.month) $("#impMonth").value = IMP.meta.month; }
   if (IMP.fullDates) { const max = rows.map(r => toISO(r.d, curMonth())).sort().pop(); if (max) $("#impMonth").value = addMonth(max.slice(0, 7), 1); }
   if (!rows.length) { msg("Não encontrei lançamentos neste arquivo. Se for um PDF escaneado (imagem), exporte em CSV/OFX pelo app do banco ou cole o texto.", "err"); $("#impPreview").innerHTML = ""; $("#impSave").disabled = true; $("#impSum").textContent = ""; return; }
   msg(rows.length + " lançamentos encontrados. Confira e desmarque o que não for compra.");
@@ -971,7 +1039,7 @@ function renderPreview() {
   const rows = IMP.rows;
   const kept = rows.filter(r => r.keep && toISO(r.d, ref));
   const spend = kept.filter(r => r.amount > 0).reduce((a, r) => a + r.amount, 0);
-  $("#impPreview").innerHTML = `<div class="prevwrap"><table><thead><tr><th></th><th>Data</th><th>Descrição</th><th>Categoria</th><th class="r">Valor</th></tr></thead><tbody>${rows.map((r, i) => { const iso = toISO(r.d, ref); return `<tr class="${r.keep && iso ? "" : "muted"}"><td><input type="checkbox" data-keep="${i}" ${r.keep ? "checked" : ""} aria-label="Incluir"></td><td class="num">${iso ? iso.split("-").reverse().join("/") : esc(r.d) + " ?"}</td><td><span class="desc">${esc(r.desc)}${r.inst ? '<span class="badge">' + r.inst.join("/") + "</span>" : ""}</span></td><td>${r.amount < 0 ? '<span class="note">Crédito/pagamento</span>' : esc(STATE.settings.rules[merchantKey(r.desc)] || autoCat(r.desc))}</td><td class="r num">${BRL.format(r.amount)}</td></tr>`; }).join("")}</tbody></table></div>`;
+  $("#impPreview").innerHTML = `<div class="prevwrap"><table><thead><tr><th></th><th>Data</th><th>Descrição</th><th>Categoria</th><th class="r">Valor</th></tr></thead><tbody>${rows.map((r, i) => { const iso = toISO(r.d, ref); return `<tr class="${r.keep && iso ? "" : "muted"}"><td><input type="checkbox" data-keep="${i}" ${r.keep ? "checked" : ""} aria-label="Incluir"></td><td class="num">${iso ? iso.split("-").reverse().join("/") : esc(r.d) + " ?"}</td><td><span class="desc">${esc(r.desc)}${r.inst ? '<span class="badge">' + r.inst.join("/") + "</span>" : ""}${r.orig ? '<span class="badge">' + esc(r.orig) + "</span>" : ""}</span></td><td>${r.amount < 0 ? '<span class="note">Crédito/pagamento</span>' : esc(STATE.settings.rules[merchantKey(r.desc)] || autoCat(r.desc))}</td><td class="r num">${BRL.format(r.amount)}</td></tr>`; }).join("")}</tbody></table></div>`;
   const dup = STATE.statements.find(s => s.card === card && s.month === ref);
   $("#impSum").innerHTML = kept.length + " lançamentos · compras " + BRL.format(spend) + (dup ? ' · <span class="up">substitui a fatura ' + esc(card) + " de " + monthLabel(ref) + "</span>" : "");
   $("#impSave").disabled = !card || !kept.length || !/^\d{4}-\d{2}$/.test(ref);
@@ -980,7 +1048,7 @@ function renderPreview() {
 function saveImport() {
   const ref = $("#impMonth").value, card = $("#impCard").value.trim();
   if (!card || !ref) return;
-  const tx = IMP.rows.filter(r => r.keep).map(r => ({id: uid(), date: toISO(r.d, ref), desc: r.desc.slice(0, 120), amount: Math.round(r.amount * 100) / 100, inst: r.inst || null, cat: null, ign: false})).filter(t => t.date).sort((a, b) => a.date.localeCompare(b.date));
+  const tx = IMP.rows.filter(r => r.keep).map(r => ({id: uid(), date: toISO(r.d, ref), desc: r.desc.slice(0, 120), amount: Math.round(r.amount * 100) / 100, inst: r.inst || null, orig: r.orig || null, cat: null, ign: false})).filter(t => t.date).sort((a, b) => a.date.localeCompare(b.date));
   const dup = STATE.statements.find(s => s.card === card && s.month === ref);
   const st = {kind: "statement", id: dup ? dup.id : "st-" + uid(), card, month: ref, fileName: IMP.fileName || "texto colado", importedAt: new Date().toISOString(), tx};
   if (JSON.stringify(st).length > 240000) { msg("Esta fatura é grande demais para um único registro. Divida o arquivo em partes.", "err"); return; }

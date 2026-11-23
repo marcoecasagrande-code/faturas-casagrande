@@ -49,7 +49,7 @@
   let tela = null;
   function mostrarLogin(msg, sair) {
     if (!tela) { const st = document.createElement("style"); st.textContent = css; document.head.appendChild(st); tela = document.createElement("div"); tela.id = "fb-login"; document.body.appendChild(tela); }
-    tela.innerHTML = `<div class="box"><img src="icon-192.png" alt=""><h1>Faturas <span>Casagrande</span></h1><p>Entre com a sua conta Google da família.</p>
+    tela.innerHTML = `<div class="box"><img src="icon-192.png" alt=""><h1>Financeiro <span>Casagrande</span></h1><p>Entre com a sua conta Google da família.</p>
       ${sair ? `<button id="fb-sair">Entrar com outra conta</button>` : `<div id="fb-gis"></div><button id="fb-entrar" class="sec">Outra forma de entrar</button>`}<div class="err"></div></div>`;
     tela.querySelector(".err").textContent = msg || "";
     tela.hidden = false;
@@ -178,7 +178,7 @@
   async function bioAtivar() {
     const u = atual || {};
     const cred = await navigator.credentials.create({ publicKey: {
-      challenge: crypto.getRandomValues(new Uint8Array(32)), rp: { name: "Faturas Casagrande" },
+      challenge: crypto.getRandomValues(new Uint8Array(32)), rp: { name: "Financeiro Casagrande" },
       user: { id: new TextEncoder().encode(String(u.uid || "familia").slice(0, 64)), name: u.email || "familia", displayName: u.displayName || u.email || "Família Casagrande" },
       pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
       authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required", residentKey: "discouraged" },
@@ -193,7 +193,7 @@
 
   async function pedirPin(cfg, opts) {
     const temBio = !!ls.get(BIO) && !(opts && opts.semBio);
-    const base = Object.assign({ titulo: "Digite o PIN", texto: "Faturas da família Casagrande", tamanho: cfg.len, esqueci: true, bio: temBio }, opts);
+    const base = Object.assign({ titulo: "Digite o PIN", texto: "Financeiro da família Casagrande", tamanho: cfg.len, esqueci: true, bio: temBio }, opts);
     if (temBio && await bioConferir()) return { ok: true, bio: true };
     let erradas = 0, msg = "", trava = 0;
     for (;;) {

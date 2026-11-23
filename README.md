@@ -1,4 +1,4 @@
-# Faturas Casagrande
+# Financeiro Casagrande
 
 App de faturas de cartão da família: importa faturas (PDF, CSV, OFX), classifica os gastos por categoria e cartão, mostra tendências e acompanha pontos e cashback.
 Site: https://marcoecasagrande-code.github.io/faturas-casagrande
