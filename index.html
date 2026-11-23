@@ -444,12 +444,29 @@ function monthRange(txs) {
 }
 const isSpend = t => t.amount > 0 && !t.ign;
 const DEMO_CARDS = {"Nubank": {type: "cb", rate: 1}, "Itaú Visa": {type: "pts", rate: 2.5, unit: "usd", fx: 5.4, milheiro: 25}};
-const cardsCfg = () => STATE.demo ? DEMO_CARDS : (STATE.settings.cards || {});
+// Configurações conhecidas de cartões (usadas enquanto a família não configurar o cartão).
+const CARD_PRESETS = [
+  {re: /BTG|ULTRABLUE/, nome: "BTG UltraBlue", texto: "UltraBlue (modalidade pontos): 3 pontos por US$ no Brasil e 3,5 no exterior; dólar calculado pela própria fatura.",
+   cfg: {type: "pts", rate: 3, rateIntl: 3.5, unit: "usd"}},
+];
+const cardsCfg = () => {
+  if (STATE.demo) return DEMO_CARDS;
+  const saved = STATE.settings.cards || {}, out = Object.assign({}, saved);
+  cardNames().forEach(c => { if (saved[c] && saved[c].type) return; const pr = CARD_PRESETS.find(x => x.re.test(norm(c))); if (pr) out[c] = Object.assign({}, pr.cfg, saved[c] || {}, {preset: pr.texto}); });
+  return out;
+};
+function autoFx(st) {
+  let usd = 0, brl = 0;
+  st.tx.forEach(t => { if (t.amount > 0 && t.orig && /^US\$/.test(t.orig)) { const v = parseAmount(t.orig.replace(/^US\$\s?/, "")); if (v) { usd += Math.abs(v); brl += t.amount; } } });
+  return usd > 0 ? brl / usd : null;
+}
 const parseNum = v => { v = String(v == null ? "" : v).trim(); if (!v) return null; const n = v.includes(",") ? parseFloat(v.replace(/\./g, "").replace(",", ".")) : parseFloat(v); return isNaN(n) ? null : n; };
 const numStr = v => v == null || v === "" ? "" : String(v).replace(".", ",");
 function rewardFor(st) {
   const cfg = cardsCfg()[st.card] || {};
-  const spend = st.tx.filter(t => isSpend(t) && effCat(t) !== "Tarifas e juros").reduce((a, t) => a + t.amount, 0);
+  const elig = st.tx.filter(t => isSpend(t) && effCat(t) !== "Tarifas e juros");
+  const spend = elig.reduce((a, t) => a + t.amount, 0);
+  const intl = elig.filter(t => t.orig).reduce((a, t) => a + t.amount, 0), dom = spend - intl;
   const detected = st.tx.filter(t => t.amount < 0 && /CASH ?BACK/.test(norm(t.desc))).reduce((a, t) => a - t.amount, 0);
   if (cfg.type === "none") return null;
   const type = cfg.type || (detected > 0 ? "cb" : null);
@@ -457,11 +474,16 @@ function rewardFor(st) {
   let value = null, src = "estimado";
   if (st.reward != null && st.reward !== "") { value = +st.reward; src = "informado"; }
   else if (type === "cb" && detected > 0) { value = detected; src = "fatura"; }
-  else if (type === "cb" && cfg.rate > 0) value = spend * cfg.rate / 100;
-  else if (type === "pts" && cfg.rate > 0) { if (cfg.unit === "usd") { if (cfg.fx > 0) value = spend / cfg.fx * cfg.rate; } else value = spend * cfg.rate; }
+  const rI = cfg.rateIntl > 0 ? cfg.rateIntl : cfg.rate;
+  let fx = null;
+  if (value == null && type === "cb" && cfg.rate > 0) value = (dom * cfg.rate + intl * rI) / 100;
+  else if (value == null && type === "pts" && cfg.rate > 0) {
+    if (cfg.unit === "usd") { fx = cfg.fx > 0 ? cfg.fx : autoFx(st); if (fx) value = (dom * cfg.rate + intl * rI) / fx; }
+    else value = dom * cfg.rate + intl * rI;
+  }
   if (value == null) return {type, value: null, src: "falta a taxa", spend};
   const brl = type === "cb" ? value : (cfg.milheiro > 0 ? value / 1000 * cfg.milheiro : null);
-  return {type, value, src, brl, spend};
+  return {type, value, src, brl, spend, fx, fxAuto: !!fx && !(cfg.fx > 0)};
 }
 const fmtReward = r => r.value == null ? "—" : r.type === "cb" ? BRL.format(r.value) : Math.round(r.value).toLocaleString("pt-BR") + " pts";
 const SRC_MARK = {estimado: "≈", fatura: "", informado: ""};
@@ -638,7 +660,7 @@ function rewardsPanel(months) {
     let cTot = 0, cBrl = 0, cSpend = 0, cAllBrl = true, type = null;
     const cells = months.map(m => { const r = rows[c][m]; if (!r) return '<td class="r note">—</td>'; type = r.type;
       if (r.value != null) { cTot += r.value; cSpend += r.spend; if (r.brl != null) cBrl += r.brl; else cAllBrl = false; if (r.src === "estimado") est = true; }
-      const tipTxt = r.value == null ? "Informe a taxa do cartão" : (r.src === "estimado" ? "Estimado sobre " + BRL.format(r.spend) + " em compras" : r.src === "fatura" ? "Cashback creditado na fatura" : "Valor informado por você") + (r.type === "pts" && r.brl != null ? " · ≈ " + BRL.format(r.brl) : "");
+      const tipTxt = r.value == null ? "Informe a taxa do cartão" : (r.src === "estimado" ? "Estimado sobre " + BRL.format(r.spend) + " em compras" + (r.fx ? " · dólar " + r.fx.toFixed(2).replace(".", ",") + (r.fxAuto ? " (da fatura)" : "") : "") : r.src === "fatura" ? "Cashback creditado na fatura" : "Valor informado por você") + (r.type === "pts" && r.brl != null ? " · ≈ " + BRL.format(r.brl) : "");
       return `<td class="r num" data-tip="${esc(tipTxt)}">${SRC_MARK[r.src] || ""}${esc(fmtReward(r))}</td>`; }).join("");
     if (type === "cb") cb += cTot; else { pts += cTot; ptsBrl += cBrl; if (!cAllBrl) ptsAllBrl = false; }
     const ret = cAllBrl && cSpend > 0 ? cBrl / cSpend * 100 : null;
@@ -646,9 +668,11 @@ function rewardsPanel(months) {
     const totTxt = type === "cb" ? BRL.format(cTot) : Math.round(cTot).toLocaleString("pt-BR") + " pts" + (cAllBrl ? " <span class=\"note\">≈ " + BRL0.format(cBrl) + "</span>" : "");
     return `<tr><td><span class="nm" style="display:flex;gap:7px;align-items:center;white-space:nowrap"><i class="sw" style="background:${cardColor(c)}"></i>${esc(c)}</span></td>${cells}<td class="r num" style="font-weight:600;white-space:nowrap">${totTxt}</td><td class="r num">${ret == null ? "—" : ret.toLocaleString("pt-BR", {maximumFractionDigits: 2}) + "%"}</td></tr>`;
   }).join("");
+  const iof = sts.reduce((a, s) => a + (s.iofSaved || 0), 0);
   const parts = [];
   if (pts) parts.push(`<b class="num">${Math.round(pts).toLocaleString("pt-BR")} pontos</b>${ptsAllBrl && ptsBrl ? " (≈ " + BRL0.format(ptsBrl) + ")" : ""}`);
   if (cb) parts.push(`<b class="num">${BRL.format(cb)}</b> de cashback`);
+  if (iof) parts.push(`<b class="num">${BRL.format(iof)}</b> de IOF economizado`);
   return `<div class="panel c12"><div class="ph"><div><h2>Pontos e cashback</h2><p class="hint">${parts.join(" + ") || "Nada acumulado no período"}${spendTot ? " · retorno médio de " + (brlTot / spendTot * 100).toLocaleString("pt-BR", {maximumFractionDigits: 2}) + "% sobre as compras" : ""}</p></div><button class="btn small" type="button" data-act="goCards">Ajustar cartões</button></div>
   <div class="tablewrap" style="border:0"><table><thead><tr><th>Cartão</th>${months.map(m => `<th class="r">${monthLabel(m)}</th>`).join("")}<th class="r">Período</th><th class="r">Retorno</th></tr></thead><tbody>${body}</tbody></table></div>
   ${est ? '<p class="note" style="margin:8px 0 0">≈ estimado pela taxa do cartão sobre as compras (sem IOF, juros e anuidade). Cashback creditado na fatura e valores que você digita em Faturas substituem a estimativa.</p>' : ""}</div>`;
@@ -771,10 +795,13 @@ function renderStatements(v) {
   const cfgHTML = cardsList.length ? `<div class="panel" style="margin-bottom:16px"><h2>Cartões e recompensas</h2><p class="hint">Como cada cartão rende. Use para estimar pontos e cashback quando a fatura não traz o valor.</p><div class="cfgs">${cardsList.map(c => { const g = cfgs[c] || {}; const t = g.type || "";
     return `<div class="cfg" data-card="${esc(c)}"><span class="cname"><i class="sw" style="background:${cardColor(c)}"></i>${esc(c)}</span>
     <select data-cfg="type" aria-label="Tipo de recompensa" ${dis}><option value="" ${!t ? "selected" : ""}>Não configurado</option><option value="pts" ${t === "pts" ? "selected" : ""}>Pontos</option><option value="cb" ${t === "cb" ? "selected" : ""}>Cashback</option><option value="none" ${t === "none" ? "selected" : ""}>Sem recompensa</option></select>
+    ${g.preset ? `<span class="chip" title="${esc(g.preset)}">padrão do cartão</span>` : ""}
     ${t === "pts" ? `<label class="inl"><input data-cfg="rate" inputmode="decimal" value="${esc(numStr(g.rate))}" placeholder="2,5" ${dis}> pontos por</label><select data-cfg="unit" aria-label="Moeda" ${dis}><option value="usd" ${g.unit !== "brl" ? "selected" : ""}>US$ 1 gasto</option><option value="brl" ${g.unit === "brl" ? "selected" : ""}>R$ 1 gasto</option></select>
-      ${g.unit !== "brl" ? `<label class="inl">cotação US$ <input data-cfg="fx" inputmode="decimal" value="${esc(numStr(g.fx))}" placeholder="ex.: 5,40" ${dis}></label>` : ""}
+      <label class="inl">no exterior <input data-cfg="rateIntl" inputmode="decimal" value="${esc(numStr(g.rateIntl))}" placeholder="igual" ${dis}></label>
+      ${g.unit !== "brl" ? `<label class="inl">cotação US$ <input data-cfg="fx" inputmode="decimal" value="${esc(numStr(g.fx))}" placeholder="da fatura" ${dis}></label>` : ""}
       <label class="inl">milheiro vale R$ <input data-cfg="milheiro" inputmode="decimal" value="${esc(numStr(g.milheiro))}" placeholder="opcional" ${dis}></label>` : ""}
-    ${t === "cb" ? `<label class="inl"><input data-cfg="rate" inputmode="decimal" value="${esc(numStr(g.rate))}" placeholder="1" ${dis}> % de cashback</label>` : ""}
+    ${t === "cb" ? `<label class="inl"><input data-cfg="rate" inputmode="decimal" value="${esc(numStr(g.rate))}" placeholder="1" ${dis}> % de cashback</label><label class="inl">no exterior <input data-cfg="rateIntl" inputmode="decimal" value="${esc(numStr(g.rateIntl))}" placeholder="igual" ${dis}> %</label>` : ""}
+    ${g.preset ? `<span class="note" style="flex-basis:100%">${esc(g.preset)}</span>` : ""}
     </div>`; }).join("")}</div></div>` : "";
   v.innerHTML = cfgHTML + `<div class="toolbar"><span class="note grow">${sts.length} fatura${sts.length === 1 ? "" : "s"} importada${sts.length === 1 ? "" : "s"}. Importar de novo o mesmo cartão e mês substitui a fatura anterior.</span></div>
   <div class="cards-list">${sts.map(s => { const sp = s.tx.filter(isSpend); const t = sp.reduce((a, x) => a + x.amount, 0);
@@ -981,7 +1008,7 @@ function parsePdfColumns(pages) {
   });
   return rows;
 }
-const BANCOS = [["BTG", "BTG Pactual"], ["NUBANK|NU PAGAMENTOS", "Nubank"], ["ITAU|ITAÚ", "Itaú"], ["BRADESCO", "Bradesco"], ["SANTANDER", "Santander"], ["BANCO INTER|\\bINTER\\b", "Inter"], ["C6 BANK|\\bC6\\b", "C6 Bank"], ["XP INVESTIMENTOS|CARTAO XP|CARTÃO XP", "XP"], ["CAIXA ECON", "Caixa"], ["BANCO DO BRASIL|OUROCARD", "Banco do Brasil"], ["PORTO SEGURO|PORTO BANK", "Porto Bank"], ["MERCADO PAGO", "Mercado Pago"], ["PICPAY", "PicPay"], ["SICOOB", "Sicoob"], ["SICREDI", "Sicredi"]];
+const BANCOS = [["BTG", "BTG UltraBlue"], ["NUBANK|NU PAGAMENTOS", "Nubank"], ["ITAU|ITAÚ", "Itaú"], ["BRADESCO", "Bradesco"], ["SANTANDER", "Santander"], ["BANCO INTER|\\bINTER\\b", "Inter"], ["C6 BANK|\\bC6\\b", "C6 Bank"], ["XP INVESTIMENTOS|CARTAO XP|CARTÃO XP", "XP"], ["CAIXA ECON", "Caixa"], ["BANCO DO BRASIL|OUROCARD", "Banco do Brasil"], ["PORTO SEGURO|PORTO BANK", "Porto Bank"], ["MERCADO PAGO", "Mercado Pago"], ["PICPAY", "PicPay"], ["SICOOB", "Sicoob"], ["SICREDI", "Sicredi"]];
 const MESES_LONGOS = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
 function guessMeta(text) {
   const n = norm(text.slice(0, 6000));
@@ -1022,6 +1049,8 @@ async function readPdf(password) {
   try {
     const {lines, pages} = await pdfLines(IMP.buf.slice(0), password);
     IMP.meta = guessMeta(lines.join("\n"));
+    const iofm = /IOF Zero[^R]*R\$\s?([\d.]+,\d{2})/i.exec(lines.join(" "));
+    IMP.meta.iofSaved = iofm ? parseAmount(iofm[1]) : null;
     return isTwoColumn(pages) ? parsePdfColumns(pages) : parseTextLines(lines);
   }
   catch (e) {
@@ -1077,6 +1106,7 @@ function saveImport() {
   const tx = IMP.rows.filter(r => r.keep).map(r => ({id: uid(), date: toISO(r.d, ref), desc: r.desc.slice(0, 120), amount: Math.round(r.amount * 100) / 100, inst: r.inst || null, orig: r.orig || null, who: r.who || null, final: r.final || null, cat: null, ign: false})).filter(t => t.date).sort((a, b) => a.date.localeCompare(b.date));
   const dup = STATE.statements.find(s => s.card === card && s.month === ref);
   const st = {kind: "statement", id: dup ? dup.id : "st-" + uid(), card, month: ref, fileName: IMP.fileName || "texto colado", importedAt: new Date().toISOString(), tx};
+  if (IMP.meta && IMP.meta.iofSaved) st.iofSaved = IMP.meta.iofSaved;
   if (JSON.stringify(st).length > 240000) { msg("Esta fatura é grande demais para um único registro. Divida o arquivo em partes.", "err"); return; }
   Store.saveStatement(st);
   closeImport(); STATE.card = "all"; STATE.view = "overview"; render();
@@ -1147,7 +1177,7 @@ document.addEventListener("change", e => {
   if (t.dataset && t.dataset.rule) { STATE.settings.rules[t.dataset.rule] = t.value; Store.saveSettings(); return render(); }
   if (t.dataset && t.dataset.cfg) {
     const card = t.closest("[data-card]").getAttribute("data-card"); const k = t.dataset.cfg;
-    const cur = Object.assign({}, (STATE.settings.cards || {})[card] || {});
+    const cur = Object.assign({}, cardsCfg()[card] || {}); delete cur.preset;
     cur[k] = (k === "type" || k === "unit") ? t.value : parseNum(t.value);
     if (k === "type" && !t.value) delete cur.type;
     STATE.settings.cards = Object.assign({}, STATE.settings.cards || {}, {[card]: cur}); Store.saveSettings(); return render();
