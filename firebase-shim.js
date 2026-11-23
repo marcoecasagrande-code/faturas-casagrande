@@ -74,6 +74,13 @@
     catch (e) { if (e && /popup-blocked|operation-not-supported|popup-closed-by-browser/.test(e.code || "")) return auth.signInWithRedirect(p); mostrarLogin(e && e.code === "auth/popup-closed-by-user" ? "" : "Não deu para entrar. Tente de novo."); }
   }
   let liberar; const pronto = new Promise(r => liberar = r); let aberto = false;
+  setTimeout(() => {
+    if (aberto || (tela && !tela.hidden) || (pinEl && !pinEl.hidden)) return;
+    const d = document.createElement("div"); d.id = "fb-lento";
+    d.innerHTML = `<style>#fb-lento{position:fixed;left:12px;right:12px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:99998;background:#141C2B;color:#fff;border-radius:14px;padding:14px;font:14px Inter,system-ui,sans-serif;display:flex;gap:10px;align-items:center;flex-wrap:wrap}#fb-lento button{margin-left:auto;border:0;border-radius:10px;padding:9px 14px;font:600 14px Inter,sans-serif;background:#2341C9;color:#fff}</style><span>Está demorando para conectar. Confira a internet.</span><button type="button">Tentar de novo</button>`;
+    d.querySelector("button").onclick = () => location.reload(); document.body.appendChild(d);
+    pronto.then(() => d.remove());
+  }, 12000);
   auth.getRedirectResult().catch(() => {});
   auth.onAuthStateChanged(async u => {
     if (!u) { if (aberto) location.reload(); return document.readyState === "loading" ? addEventListener("DOMContentLoaded", () => mostrarLogin()) : mostrarLogin(); }
@@ -194,13 +201,16 @@
   async function pedirPin(cfg, opts) {
     const temBio = !!ls.get(BIO) && !(opts && opts.semBio);
     const base = Object.assign({ titulo: "Digite o PIN", texto: "Financeiro da família Casagrande", tamanho: cfg.len, esqueci: true, bio: temBio }, opts);
-    if (temBio && await bioConferir()) return { ok: true, bio: true };
-    let erradas = 0, msg = "", trava = 0;
+    let erradas = 0, msg = "", trava = 0, primeira = true;
     for (;;) {
-      const espera = telaPin(base);
+      const espera = telaPin(base);          // a tela do PIN aparece na hora
       const api = telaPin.atual;
       if (msg) { api.erro(msg); if (trava) api.travar(trava); }
-      const r = await espera;
+      // biometria automática só na primeira tela; se o aparelho não mostrar o pedido, o PIN continua ali
+      const auto = temBio && primeira ? bioConferir().then(ok => ok ? { bioOk: true } : new Promise(() => {})) : new Promise(() => {});
+      primeira = false;
+      const r = await Promise.race([espera, auto]);
+      if (r.bioOk) return { ok: true, bio: true };
       if (r.esqueci || r.cancelar) return r;
       if (r.bio) { if (await bioConferir()) return { ok: true, bio: true }; msg = "Não deu para usar a biometria. Use o PIN."; trava = 0; continue; }
       if (await pinHash(r.pin, cfg.salt, cfg.iter) === cfg.hash) return { ok: true };
