@@ -107,6 +107,21 @@ header.top{position:relative;isolation:isolate;padding-top:20px}
 .pbar .ptrack{height:6px;background:var(--surface-2);border-radius:99px;overflow:hidden}
 .pbar .ptrack i{display:block;height:100%;border-radius:99px}
 tr.tot td{border-top:2px solid var(--line)}
+.metabar{position:relative;height:14px;background:var(--surface-2);border-radius:99px;margin:6px 0 16px}
+.metabar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,color-mix(in srgb,var(--orange) 70%,var(--accent)),var(--orange))}
+.metabar .metamark{position:absolute;top:-4px;width:4px;height:22px;margin-left:-2px;border-radius:3px;background:var(--fg)}
+.metanums{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.metanums>div{display:flex;flex-direction:column;gap:2px;min-width:0}
+.metanums b{font-family:var(--f-display);font-size:20px;font-weight:700}
+@media (max-width:720px){.metanums{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.metafield{display:flex;align-items:center;gap:8px;flex:1 1 220px}
+.metafield input{flex:1;min-width:0;font:600 18px var(--f-num);text-align:right}
+.metaform{display:flex;flex-direction:column;gap:6px;max-width:560px}
+.pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:600;white-space:nowrap}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.p-ok{background:color-mix(in srgb,var(--down) 15%,var(--surface));color:var(--down)}
+.p-warn{background:var(--warn-soft);color:var(--warn)}
+.p-idle{background:var(--surface-2);color:var(--muted)}
 .patgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:14px}
 .pgroup{display:flex;flex-direction:column;gap:8px}
 .pgroup h3{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-family:var(--f-body);font-weight:600}
@@ -468,7 +483,7 @@ const Store = {
     this.col.onSnapshot(snap => {
       const sts = [], pats = [], st = {rules: {}, customCats: [], cards: {}};
       snap.docs.forEach(d => { const b = d.data(); if (!b) return; if (b.kind === "statement") sts.push(b); else if (b.kind === "patrimonio") pats.push(b); else if (b.kind === "settings") Object.assign(st, b); });
-      STATE.statements = sts; STATE.pats = pats; STATE.settings = {rules: st.rules || {}, customCats: st.customCats || [], cards: st.cards || {}};
+      STATE.statements = sts; STATE.pats = pats; STATE.settings = {rules: st.rules || {}, customCats: st.customCats || [], cards: st.cards || {}, patMetas: st.patMetas || {}};
       if (!snap.metadata.fromCache) { first = false; clearTimeout(timer); }
       STATE.mode = "cloud"; setStatus("ok", this.family ? "Salvo para a família" : "Salvo na sua conta (privado)");
       render();
@@ -508,7 +523,7 @@ const Store = {
   },
   saveSettings() {
     if (this.local) return this.persistLocal();
-    const body = {kind: "settings", rules: STATE.settings.rules, customCats: STATE.settings.customCats, cards: STATE.settings.cards || {}};
+    const body = {kind: "settings", rules: STATE.settings.rules, customCats: STATE.settings.customCats, cards: STATE.settings.cards || {}, patMetas: STATE.settings.patMetas || {}};
     this.enqueue("settings", () => this.col.doc("settings").set(body));
   },
 };
@@ -1081,6 +1096,7 @@ async function importBackup(file) {
       STATE.settings.rules = Object.assign({}, STATE.settings.rules, j.settings.rules || {});
       STATE.settings.customCats = [...new Set((STATE.settings.customCats || []).concat(j.settings.customCats || []))];
       STATE.settings.cards = Object.assign({}, j.settings.cards || {}, STATE.settings.cards || {});
+      STATE.settings.patMetas = Object.assign({}, j.settings.patMetas || {}, STATE.settings.patMetas || {});
       Store.saveSettings();
     }
     render(); toast(sts.length + " fatura" + (sts.length === 1 ? "" : "s") + " importada" + (sts.length === 1 ? "" : "s") + ".");
@@ -1543,6 +1559,7 @@ function renderPat(v) {
       <div><div class="eyebrow">Fora do real</div><div class="v">${BRL0.format(intl)}</div><div class="s">${total ? (intl / total * 100).toLocaleString("pt-BR", {maximumFractionDigits: 1}) + "% · dólar e bitcoin" : ""}</div></div>
       <div><div class="eyebrow">Desde o início</div><div class="v ${dFirst == null ? "" : dFirst >= 0 ? "down" : "up"}">${dFirst == null ? "—" : (dFirst >= 0 ? "+" : "−") + BRL0.format(Math.abs(dFirst))}</div><div class="s">${recs.length} registro${recs.length > 1 ? "s" : ""} desde ${fmtDate(first.date)}</div></div>
     </section>
+    ${metaPanel(totalHoje != null ? totalHoje : total, recs)}
     <div class="panel c8"><div class="ph"><div><h2>Evolução do patrimônio</h2><p class="hint">Total em reais a cada registro, por pessoa</p></div><button class="btn small primary" type="button" data-act="newPat">+ Novo registro</button></div>
       ${patSVG(recs)}
       <div class="legend">${Object.keys(PAT_WHO).filter(k => recs.some(r => PAT_ASSETS.some(a => a.who === k && patVals(r)[a.id]))).map(k => '<span><i class="sw" style="background:' + PAT_WHO[k] + ';border-radius:50%"></i>' + esc(k) + "</span>").join("")}<span><i class="sw" style="background:var(--fg);height:3px;border-radius:2px"></i>Total</span></div>
@@ -1567,18 +1584,54 @@ function renderPat(v) {
   </div>`;
 }
 
+function metaPanel(atual, recs) {
+  const ano = new Date().getFullYear(), fim = ano + "-12-31";
+  const meta = (STATE.settings.patMetas || {})[ano];
+  const editando = STATE.editMeta || !meta;
+  const form = `<div class="metaform"><label class="lbl" for="metaIn">Meta para 31/12/${ano} (soma do patrimônio da família)</label>
+      <div class="row" style="align-items:center"><span class="pfield metafield"><span class="pcur">R$</span><input id="metaIn" inputmode="decimal" autocomplete="off" value="${meta ? esc(numIn(meta)) : ""}" placeholder="ex.: 2.500.000"></span>
+      <button class="btn primary" type="button" data-act="metaSave" style="flex:0 0 auto">Salvar meta</button>${meta ? '<button class="btn" type="button" data-act="metaCancel" style="flex:0 0 auto">Cancelar</button>' : ""}</div></div>`;
+  if (editando) return `<div class="panel c12 metapanel"><h2>Meta de fim de ano</h2><p class="hint">Quanto a família quer ter somando todos os ativos no último dia do ano. O app acompanha o quanto falta e se o ritmo atual chega lá.</p>${form}</div>`;
+  const hoje = todayISO();
+  const dias = Math.max(0, Math.round((new Date(fim + "T12:00:00") - new Date(hoje + "T12:00:00")) / 864e5));
+  const meses = dias / 30.44;
+  const falta = meta - atual, pctv = Math.max(0, Math.min(100, atual / meta * 100));
+  const porMes = falta > 0 && meses > 0 ? falta / Math.max(1, meses) : 0;
+  // ritmo: crescimento médio por dia entre o primeiro e o último registro
+  let proj = null, ritmoMes = null;
+  if (recs.length > 1) {
+    const a = recs[0], b = recs[recs.length - 1];
+    const d = (new Date(b.date + "T12:00:00") - new Date(a.date + "T12:00:00")) / 864e5;
+    if (d >= 7) { const porDia = (patTotal(b) - patTotal(a)) / d; ritmoMes = porDia * 30.44; proj = atual + porDia * dias; }
+  }
+  const atingida = falta <= 0;
+  const status = atingida ? '<span class="pill p-ok">Meta atingida</span>' : proj == null ? '<span class="pill p-idle">Faça mais registros para ver o ritmo</span>' : proj >= meta ? '<span class="pill p-ok">No ritmo para bater a meta</span>' : '<span class="pill p-warn">Abaixo do ritmo necessário</span>';
+  return `<div class="panel c12 metapanel">
+    <div class="ph"><div><h2>Meta de fim de ano</h2><p class="hint">Patrimônio da família em 31/12/${ano} · faltam ${dias} dia${dias === 1 ? "" : "s"}</p></div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${status}<button class="btn small" type="button" data-act="metaEdit">Alterar meta</button></div></div>
+    <div class="metabar"><i style="width:${pctv.toFixed(1)}%"></i><span class="metamark" style="left:${pctv.toFixed(1)}%"></span></div>
+    <div class="metanums">
+      <div><span class="eyebrow">Hoje</span><b class="num">${BRL0.format(atual)}</b><span class="note">${pctv.toLocaleString("pt-BR", {maximumFractionDigits: 1})}% da meta</span></div>
+      <div><span class="eyebrow">Meta</span><b class="num">${BRL0.format(meta)}</b><span class="note">até 31/12/${ano}</span></div>
+      <div><span class="eyebrow">${atingida ? "Acima da meta" : "Falta"}</span><b class="num ${atingida ? "down" : ""}">${BRL0.format(Math.abs(falta))}</b><span class="note">${atingida ? "parabéns à família" : porMes ? "≈ " + BRL0.format(porMes) + " por mês" : ""}</span></div>
+      <div><span class="eyebrow">No ritmo atual</span><b class="num ${proj == null ? "" : proj >= meta ? "down" : "up"}">${proj == null ? "—" : BRL0.format(proj)}</b><span class="note">${ritmoMes == null ? "precisa de registros com 1 semana ou mais de distância" : (ritmoMes >= 0 ? "+" : "−") + BRL0.format(Math.abs(ritmoMes)) + " por mês desde " + fmtDate(recs[0].date)}</span></div>
+    </div></div>`;
+}
+
 function patSVG(recs) {
   const phone = window.innerWidth < 600;
-  const W = phone ? 420 : 720, H = phone ? 280 : 330, L = phone ? 84 : 92, R = 14, T = 14, B = 30;
+  const W = phone ? 420 : 720, H = phone ? 280 : 330, L = phone ? 104 : 96, R = 14, T = 14, B = 30;
   const whos = Object.keys(PAT_WHO);
   const series = {}; whos.forEach(w => series[w] = recs.map(r => { const v = patVals(r); return PAT_ASSETS.filter(a => a.who === w).reduce((s2, a) => s2 + (v[a.id] || 0), 0); }));
   const totals = recs.map(patTotal);
-  const max = niceMax(Math.max(...totals, 1)), n = recs.length, iw = W - L - R, ih = H - T - B;
+  const metaV = (STATE.settings.patMetas || {})[new Date().getFullYear()];
+  const max = niceMax(Math.max(...totals, metaV || 0, 1)), n = recs.length, iw = W - L - R, ih = H - T - B;
   const x = i => n === 1 ? L + iw / 2 : L + i * iw / (n - 1), y = val => T + ih - val / max * ih;
   let s2 = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Evolução do patrimônio">`;
   for (let i = 0; i <= 4; i++) { const val = max * i / 4; s2 += `<line class="grid" x1="${L}" x2="${W - R}" y1="${y(val)}" y2="${y(val)}"/><text class="ax" x="${L - 8}" y="${y(val) + 4}" text-anchor="end">${shortBRL(val)}</text>`; }
   const step = n > 8 ? Math.ceil(n / 8) : 1;
   recs.forEach((r, i) => { if (i % step === 0 || i === n - 1) s2 += `<text class="ax" x="${x(i)}" y="${H - 8}" text-anchor="middle">${fmtDate(r.date).slice(0, 5)}</text>`; });
+  if (metaV) s2 += `<line x1="${L}" x2="${W - R}" y1="${y(metaV)}" y2="${y(metaV)}" style="stroke:var(--orange)" stroke-width="1.6" stroke-dasharray="6 5"/><text x="${W - R}" y="${y(metaV) - 6}" text-anchor="end" style="fill:var(--orange);font:600 11px var(--f-body)">Meta ${shortBRL(metaV)}</text>`;
   s2 += `<path d="M${x(0)},${y(0)} ${totals.map((t, i) => "L" + x(i).toFixed(1) + "," + y(t).toFixed(1)).join(" ")} L${x(n - 1)},${y(0)} Z" style="fill:var(--accent);opacity:.08"/>`;
   s2 += `<polyline points="${totals.map((t, i) => x(i).toFixed(1) + "," + y(t).toFixed(1)).join(" ")}" fill="none" style="stroke:var(--fg)" stroke-width="2.6" stroke-linejoin="round"/>`;
   totals.forEach((t, i) => s2 += `<circle cx="${x(i).toFixed(1)}" cy="${y(t).toFixed(1)}" r="${i === n - 1 ? 5 : 3.2}" style="fill:var(--fg);stroke:var(--surface);stroke-width:1.5" data-tip="${esc(fmtDate(recs[i].date) + " · total " + BRL.format(t))}"/>`);
@@ -1705,7 +1758,8 @@ document.addEventListener("scroll", () => tip.hidden = true, true);
 $("#tabs").addEventListener("click", e => { const b = e.target.closest("button[data-view]"); if (!b) return; STATE.view = b.dataset.view; pendingDelete = null; saveUi(); render(); });
 $("#periodSeg").addEventListener("click", e => { const b = e.target.closest("button[data-p]"); if (!b) return; STATE.period = +b.dataset.p; STATE.pickMonth = null; STATE.txMonth = "all"; saveUi(); render(); });
 $("#monthSel").onchange = e => { STATE.pickMonth = e.target.value || null; STATE.txMonth = "all"; render(); };
-document.addEventListener("keydown", e => { if ((e.key === "Enter" || e.key === " ") && e.target.matches && e.target.matches(".tap[data-act]")) { e.preventDefault(); e.target.click(); } });
+document.addEventListener("keydown", e => { if ((e.key === "Enter" || e.key === " ") && e.target.matches && e.target.matches(".tap[data-act]")) { e.preventDefault(); e.target.click(); }
+  if (e.key === "Enter" && e.target.id === "metaIn") { e.preventDefault(); const b = document.querySelector('[data-act="metaSave"]'); if (b) b.click(); } });
 $("#cardSel").onchange = e => { STATE.card = e.target.value; STATE.txMonth = "all"; render(); };
 $("#personSeg").addEventListener("click", e => { const b = e.target.closest("button[data-person]"); if (!b) return; STATE.person = b.getAttribute("data-person"); render(); });
 $("#btnImport").onclick = () => STATE.module === "patrimonio" ? openPat() : openImport();
@@ -1713,6 +1767,10 @@ document.querySelector(".modsw").addEventListener("click", e => { const b = e.ta
 document.addEventListener("click", e => {
   const t = e.target.closest("[data-act],[data-cat],[data-ign],[data-askdel],[data-del],[data-undel],[data-delrule],[data-delcat],[data-delcard],[data-patedit],[data-patask],[data-patdel],#aiBtn"); if (!t) return;
   if (t.dataset.act === "newPat") return openPat();
+  if (t.dataset.act === "metaEdit") { STATE.editMeta = true; render(); const i = $("#metaIn"); if (i) i.focus(); return; }
+  if (t.dataset.act === "metaCancel") { STATE.editMeta = false; return render(); }
+  if (t.dataset.act === "metaSave") { const v2 = parseNum($("#metaIn").value); if (!(v2 > 0)) { toast("Digite o valor da meta."); return; }
+    STATE.settings.patMetas = Object.assign({}, STATE.settings.patMetas || {}, {[new Date().getFullYear()]: v2}); STATE.editMeta = false; Store.saveSettings(); render(); toast("Meta de " + BRL0.format(v2) + " salva para 31/12."); return; }
   if (t.dataset.patedit) return openPat(t.dataset.patedit);
   if (t.dataset.patask) { pendingDelete = t.dataset.patask; return render(); }
   if (t.dataset.patdel) { const r = STATE.pats.find(x => x.id === t.dataset.patdel); Store.deletePat(t.dataset.patdel); pendingDelete = null; render(); if (r) toast("Registro de " + fmtDate(r.date) + " excluído."); return; }
