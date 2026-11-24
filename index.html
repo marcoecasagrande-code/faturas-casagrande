@@ -244,6 +244,24 @@ svg.chart .trend{stroke:var(--fg);stroke-width:1.4;stroke-dasharray:5 4;fill:non
 .gapchip button{border:0;background:var(--surface);color:var(--muted);border-radius:999px;padding:3px 9px;font-size:11.5px;font-weight:500}
 .gapchip button:hover{color:var(--fg)}
 .gapchip.off{background:var(--surface-2);border-color:var(--line);color:var(--muted)}
+.rrow{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:pan-y}
+.rrow.holding{background:color-mix(in srgb,var(--orange) 12%,var(--surface))}
+.holdring{position:fixed;z-index:200;width:56px;height:56px;margin:-72px 0 0 -28px;pointer-events:none;display:grid;place-items:center;border-radius:50%;background:var(--surface);box-shadow:0 6px 18px rgba(0,0,0,.3)}
+.holdring svg{position:absolute;inset:6px;width:44px;height:44px;transform:rotate(-90deg)}
+.holdring circle{fill:none;stroke-width:4}
+.holdring .bg{stroke:color-mix(in srgb,var(--orange) 22%,transparent)}
+.holdring .fg{stroke:var(--orange);stroke-linecap:round;stroke-dasharray:113.1;stroke-dashoffset:113.1;animation:holdfill 3s linear forwards}
+.holdring span{font-size:9px;font-weight:600;color:var(--fg)}
+@keyframes holdfill{to{stroke-dashoffset:0}}
+#catTitle{display:flex;align-items:center}
+.catlist{display:flex;flex-direction:column}
+.catrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.catrow:first-child{border-top:0}
+.catrow .cd{display:flex;flex-direction:column;gap:2px;min-width:0}
+.catrow .cd b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.catrow .ca{font-size:14px}
+.catrow select{grid-column:1/-1;width:100%}
+@media (min-width:700px){.catrow{grid-template-columns:minmax(0,1fr) auto 200px}.catrow select{grid-column:auto}}
 .mlist{display:flex;flex-direction:column}
 .mrow{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:2px 10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
 .mrow:first-child{border-top:0;padding-top:2px}
@@ -402,6 +420,13 @@ textarea{width:100%;min-height:110px;font-family:var(--f-num);font-size:12px}
   <div id="bannerArea"></div>
   <section id="view"></section>
 </main>
+
+<dialog id="catDlg">
+  <div class="dlg">
+    <header><h2 id="catTitle">Gastos da categoria</h2><button class="btn small" type="button" id="catClose">Fechar</button></header>
+    <div class="body" id="catBody"></div>
+  </div>
+</dialog>
 
 <dialog id="patDlg">
   <div class="dlg">
@@ -901,7 +926,7 @@ function renderOverview(v) {
       <div class="legend">${(focus ? [focus] : stackCats).map(c => '<span><i class="sw" style="background:' + catColor(c) + '"></i>' + esc(c) + "</span>").join("")}</div>
     </div>
     <div class="panel c4">
-      <h2>Ranking de categorias</h2><p class="hint">Variação vs ${prevMonths.length ? "os " + prevMonths.length + " meses anteriores" : "período anterior"} · clique para ver a tendência</p>
+      <h2>Ranking de categorias</h2><p class="hint">Variação vs ${prevMonths.length ? "os " + prevMonths.length + " meses anteriores" : "período anterior"} · toque para ver a tendência · <b>segure 3 s</b> para ver os gastos e mudar a categoria</p>
       <div class="rank">${catRank.map(([c, val], i) => { const p = pct(catTot[c], catPrev[c] || 0); const hasPrev = inPrev.length > 0;
         return `<button class="rrow" type="button" data-cat="${esc(c)}" aria-pressed="${focus === c}"><span class="pos">${i + 1}</span><span class="nm"><i class="sw" style="background:${catColor(c)}"></i>${esc(c)}</span><span class="amt">${BRL0.format(val)}</span><span class="track"><span class="fill" style="display:block;width:${(val / maxCat * 100).toFixed(1)}%;background:${catColor(c)}"></span></span><span class="meta"><span>${(val / total * 100).toLocaleString("pt-BR", {maximumFractionDigits: 1})}% do total</span><span>${!hasPrev ? "" : p == null ? "novo" : '<span class="' + (p > 0 ? "up" : "down") + '">' + (p > 0 ? "▲ " : "▼ ") + fmtPct(p) + "</span>"}</span></span></button>`; }).join("")}</div>
     </div>
@@ -1058,14 +1083,51 @@ function setTxCategory(stId, txId, cat) {
   const ruleCat = STATE.settings.rules[key] || autoCat(tx.desc);
   tx.cat = cat === ruleCat ? null : cat;
   Store.saveStatement(Object.assign({}, st, {tx: st.tx.slice()}));
-  render();
+  render(); refreshCatDlg();
   toast(`Categoria alterada para ${cat}.`, `Aplicar a todos de ${key}`, () => {
     STATE.settings.rules[key] = cat;
     // limpa ajustes individuais desse estabelecimento
     STATE.statements.forEach(s => { let ch = false; s.tx.forEach(t => { if (merchantKey(t.desc) === key && t.cat) { t.cat = null; ch = true; } }); if (ch) Store.saveStatement(Object.assign({}, s)); });
-    Store.saveSettings(); render(); toast(`Regra criada: ${key} → ${cat}.`);
+    Store.saveSettings(); render(); refreshCatDlg(); toast(`Regra criada: ${key} → ${cat}.`);
   });
 }
+/* lista de gastos de uma categoria (abre segurando 3 s no ranking) */
+const catDlg = $("#catDlg"); let CAT_OPEN = null;
+function openCatDlg(cat) { CAT_OPEN = cat; refreshCatDlg(); if (typeof catDlg.showModal === "function") catDlg.showModal(); else catDlg.setAttribute("open", ""); }
+function refreshCatDlg() {
+  if (!CAT_OPEN || !catDlg) return;
+  const {txs, months} = scopeTx();
+  const list = txs.filter(t => months.includes(t.month) && isSpend(t) && t.c === CAT_OPEN).sort((a, b) => b.date.localeCompare(a.date) || b.amount - a.amount);
+  const tot = list.reduce((a, t) => a + t.amount, 0), cats = allCats();
+  $("#catTitle").innerHTML = '<i class="sw" style="background:' + catColor(CAT_OPEN) + ';border-radius:50%;margin-right:8px"></i>' + esc(CAT_OPEN);
+  $("#catBody").innerHTML = `<p class="note" style="margin:0">${list.length} lançamento${list.length === 1 ? "" : "s"} · ${BRL.format(tot)} · ${months.length ? monthLabel(months[0]) + (months.length > 1 ? " a " + monthLabel(months[months.length - 1]) : "") : ""}${STATE.card !== "all" ? " · " + esc(STATE.card) : ""}${STATE.person !== "all" ? " · " + esc(STATE.person) : ""}. Escolha outra categoria para mover o gasto.</p>
+    ${STATE.demo ? '<p class="note" style="margin:0">Estes são dados de exemplo: importe uma fatura para poder reclassificar.</p>' : ""}
+    <div class="catlist">${list.map(t => `<div class="catrow"><div class="cd"><b title="${esc(t.desc)}">${esc(t.desc)}</b><span class="note">${t.date.slice(8, 10)}/${t.date.slice(5, 7)}/${t.date.slice(2, 4)} · ${esc(t.card)}${t.who ? " · " + esc(t.who) : ""}${t.inst ? " · parcela " + t.inst[0] + "/" + t.inst[1] : ""}</span></div>
+      <b class="num ca">${BRL.format(t.amount)}</b>
+      <select data-tx="${t.id}" data-st="${t.stId}" aria-label="Categoria de ${esc(t.desc)}" ${STATE.demo ? "disabled" : ""}>${cats.map(c => `<option ${c === t.c ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></div>`).join("") || '<p class="empty">Nenhum gasto nesta categoria no período.</p>'}</div>`;
+}
+$("#catClose").onclick = () => catDlg.open && catDlg.close();
+catDlg.addEventListener("close", () => { CAT_OPEN = null; });
+
+// segurar 3 s numa categoria do ranking
+(() => {
+  let timer = null, ring = null, alvo = null, x0 = 0, y0 = 0, disparou = false;
+  const cancela = () => { clearTimeout(timer); timer = null; if (ring) { ring.remove(); ring = null; } if (alvo) alvo.classList.remove("holding"); alvo = null; };
+  document.addEventListener("pointerdown", e => {
+    const r = e.target.closest && e.target.closest(".rrow[data-cat]"); if (!r || (e.button && e.button !== 0)) return;
+    cancela(); disparou = false; alvo = r; x0 = e.clientX; y0 = e.clientY; r.classList.add("holding");
+    ring = document.createElement("div"); ring.className = "holdring"; ring.style.left = e.clientX + "px"; ring.style.top = e.clientY + "px";
+    ring.innerHTML = '<svg viewBox="0 0 44 44"><circle class="bg" cx="22" cy="22" r="18"/><circle class="fg" cx="22" cy="22" r="18"/></svg><span>segure</span>';
+    document.body.appendChild(ring);
+    timer = setTimeout(() => { const cat = alvo.dataset.cat; disparou = true; cancela(); if (navigator.vibrate) try { navigator.vibrate(30); } catch (e2) {} openCatDlg(cat); }, 3000);
+  });
+  document.addEventListener("pointermove", e => { if (timer && Math.hypot(e.clientX - x0, e.clientY - y0) > 12) cancela(); });
+  ["pointerup", "pointercancel", "scroll"].forEach(ev => document.addEventListener(ev, () => { if (timer) cancela(); }, true));
+  // depois de abrir a lista, não trata o soltar como toque (não muda a tendência)
+  document.addEventListener("click", e => { if (disparou && e.target.closest && e.target.closest(".rrow")) { e.stopPropagation(); e.preventDefault(); disparou = false; } }, true);
+  document.addEventListener("contextmenu", e => { if (e.target.closest && e.target.closest(".rrow[data-cat]")) e.preventDefault(); });
+})();
+
 function toggleIgnore(stId, txId) {
   const st = STATE.statements.find(s => s.id === stId); if (!st) return;
   const tx = st.tx.find(t => t.id === txId); if (!tx) return;
