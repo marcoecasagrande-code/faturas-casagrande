@@ -78,7 +78,9 @@ header.top{position:relative;isolation:isolate;padding-top:20px}
 .cotchip .cot-flag{width:18px;height:18px;border-radius:50%;flex:none}
 .cotchip .ck{color:var(--muted)}
 .cotchip b{font-size:13px}
-.cotchip .cp{font-size:11.5px}
+.cotchip .cp{font-size:11.5px;font-weight:600}
+.cotchip .cp.pos{color:var(--accent)}
+.cotchip .cp.neg{color:var(--up)}
 .status{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:6px}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
 .dot.ok{background:var(--down)} .dot.warn{background:var(--warn)}
@@ -1882,10 +1884,11 @@ function cotChip() {
   if (!q) { el.hidden = true; return; }
   $("#cotFx").textContent = "R$ " + q.fx.toLocaleString("pt-BR", {minimumFractionDigits: 2, maximumFractionDigits: 4});
   const pc = $("#cotPct"), v = q.fxPct;
-  if (isFinite(v)) { pc.textContent = (v > 0 ? "▲ " : v < 0 ? "▼ " : "") + Math.abs(v).toLocaleString("pt-BR", {maximumFractionDigits: 2}) + "%"; pc.className = "cp num"; }
+  if (isFinite(v)) { pc.textContent = (v > 0 ? "▲ " : v < 0 ? "▼ " : "") + Math.abs(v).toLocaleString("pt-BR", {maximumFractionDigits: 2}) + "%"; pc.className = "cp num " + (v > 0 ? "pos" : v < 0 ? "neg" : ""); }
   $("#cotBtc").textContent = BRL0.format(q.btc);
   const pb = $("#cotBtcPct"), vb = q.btcPct;
   pb.textContent = isFinite(vb) ? (vb > 0 ? "▲ " : vb < 0 ? "▼ " : "") + Math.abs(vb).toLocaleString("pt-BR", {maximumFractionDigits: 2}) + "%" : "";
+  pb.className = "cp num " + (vb > 0 ? "pos" : vb < 0 ? "neg" : "");
   el.title = "Cotações de compra · atualizado " + fmtHora(q) + " · fonte AwesomeAPI";
   el.hidden = false;
 }
