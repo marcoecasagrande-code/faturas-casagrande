@@ -105,7 +105,7 @@
     b.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>Instalar app';
     b.title = "Instalar o Financeiro Casagrande neste computador ou celular";
     b.onclick = async () => { const p = pedidoInstalar; if (!p) return; pedidoInstalar = null; p.prompt(); try { const r = await p.userChoice; if (r && r.outcome === "accepted") b.remove(); else { pedidoInstalar = p; } } catch (e) {} };
-    st.after(b);
+    const ancora = document.getElementById("cotBox"); if (ancora) ancora.before(b); else st.after(b);
   }
   function addSair(u) {
     if (document.getElementById("fb-out")) return;
