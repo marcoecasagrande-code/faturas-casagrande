@@ -119,6 +119,10 @@ header.top{position:relative;isolation:isolate;padding-top:20px}
   .improw .impwrap .dots{display:none}
 }
 @media (max-width:380px){.cotbox .cotchip .ck{display:none}.modsw button{font-size:14.5px;gap:6px;padding:10px 6px}.modsw button svg{width:18px;height:18px}.newsbtn .nb2{display:none}}
+.valcol{font-weight:600;white-space:nowrap}
+.cardcol{white-space:nowrap}
+@media (max-width:560px){.tablewrap td,.tablewrap th{padding-left:7px;padding-right:7px}.yr{display:none}.tablewrap .desc{white-space:normal;word-break:break-word;min-width:110px;display:inline-block}}
+@media (max-width:900px){.cardcol .cardnm{display:none}.cardcol .note{font-size:inherit}.colfat{display:none}}
 .status{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:6px}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
 .dot.ok{background:var(--down)} .dot.warn{background:var(--warn)}
@@ -1230,12 +1234,12 @@ function renderTx(v) {
     ${othersN && !STATE.demo ? `<button class="btn small" type="button" id="aiBtn" hidden>Classificar "Outros" com Claude (${othersN})</button>` : ""}
   </div>
   <p class="note" style="margin:0 0 10px">${list.length} lançamento${list.length === 1 ? "" : "s"} · ${BRL.format(tot)} em compras${list.length > shown.length ? " · mostrando os 400 mais recentes" : ""}</p>
-  <div class="tablewrap"><table><thead><tr><th>Data</th><th>Descrição</th><th>Cartão</th><th>Pessoa</th><th>Fatura</th><th>Categoria</th><th class="r">Valor</th><th></th></tr></thead><tbody>
-  ${shown.map(t => `<tr class="${isSpend(t) ? "" : "muted"}"><td class="num">${t.date.slice(8, 10)}/${t.date.slice(5, 7)}/${t.date.slice(2, 4)}</td>
+  <div class="tablewrap"><table><thead><tr><th>Data</th><th>Descrição</th><th class="r">Valor</th><th>Cartão</th><th>Pessoa</th><th class="colfat">Fatura</th><th>Categoria</th><th></th></tr></thead><tbody>
+  ${shown.map(t => `<tr class="${isSpend(t) ? "" : "muted"}"><td class="num">${t.date.slice(8, 10)}/${t.date.slice(5, 7)}<span class="yr">/${t.date.slice(2, 4)}</span></td>
     <td><span class="desc" title="${esc(t.desc)}">${esc(t.desc)}${t.inst ? '<span class="badge">' + t.inst[0] + "/" + t.inst[1] + "</span>" : ""}${t.orig ? '<span class="badge">' + esc(t.orig) + "</span>" : ""}</span></td>
-    <td>${esc(t.card)}${t.final ? ' <span class="note num">· ' + esc(t.final) + "</span>" : ""}</td><td>${t.who ? '<span class="chip"><i class="sw" style="background:' + personColor(t.who) + ';border-radius:50%"></i>' + esc(t.who) + "</span>" : '<span class="note">—</span>'}</td><td class="num">${monthLabel(t.month)}</td>
+    <td class="r num valcol">${BRL.format(t.amount)}</td>
+    <td class="cardcol"><span class="cardnm">${esc(t.card)}</span>${t.final ? ' <span class="note num">· ' + esc(t.final) + "</span>" : ""}</td><td>${t.who ? '<span class="chip"><i class="sw" style="background:' + personColor(t.who) + ';border-radius:50%"></i>' + esc(t.who) + "</span>" : '<span class="note">—</span>'}</td><td class="num colfat">${monthLabel(t.month)}</td>
     <td>${t.amount < 0 ? '<span class="note">Crédito</span>' : `<select data-tx="${t.id}" data-st="${t.stId}" aria-label="Categoria" ${STATE.demo ? "disabled" : ""}>${cats.map(c => `<option ${c === t.c ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>${t.palpite ? '<span class="palpite" title="Categoria adivinhada pelo app. Escolha a categoria certa para confirmar.">palpite</span>' : ""}`}</td>
-    <td class="r num">${BRL.format(t.amount)}</td>
     <td>${t.amount > 0 && !STATE.demo ? `<button class="btn small" type="button" data-ign="${t.id}" data-st="${t.stId}">${t.ign ? "Contar" : "Ignorar"}</button>` : ""}</td></tr>`).join("") || '<tr><td colspan="8" class="empty">Nenhum lançamento encontrado.</td></tr>'}
   </tbody></table></div>`;
   const s = $("#txSearch"); s.addEventListener("input", debounce(() => { STATE.txSearch = s.value; renderKeepFocus("#txSearch"); }, 200));
