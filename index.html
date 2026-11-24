@@ -228,6 +228,19 @@ svg.chart .trend{stroke:var(--fg);stroke-width:1.4;stroke-dasharray:5 4;fill:non
 .rrow .track{grid-column:2/4;height:6px;background:var(--surface-2);border-radius:99px;overflow:hidden}
 .rrow .fill{height:100%;border-radius:99px}
 .rrow .meta{grid-column:2/4;display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted)}
+.gapbanner{align-items:flex-start;background:var(--warn-soft);border-color:color-mix(in srgb,var(--warn) 45%,transparent)}
+.gapbanner>svg{color:var(--warn);flex:none;margin-top:1px}
+.gapbanner strong{color:var(--warn)}
+.gapbanner>span:nth-child(2){flex:1 1 260px;min-width:0}
+.gapacts{display:flex;gap:6px;flex-wrap:wrap}
+.gaprow{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:10px 0;border-top:1px dashed var(--line)}
+.gaprow:first-of-type{border-top:0}
+.gaprow .cname{display:flex;align-items:center;gap:8px;font-family:var(--f-display);font-weight:700;min-width:130px}
+.gapmonths{display:flex;flex-wrap:wrap;gap:6px}
+.gapchip{display:inline-flex;align-items:center;gap:8px;border:1px solid color-mix(in srgb,var(--warn) 45%,transparent);background:var(--warn-soft);color:var(--fg);border-radius:999px;padding:3px 4px 3px 11px;font-size:12.5px;font-weight:500}
+.gapchip button{border:0;background:var(--surface);color:var(--muted);border-radius:999px;padding:3px 9px;font-size:11.5px;font-weight:500}
+.gapchip button:hover{color:var(--fg)}
+.gapchip.off{background:var(--surface-2);border-color:var(--line);color:var(--muted)}
 .mlist{display:flex;flex-direction:column}
 .mrow{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:2px 10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
 .mrow:first-child{border-top:0;padding-top:2px}
@@ -526,7 +539,7 @@ const Store = {
     this.col.onSnapshot(snap => {
       const sts = [], pats = [], st = {rules: {}, customCats: [], cards: {}};
       snap.docs.forEach(d => { const b = d.data(); if (!b) return; if (b.kind === "statement") sts.push(b); else if (b.kind === "patrimonio") pats.push(b); else if (b.kind === "settings") Object.assign(st, b); });
-      STATE.statements = sts; STATE.pats = pats; STATE.settings = {rules: st.rules || {}, customCats: st.customCats || [], cards: st.cards || {}, patMetas: st.patMetas || {}};
+      STATE.statements = sts; STATE.pats = pats; STATE.settings = {rules: st.rules || {}, customCats: st.customCats || [], cards: st.cards || {}, patMetas: st.patMetas || {}, ignoredGaps: st.ignoredGaps || []};
       if (!snap.metadata.fromCache) { first = false; clearTimeout(timer); }
       STATE.mode = "cloud"; setStatus("ok", this.family ? "Salvo para a família" : "Salvo na sua conta (privado)");
       render();
@@ -566,7 +579,7 @@ const Store = {
   },
   saveSettings() {
     if (this.local) return this.persistLocal();
-    const body = {kind: "settings", rules: STATE.settings.rules, customCats: STATE.settings.customCats, cards: STATE.settings.cards || {}, patMetas: STATE.settings.patMetas || {}};
+    const body = {kind: "settings", rules: STATE.settings.rules, customCats: STATE.settings.customCats, cards: STATE.settings.cards || {}, patMetas: STATE.settings.patMetas || {}, ignoredGaps: STATE.settings.ignoredGaps || []};
     this.enqueue("settings", () => this.col.doc("settings").set(body));
   },
 };
@@ -691,6 +704,22 @@ const fmtReward = r => r.value == null ? "—" : r.type === "cb" ? BRL.format(r.
 const SRC_MARK = {estimado: "≈", fatura: "", informado: ""};
 function sumBy(txs, keyFn) { const o = {}; txs.forEach(t => { const k = keyFn(t); o[k] = (o[k] || 0) + t.amount; }); return o; }
 
+/* ---------- faturas faltando ---------- */
+// Para cada cartão: do mês da primeira fatura até o mês atual (a partir do dia 20) ou o anterior.
+function faturasFaltando() {
+  if (STATE.demo) return [];
+  const hoje = new Date(); let lim = curMonth(); if (hoje.getDate() < 20) lim = addMonth(lim, -1);
+  const ign = new Set(STATE.settings.ignoredGaps || []), out = [];
+  cardNames().forEach(c => {
+    const ms = STATE.statements.filter(x => x.card === c).map(x => x.month).sort(); if (!ms.length) return;
+    const tem = new Set(ms), falta = []; let m = ms[0];
+    while (m <= lim) { if (!tem.has(m) && !ign.has(c + "|" + m)) falta.push(m); m = addMonth(m, 1); }
+    if (falta.length) out.push({card: c, falta});
+  });
+  return out;
+}
+const listaMeses = ms => ms.length <= 4 ? ms.map(monthLabel).join(", ") : ms.slice(0, 3).map(monthLabel).join(", ") + " e mais " + (ms.length - 3);
+
 /* ---------- renderização ---------- */
 let DEMO = null;
 function render() {
@@ -729,7 +758,12 @@ function render() {
   const ba = $("#bannerArea");
   if (STATE.mode === "loading") ba.innerHTML = "";
   else if (STATE.demo) ba.innerHTML = '<div class="banner"><strong>Dados de exemplo.</strong><span>Isto é uma simulação para mostrar como o app funciona. Importe a primeira fatura e o exemplo some.</span><button class="btn small primary" type="button" data-act="import">Importar fatura</button>' + (window.__fbLogin ? '<button class="btn small" type="button" data-act="goBackup">Trazer backup do app do Claude</button>' : '') + '</div>';
-  else ba.innerHTML = "";
+  else {
+    const gaps = faturasFaltando(), n = gaps.reduce((a, g) => a + g.falta.length, 0);
+    ba.innerHTML = n ? `<div class="banner gapbanner"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+      <span><strong>${n === 1 ? "Falta 1 fatura" : "Faltam " + n + " faturas"}.</strong> ${gaps.map(g => esc(g.card) + ": " + listaMeses(g.falta)).join(" · ")}</span>
+      <span class="gapacts"><button class="btn small primary" type="button" data-act="import">Importar</button><button class="btn small" type="button" data-act="verFaltas">Ver detalhes</button></span></div>` : "";
+  }
   const v = $("#view");
   if (STATE.mode === "loading") { v.innerHTML = '<div class="panel empty">Carregando suas faturas…</div>'; return; }
   if (STATE.view === "overview") renderOverview(v);
@@ -1063,7 +1097,13 @@ function renderStatements(v) {
     };
     const b = $("#addCard"); if (b) b.onclick = add; const i = $("#newCard"); if (i) i.onkeydown = e => { if (e.key === "Enter") add(); };
   });
-  v.innerHTML = cfgHTML + `<div class="toolbar"><span class="note grow">${sts.length} fatura${sts.length === 1 ? "" : "s"} importada${sts.length === 1 ? "" : "s"}. Importar de novo o mesmo cartão e mês substitui a fatura anterior.</span></div>
+  const gaps = faturasFaltando(), ignList = (STATE.settings.ignoredGaps || []).slice().sort();
+  const gapHTML = gaps.length || ignList.length ? `<div class="panel" id="gapPanel" style="margin-bottom:16px"><h2>Faturas faltando</h2>
+    <p class="hint">Meses sem fatura desde a primeira fatura de cada cartão. Se o cartão não teve fatura naquele mês, toque em "Sem fatura" para parar de avisar.</p>
+    ${gaps.length ? gaps.map(g => `<div class="gaprow"><span class="cname"><i class="sw" style="background:${cardColor(g.card)}"></i>${esc(g.card)}</span><span class="gapmonths">${g.falta.map(m => `<span class="gapchip">${esc(monthLabel(m))}<button type="button" data-gapign="${esc(g.card + "|" + m)}" title="Este cartão não teve fatura em ${esc(monthLong(m))}">Sem fatura</button></span>`).join("")}</span></div>`).join("") + '<button class="btn small primary" type="button" data-act="import" style="margin-top:10px">Importar faturas</button>' : '<p class="note" style="margin:0">Nenhuma fatura faltando.</p>'}
+    ${ignList.length ? `<details style="margin-top:12px"><summary>Meses marcados como sem fatura (${ignList.length})</summary><div class="gapmonths" style="margin-top:8px">${ignList.map(k => { const [c, m] = k.split("|"); return `<span class="gapchip off">${esc(c)} · ${esc(monthLabel(m))}<button type="button" data-gapun="${esc(k)}">Voltar a avisar</button></span>`; }).join("")}</div></details>` : ""}
+  </div>` : "";
+  v.innerHTML = gapHTML + cfgHTML + `<div class="toolbar"><span class="note grow">${sts.length} fatura${sts.length === 1 ? "" : "s"} importada${sts.length === 1 ? "" : "s"}. Importar de novo o mesmo cartão e mês substitui a fatura anterior.</span></div>
   <div class="cards-list">${sts.map(s => { const sp = s.tx.filter(isSpend); const t = sp.reduce((a, x) => a + x.amount, 0);
     const r = rewardFor(s); const est = r && r.src !== "informado" && r.value != null ? fmtReward(Object.assign({}, r)) + (r.src === "fatura" ? " (fatura)" : " (estimado)") : "";
     return `<div class="st" style="--tc:${cardColor(s.card)}"><i class="sw" style="width:12px;height:12px;background:${cardColor(s.card)}"></i><div><div class="t">${esc(s.card)} · ${esc(monthLong(s.month))}</div><div class="m">${sp.length} compras${(() => { const pp = sumBy(sp.filter(x => x.who), x => x.who); const ks = Object.keys(pp); return ks.length > 1 ? " · " + ks.sort().map(k => esc(k) + " " + BRL0.format(pp[k])).join(" · ") : ""; })()} · arquivo: ${esc(s.fileName || "—")}</div></div><div class="num" style="font-weight:600">${BRL.format(t)}</div>
@@ -1143,6 +1183,7 @@ async function importBackup(file) {
       STATE.settings.customCats = [...new Set((STATE.settings.customCats || []).concat(j.settings.customCats || []))];
       STATE.settings.cards = Object.assign({}, j.settings.cards || {}, STATE.settings.cards || {});
       STATE.settings.patMetas = Object.assign({}, j.settings.patMetas || {}, STATE.settings.patMetas || {});
+      STATE.settings.ignoredGaps = [...new Set((STATE.settings.ignoredGaps || []).concat(j.settings.ignoredGaps || []))];
       Store.saveSettings();
     }
     render(); toast(sts.length + " fatura" + (sts.length === 1 ? "" : "s") + " importada" + (sts.length === 1 ? "" : "s") + ".");
@@ -1880,8 +1921,11 @@ $("#personSeg").addEventListener("click", e => { const b = e.target.closest("but
 $("#btnImport").onclick = () => STATE.module === "patrimonio" ? openPat() : openImport();
 document.querySelector(".modsw").addEventListener("click", e => { const b = e.target.closest("button[data-mod]"); if (!b || b.dataset.mod === STATE.module) return; STATE.module = b.dataset.mod; saveUi(); render(); window.scrollTo({top: 0}); });
 document.addEventListener("click", e => {
-  const t = e.target.closest("[data-act],[data-cat],[data-ign],[data-askdel],[data-del],[data-undel],[data-delrule],[data-delcat],[data-delcard],[data-patedit],[data-patask],[data-patdel],[data-evo],#aiBtn"); if (!t) return;
+  const t = e.target.closest("[data-act],[data-cat],[data-ign],[data-askdel],[data-del],[data-undel],[data-delrule],[data-delcat],[data-delcard],[data-patedit],[data-patask],[data-patdel],[data-evo],[data-gapign],[data-gapun],#aiBtn"); if (!t) return;
   if (t.dataset.evo) { const id = t.dataset.evo; if (id === "__total") PAT_SHOW_TOTAL = !PAT_SHOW_TOTAL; else if (PAT_HIDE.has(id)) PAT_HIDE.delete(id); else PAT_HIDE.add(id); return render(); }
+  if (t.dataset.act === "verFaltas") { STATE.view = "statements"; saveUi(); render(); const gp = $("#gapPanel"); if (gp) gp.scrollIntoView({behavior: "smooth", block: "start"}); return; }
+  if (t.dataset.gapign) { STATE.settings.ignoredGaps = [...new Set((STATE.settings.ignoredGaps || []).concat([t.dataset.gapign]))]; Store.saveSettings(); render(); const [c, m] = t.dataset.gapign.split("|"); toast(c + ": " + monthLong(m) + " marcado como sem fatura."); return; }
+  if (t.dataset.gapun) { STATE.settings.ignoredGaps = (STATE.settings.ignoredGaps || []).filter(k => k !== t.dataset.gapun); Store.saveSettings(); return render(); }
   if (t.dataset.act === "newPat") return openPat();
   if (t.dataset.act === "metaEdit") { STATE.editMeta = true; render(); const i = $("#metaIn"); if (i) i.focus(); return; }
   if (t.dataset.act === "metaCancel") { STATE.editMeta = false; return render(); }
