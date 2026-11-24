@@ -95,6 +95,26 @@ header.top{position:relative;isolation:isolate;padding-top:20px}
 .newsitem img{grid-column:2;grid-row:1 / span 2;width:84px;height:60px;object-fit:cover;border-radius:8px;background:var(--surface-2)}
 .newsnote{font-size:12px;color:var(--muted);margin:0}
 .newsempty{padding:24px 4px;color:var(--muted);text-align:center}
+.improw .newsmob{display:none}
+@media (max-width:560px){
+  .bar{gap:10px;padding-block:2px 12px}
+  .bar>.newsbtn:not(.newsmob){display:none}
+  .cotbox{flex:1 1 100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+  .cotbox .cotchip{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:3px 6px;padding:7px 8px;border-radius:12px;white-space:normal;box-shadow:var(--cardsh)}
+  .cotbox .cotchip[hidden]{display:none}
+  .cotchip .cot-flag,.cotchip .cot-btc,.cotchip .cot-selic{width:16px;height:16px;font-size:9.5px}
+  .cotbox .cotchip .ck{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cotbox .cotchip b{grid-column:1 / -1;font-size:12.5px;white-space:nowrap;letter-spacing:-.02em}
+  .cotbox .cotchip .cp{grid-column:1 / -1;font-size:10.5px;white-space:nowrap}
+  .modsw{margin:0 0 10px}
+  .modsw button{padding:11px 10px;font-size:16px}
+  .improw{margin:0 0 12px;align-items:center}
+  .improw .newsmob{display:inline-flex;grid-column:1;justify-self:stretch;justify-content:center;padding:10px 12px}
+  .improw .impwrap{justify-self:stretch}
+  .improw .impwrap .btn{width:100%;justify-content:center;padding:10px 12px}
+  .improw .impwrap .dots{display:none}
+  .improw .impwrap .btn{box-shadow:0 4px 14px color-mix(in srgb,var(--accent) 30%,transparent)}
+}
 .status{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:6px}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
 .dot.ok{background:var(--down)} .dot.warn{background:var(--warn)}
@@ -484,7 +504,7 @@ textarea{width:100%;min-height:110px;font-family:var(--f-num);font-size:12px}
       <button type="button" role="tab" data-mod="cartoes" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6.5 15h4" stroke-linecap="round"/></svg>Cartões</button>
       <button type="button" role="tab" data-mod="patrimonio" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 20h18M4 10h16M12 3l9 5H3l9-5zM6 10v7M10 10v7M14 10v7M18 10v7"/></svg>Patrimônio</button>
     </div>
-    <div class="improw"><span class="impwrap"><span class="dots" aria-hidden="true"><svg viewBox="0 0 300 330"><defs><pattern id="dotp" width="9" height="9" patternUnits="userSpaceOnUse"><circle cx="4.5" cy="4.5" r="2.1"/></pattern><mask id="dolm"><text x="150" y="282" text-anchor="middle" font-size="340" font-weight="700" font-family="Bricolage Grotesque, Inter, Arial, sans-serif" fill="#fff">$</text></mask></defs><rect width="300" height="330" fill="url(#dotp)" mask="url(#dolm)"/></svg></span><button class="btn primary" id="btnImport" type="button">+ Importar fatura</button></span></div>
+    <div class="improw"><button class="btn newsbtn newsmob" type="button" id="newsBtn2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h13v13a2 2 0 0 0 2 2H6a2 2 0 0 1-2-2z"/><path d="M17 9h3v9a2 2 0 0 1-2 2"/><path d="M7.5 9h6M7.5 12.5h6M7.5 16h4"/></svg>Notícias</button><span class="impwrap"><span class="dots" aria-hidden="true"><svg viewBox="0 0 300 330"><defs><pattern id="dotp" width="9" height="9" patternUnits="userSpaceOnUse"><circle cx="4.5" cy="4.5" r="2.1"/></pattern><mask id="dolm"><text x="150" y="282" text-anchor="middle" font-size="340" font-weight="700" font-family="Bricolage Grotesque, Inter, Arial, sans-serif" fill="#fff">$</text></mask></defs><rect width="300" height="330" fill="url(#dotp)" mask="url(#dolm)"/></svg></span><button class="btn primary" id="btnImport" type="button">+ Importar fatura</button></span></div>
     <nav class="tabs" role="tablist" id="tabs">
       <button role="tab" data-view="overview" aria-selected="true" type="button">Visão geral</button>
       <button role="tab" data-view="tx" aria-selected="false" type="button">Lançamentos</button>
@@ -2404,7 +2424,7 @@ async function renderNews() {
   lista = lista.slice(0, dias === 1 ? 30 : 60);
   box.innerHTML = lista.map((i, n) => '<a class="newsitem" target="_blank" rel="noopener" href="' + esc(i.link) + '"><span class="nt">' + esc(i.titulo) + '</span><span class="nm"><b>' + esc(i.fonte) + '</b> · ' + esc(quandoNews(i.data)) + '</span>' + (i.img ? '<img loading="lazy" alt="" src="' + esc(i.img) + '" onerror="this.remove()">' : '') + '</a>').join("") || '<div class="newsempty">Nenhuma manchete nesse período.</div>';
 }
-$("#newsBtn").addEventListener("click", () => { renderNews(); if (typeof newsDlg.showModal === "function") newsDlg.showModal(); else newsDlg.setAttribute("open", ""); });
+["#newsBtn", "#newsBtn2"].forEach(id => $(id).addEventListener("click", () => { renderNews(); if (typeof newsDlg.showModal === "function") newsDlg.showModal(); else newsDlg.setAttribute("open", ""); }));
 $("#newsClose").addEventListener("click", () => newsDlg.close());
 newsDlg.addEventListener("click", e => { if (e.target === newsDlg) newsDlg.close(); });
 $("#newsTema").addEventListener("click", e => { const b = e.target.closest("button[data-t]"); if (!b) return; NEWS.tema = b.dataset.t; renderNews(); });
