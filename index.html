@@ -107,6 +107,32 @@ header.top{position:relative;isolation:isolate;padding-top:20px}
 .pbar .ptrack{height:6px;background:var(--surface-2);border-radius:99px;overflow:hidden}
 .pbar .ptrack i{display:block;height:100%;border-radius:99px}
 tr.tot td{border-top:2px solid var(--line)}
+.evo .evochips{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 14px}
+.evochip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 11px;font-size:12.5px;font-weight:500;color:var(--fg)}
+.evochip i{width:14px;height:3px;border-radius:2px;background:var(--lc)}
+.evochip[aria-pressed="false"]{color:var(--muted);opacity:.55}
+.evochip[aria-pressed="false"] i{background:var(--line)}
+.evochip.tot i{height:3px;background:repeating-linear-gradient(90deg,var(--lc) 0 4px,transparent 4px 6px)}
+.evochip.tot[aria-pressed="false"] i{background:repeating-linear-gradient(90deg,var(--line) 0 4px,transparent 4px 6px)}
+.evowrap{position:relative;touch-action:pan-y}
+.evo-svg .evogrid{stroke:var(--line);stroke-width:1;stroke-dasharray:2 5}
+.evo-svg .evobase{stroke:var(--line);stroke-width:1.2}
+.evo-svg .ax{font-size:11.5px}
+.evoline{fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.evoline.tot{stroke-width:2.2;stroke-dasharray:7 5}
+.evolead{fill:none;stroke-width:1.2;opacity:.55}
+.evolab{font:600 12.5px var(--f-body);fill:var(--fg)}
+.evoval{font:500 11.5px var(--f-num);fill:var(--muted)}
+.evometa{stroke:var(--orange);stroke-width:1.4;stroke-dasharray:6 5}
+.evometa-t{font:600 11.5px var(--f-body);fill:var(--orange)}
+.evox{stroke:var(--muted);stroke-width:1;stroke-dasharray:3 3;transition:opacity .12s}
+.evotip{position:absolute;top:8px;z-index:5;min-width:250px;max-width:320px;background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:14px;padding:10px 12px;box-shadow:0 12px 30px rgba(10,14,24,.25);pointer-events:none;font-size:12.5px}
+.evotip .th{display:flex;justify-content:space-between;gap:12px;font-weight:600;padding-bottom:6px;margin-bottom:6px;border-bottom:1px solid var(--line)}
+.evotip .tr{display:grid;grid-template-columns:10px minmax(0,1fr) auto auto;gap:4px 8px;align-items:center;padding:2px 0}
+.evotip .tr i{width:9px;height:9px;border-radius:50%}
+.evotip .tr span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
+.evotip .tr em{font-style:normal;font:500 11px var(--f-num);min-width:58px;text-align:right}
+@media (prefers-reduced-motion:no-preference){.evoline{stroke-dasharray:1;stroke-dashoffset:1;animation:evodraw 1.1s cubic-bezier(.3,.7,.2,1) forwards}.evoline.tot{animation:none;stroke-dasharray:7 5;stroke-dashoffset:0}@keyframes evodraw{to{stroke-dashoffset:0}}}
 .metabar{position:relative;height:14px;background:var(--surface-2);border-radius:99px;margin:6px 0 16px}
 .metabar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,color-mix(in srgb,var(--orange) 70%,var(--accent)),var(--orange))}
 .metabar .metamark{position:absolute;top:-4px;width:4px;height:22px;margin-left:-2px;border-radius:3px;background:var(--fg)}
@@ -1530,6 +1556,7 @@ const patTotal = r => Object.values(patVals(r)).reduce((a, x) => a + (x || 0), 0
 function renderPat(v) {
   const recs = patSorted();
   cotacaoHoje();
+  setTimeout(wireEvo);
   if (!recs.length) {
     v.innerHTML = `<div class="panel pat-empty"><h2>Patrimônio da família</h2>
       <p class="hint">Registre quanto há em cada conta. A cada novo registro o app guarda o valor e mostra a evolução, quanto cada pessoa tem e a divisão entre BTG, XP e Bitcoin.</p>
@@ -1560,12 +1587,13 @@ function renderPat(v) {
       <div><div class="eyebrow">Desde o início</div><div class="v ${dFirst == null ? "" : dFirst >= 0 ? "down" : "up"}">${dFirst == null ? "—" : (dFirst >= 0 ? "+" : "−") + BRL0.format(Math.abs(dFirst))}</div><div class="s">${recs.length} registro${recs.length > 1 ? "s" : ""} desde ${fmtDate(first.date)}</div></div>
     </section>
     ${metaPanel(totalHoje != null ? totalHoje : total, recs)}
-    <div class="panel c8"><div class="ph"><div><h2>Evolução do patrimônio</h2><p class="hint">Total em reais a cada registro, por pessoa</p></div><button class="btn small primary" type="button" data-act="newPat">+ Novo registro</button></div>
-      ${patSVG(recs)}
-      <div class="legend">${Object.keys(PAT_WHO).filter(k => recs.some(r => PAT_ASSETS.some(a => a.who === k && patVals(r)[a.id]))).map(k => '<span><i class="sw" style="background:' + PAT_WHO[k] + ';border-radius:50%"></i>' + esc(k) + "</span>").join("")}<span><i class="sw" style="background:var(--fg);height:3px;border-radius:2px"></i>Total</span></div>
+    <div class="panel c12 evo">
+      <div class="ph"><div><h2>Evolução do patrimônio</h2><p class="hint">Cada linha é um ativo, em reais, a cada registro · toque nos nomes para mostrar ou esconder</p></div><button class="btn small primary" type="button" data-act="newPat">+ Novo registro</button></div>
+      <div class="evochips">${PAT_ASSETS.filter(a => recs.some(r => patVals(r)[a.id] != null)).map(a => `<button type="button" class="evochip" data-evo="${a.id}" aria-pressed="${!PAT_HIDE.has(a.id)}" style="--lc:${ASSET_COLOR[a.id]}"><i></i>${esc(a.nome)}${a.sub ? " " + esc(a.sub.slice(0, 5)) + "." : ""}</button>`).join("")}<button type="button" class="evochip tot" data-evo="__total" aria-pressed="${PAT_SHOW_TOTAL}" style="--lc:var(--fg)"><i></i>Total da família</button></div>
+      <div class="evowrap" id="evoWrap">${patSVG(recs)}<div class="evotip" id="evoTip" hidden></div></div>
     </div>
-    <div class="panel c4"><h2>Por pessoa</h2><p class="hint">Bitcoin conta como da família</p><div class="pbars">${bars(byWho, PAT_WHO)}</div>
-      <h2 style="margin-top:18px">Por instituição</h2><p class="hint">Onde está guardado</p><div class="pbars">${bars(byInst, PAT_INST)}</div></div>
+    <div class="panel c6"><h2>Por pessoa</h2><p class="hint">Bitcoin conta como da família</p><div class="pbars">${bars(byWho, PAT_WHO)}</div></div>
+    <div class="panel c6"><h2>Por instituição</h2><p class="hint">Onde está guardado</p><div class="pbars">${bars(byInst, PAT_INST)}</div></div>
     <div class="panel c12"><h2>Ativos</h2><p class="hint">Valores do registro de ${fmtDate(last.date)}${last.fx ? " · dólar a " + BRL.format(last.fx) : ""}${last.btcPrice ? " · bitcoin a " + BRL0.format(last.btcPrice) : ""}</p>
       <div class="tablewrap" style="border:0"><table><thead><tr><th>Ativo</th><th>Pessoa</th><th class="r">Saldo</th><th class="r">Em reais</th><th class="r">Variação</th><th class="r">% do total</th></tr></thead><tbody>
       ${PAT_ASSETS.map(a => { const x = lv[a.id], raw = last.v[a.id], px = pv ? pv[a.id] : null, dd = x != null && px != null ? x - px : null;
@@ -1618,27 +1646,85 @@ function metaPanel(atual, recs) {
     </div></div>`;
 }
 
+const ASSET_COLOR = {"btg-marco-br": "var(--c0)", "btg-marco-us": "var(--c8)", "btg-alice": "var(--c2)", "btg-moema": "var(--c3)", "btc": "#F7931A", "xp-moema": "var(--c10)", "xp-alice": "var(--c11)", "xp-marco": "var(--c4)"};
+const PAT_HIDE = new Set();
+let PAT_SHOW_TOTAL = false;
+let EVO = null;  // geometria do último gráfico, usada pela dica
+// curva suave que não passa do valor dos pontos (monotone cubic)
+function smoothPath(pts) {
+  if (pts.length === 1) return "";
+  const n = pts.length, dx = [], m = [], t = [];
+  for (let i = 0; i < n - 1; i++) { dx[i] = pts[i + 1][0] - pts[i][0]; m[i] = (pts[i + 1][1] - pts[i][1]) / dx[i]; }
+  t[0] = m[0]; t[n - 1] = m[n - 2];
+  for (let i = 1; i < n - 1; i++) t[i] = m[i - 1] * m[i] <= 0 ? 0 : (m[i - 1] + m[i]) / 2;
+  for (let i = 0; i < n - 1; i++) { if (m[i] === 0) { t[i] = t[i + 1] = 0; continue; } const a = t[i] / m[i], b = t[i + 1] / m[i], h = a * a + b * b; if (h > 9) { const k = 3 / Math.sqrt(h); t[i] = k * a * m[i]; t[i + 1] = k * b * m[i]; } }
+  let d = "M" + pts[0][0].toFixed(1) + "," + pts[0][1].toFixed(1);
+  for (let i = 0; i < n - 1; i++) { const h = dx[i] / 3; d += " C" + (pts[i][0] + h).toFixed(1) + "," + (pts[i][1] + t[i] * h).toFixed(1) + " " + (pts[i + 1][0] - h).toFixed(1) + "," + (pts[i + 1][1] - t[i + 1] * h).toFixed(1) + " " + pts[i + 1][0].toFixed(1) + "," + pts[i + 1][1].toFixed(1); }
+  return d;
+}
 function patSVG(recs) {
   const phone = window.innerWidth < 600;
-  const W = phone ? 420 : 720, H = phone ? 280 : 330, L = phone ? 104 : 96, R = 14, T = 14, B = 30;
-  const whos = Object.keys(PAT_WHO);
-  const series = {}; whos.forEach(w => series[w] = recs.map(r => { const v = patVals(r); return PAT_ASSETS.filter(a => a.who === w).reduce((s2, a) => s2 + (v[a.id] || 0), 0); }));
-  const totals = recs.map(patTotal);
-  const metaV = (STATE.settings.patMetas || {})[new Date().getFullYear()];
-  const max = niceMax(Math.max(...totals, metaV || 0, 1)), n = recs.length, iw = W - L - R, ih = H - T - B;
-  const x = i => n === 1 ? L + iw / 2 : L + i * iw / (n - 1), y = val => T + ih - val / max * ih;
-  let s2 = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Evolução do patrimônio">`;
-  for (let i = 0; i <= 4; i++) { const val = max * i / 4; s2 += `<line class="grid" x1="${L}" x2="${W - R}" y1="${y(val)}" y2="${y(val)}"/><text class="ax" x="${L - 8}" y="${y(val) + 4}" text-anchor="end">${shortBRL(val)}</text>`; }
-  const step = n > 8 ? Math.ceil(n / 8) : 1;
-  recs.forEach((r, i) => { if (i % step === 0 || i === n - 1) s2 += `<text class="ax" x="${x(i)}" y="${H - 8}" text-anchor="middle">${fmtDate(r.date).slice(0, 5)}</text>`; });
-  if (metaV) s2 += `<line x1="${L}" x2="${W - R}" y1="${y(metaV)}" y2="${y(metaV)}" style="stroke:var(--orange)" stroke-width="1.6" stroke-dasharray="6 5"/><text x="${W - R}" y="${y(metaV) - 6}" text-anchor="end" style="fill:var(--orange);font:600 11px var(--f-body)">Meta ${shortBRL(metaV)}</text>`;
-  s2 += `<path d="M${x(0)},${y(0)} ${totals.map((t, i) => "L" + x(i).toFixed(1) + "," + y(t).toFixed(1)).join(" ")} L${x(n - 1)},${y(0)} Z" style="fill:var(--accent);opacity:.08"/>`;
-  s2 += `<polyline points="${totals.map((t, i) => x(i).toFixed(1) + "," + y(t).toFixed(1)).join(" ")}" fill="none" style="stroke:var(--fg)" stroke-width="2.6" stroke-linejoin="round"/>`;
-  totals.forEach((t, i) => s2 += `<circle cx="${x(i).toFixed(1)}" cy="${y(t).toFixed(1)}" r="${i === n - 1 ? 5 : 3.2}" style="fill:var(--fg);stroke:var(--surface);stroke-width:1.5" data-tip="${esc(fmtDate(recs[i].date) + " · total " + BRL.format(t))}"/>`);
-  whos.forEach(w => { if (!series[w].some(Boolean)) return;
-    s2 += `<polyline points="${series[w].map((t, i) => x(i).toFixed(1) + "," + y(t).toFixed(1)).join(" ")}" fill="none" style="stroke:${PAT_WHO[w]}" stroke-width="2" stroke-dasharray="${n === 1 ? "" : ""}" stroke-linejoin="round"/>`;
-    series[w].forEach((t, i) => s2 += `<circle cx="${x(i).toFixed(1)}" cy="${y(t).toFixed(1)}" r="3" style="fill:${PAT_WHO[w]};stroke:var(--surface);stroke-width:1.2" data-tip="${esc(w + " · " + fmtDate(recs[i].date) + ": " + BRL.format(t))}"/>`); });
-  return s2 + "</svg>";
+  const vis = PAT_ASSETS.filter(a => !PAT_HIDE.has(a.id) && recs.some(r => patVals(r)[a.id] != null));
+  const W = phone ? 420 : 1000, H = phone ? 300 : 380, L = phone ? 62 : 70, R = phone ? 16 : 190, T = 22, B = 34;
+  const vals = recs.map(patVals), totals = recs.map(patTotal);
+  const metaV = PAT_SHOW_TOTAL ? (STATE.settings.patMetas || {})[new Date().getFullYear()] : null;
+  let maxV = 0; vis.forEach(a => vals.forEach(v => { if (v[a.id] != null) maxV = Math.max(maxV, v[a.id]); }));
+  if (PAT_SHOW_TOTAL) maxV = Math.max(maxV, ...totals, metaV || 0);
+  const max = niceMax(maxV || 1), n = recs.length, iw = W - L - R, ih = H - T - B;
+  const t0 = new Date(recs[0].date + "T12:00:00").getTime(), t1 = new Date(recs[n - 1].date + "T12:00:00").getTime();
+  const x = i => n === 1 ? L + iw / 2 : L + (new Date(recs[i].date + "T12:00:00").getTime() - t0) / (t1 - t0 || 1) * iw;
+  const y = v => T + ih - v / max * ih;
+  const lbl = v => v >= 1e6 ? (v / 1e6).toLocaleString("pt-BR", {maximumFractionDigits: 2}) + " mi" : v >= 1e3 ? Math.round(v / 1e3).toLocaleString("pt-BR") + " mil" : Math.round(v).toLocaleString("pt-BR");
+  let g = `<svg class="chart evo-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Evolução de cada ativo do patrimônio"><defs>`;
+  vis.forEach(a => g += `<linearGradient id="gf-${a.id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:${ASSET_COLOR[a.id]};stop-opacity:.16"/><stop offset="1" style="stop-color:${ASSET_COLOR[a.id]};stop-opacity:0"/></linearGradient>`);
+  g += `</defs>`;
+  for (let i = 0; i <= 4; i++) { const v = max * i / 4; g += `<line class="${i ? "evogrid" : "evobase"}" x1="${L}" x2="${W - R + (phone ? 0 : 8)}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}"/><text class="ax" x="${L - 10}" y="${(y(v) + 4).toFixed(1)}" text-anchor="end">${i ? lbl(v) : "R$ 0"}</text>`; }
+  const step = n > (phone ? 5 : 10) ? Math.ceil(n / (phone ? 5 : 10)) : 1;
+  recs.forEach((r, i) => { if (i % step === 0 || i === n - 1) g += `<text class="ax" x="${x(i).toFixed(1)}" y="${H - 10}" text-anchor="${n > 1 && i === 0 ? "start" : n > 1 && i === n - 1 ? "end" : "middle"}">${fmtDate(r.date)}</text>`; });
+  if (metaV) g += `<line x1="${L}" x2="${W - R}" y1="${y(metaV).toFixed(1)}" y2="${y(metaV).toFixed(1)}" class="evometa"/><text x="${L + 6}" y="${(y(metaV) - 7).toFixed(1)}" class="evometa-t">Meta ${BRL0.format(metaV)}</text>`;
+  const series = vis.map(a => ({a, pts: recs.map((r, i) => vals[i][a.id] == null ? null : [x(i), y(vals[i][a.id]), vals[i][a.id]]).filter(Boolean)}));
+  if (PAT_SHOW_TOTAL) series.push({a: {id: "__total", nome: "Total da família"}, pts: recs.map((r, i) => [x(i), y(totals[i]), totals[i]]), total: true});
+  // área suave só sob cada linha (bem leve) + linha + ponto final
+  series.forEach(({a, pts, total}) => {
+    if (!pts.length) return;
+    const col = total ? "var(--fg)" : ASSET_COLOR[a.id], d = smoothPath(pts);
+    if (d) g += `<path class="evoline${total ? " tot" : ""}" d="${d}" pathLength="1" style="stroke:${col}"/>`;
+    pts.forEach((p, i) => { const end = i === pts.length - 1; if (end || n <= 12) g += `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${end ? 4.6 : 2.6}" style="fill:${end ? col : "var(--surface)"};stroke:${col};stroke-width:${end ? 2.4 : 1.8}"/>`; });
+  });
+  // rótulos no fim de cada linha, sem se sobrepor (computador)
+  if (!phone) {
+    const ends = series.filter(s3 => s3.pts.length).map(s3 => ({s: s3, y: s3.pts[s3.pts.length - 1][1], v: s3.pts[s3.pts.length - 1][2]})).sort((a, b) => a.y - b.y);
+    const gap = 30; for (let i = 1; i < ends.length; i++) if (ends[i].y - ends[i - 1].y < gap) ends[i].y = ends[i - 1].y + gap;
+    const over = ends.length ? ends[ends.length - 1].y - (H - B + 6) : 0; if (over > 0) ends.forEach(e => e.y -= over);
+    for (let i = ends.length - 2; i >= 0; i--) if (ends[i + 1].y - ends[i].y < gap) ends[i].y = ends[i + 1].y - gap;
+    const lx = W - R + 18;
+    ends.forEach(e => { const a = e.s.a, col = e.s.total ? "var(--fg)" : ASSET_COLOR[a.id], px = e.s.pts[e.s.pts.length - 1];
+      g += `<path d="M${(px[0] + 6).toFixed(1)},${px[1].toFixed(1)} C${(lx - 8).toFixed(1)},${px[1].toFixed(1)} ${(lx - 12).toFixed(1)},${e.y.toFixed(1)} ${(lx - 4).toFixed(1)},${e.y.toFixed(1)}" class="evolead" style="stroke:${col}"/>`;
+      g += `<text x="${lx}" y="${(e.y - 3).toFixed(1)}" class="evolab"><tspan style="fill:${col}">●</tspan> ${esc(a.nome)}${a.sub ? " " + esc(a.sub.slice(0, 5)) + "." : ""}</text><text x="${lx + 13}" y="${(e.y + 12).toFixed(1)}" class="evoval">${BRL0.format(e.v)}</text>`; });
+  }
+  g += `<line id="evoX" class="evox" x1="0" x2="0" y1="${T}" y2="${T + ih}" style="opacity:0"/><rect id="evoHit" x="${L}" y="${T}" width="${iw}" height="${ih}" fill="transparent"/>`;
+  EVO = {W, L, iw, xs: recs.map((r, i) => x(i)), recs, series};
+  return g + "</svg>";
+}
+function wireEvo() {
+  const wrap = $("#evoWrap"); if (!wrap || !EVO) return;
+  const svg = wrap.querySelector("svg"), tip = $("#evoTip"), xl = svg.querySelector("#evoX");
+  const show = ev => {
+    const rc = svg.getBoundingClientRect(), sx = (ev.clientX - rc.left) / rc.width * EVO.W;
+    let i = 0, best = Infinity; EVO.xs.forEach((xx, k) => { const dd = Math.abs(xx - sx); if (dd < best) { best = dd; i = k; } });
+    const r = EVO.recs[i], v = patVals(r), pv = i > 0 ? patVals(EVO.recs[i - 1]) : null;
+    xl.setAttribute("x1", EVO.xs[i]); xl.setAttribute("x2", EVO.xs[i]); xl.style.opacity = 1;
+    const rows = PAT_ASSETS.filter(a => !PAT_HIDE.has(a.id) && v[a.id] != null).sort((a, b) => v[b.id] - v[a.id]).map(a => {
+      const dd = pv && pv[a.id] != null ? v[a.id] - pv[a.id] : null;
+      return `<div class="tr"><i style="background:${ASSET_COLOR[a.id]}"></i><span>${esc(a.nome)}${a.sub ? " " + (a.cur === "USD" ? "🇺🇸" : "Nac.") : ""}</span><b class="num">${BRL0.format(v[a.id])}</b>${dd == null || Math.abs(dd) < .5 ? "<em></em>" : '<em class="' + (dd > 0 ? "down" : "up") + '">' + (dd > 0 ? "+" : "−") + BRL0.format(Math.abs(dd)) + "</em>"}</div>`; }).join("");
+    tip.innerHTML = `<div class="th">${fmtDate(r.date)}<b class="num">${BRL0.format(patTotal(r))}</b></div>${rows}`;
+    tip.hidden = false;
+    const wr = wrap.getBoundingClientRect(), px = EVO.xs[i] / EVO.W * rc.width + (rc.left - wr.left);
+    const tw = tip.offsetWidth; let left = px + 14; if (left + tw > wr.width) left = px - tw - 14; if (left < 0) left = Math.max(0, (wr.width - tw) / 2);
+    tip.style.left = left + "px";
+  };
+  const hide = () => { tip.hidden = true; xl.style.opacity = 0; };
+  svg.addEventListener("pointermove", show); svg.addEventListener("pointerdown", show); svg.addEventListener("pointerleave", hide);
 }
 
 /* cotações do dia (AwesomeAPI). No app dentro do Claude a busca é bloqueada: aí as cotações são digitadas. */
@@ -1765,7 +1851,8 @@ $("#personSeg").addEventListener("click", e => { const b = e.target.closest("but
 $("#btnImport").onclick = () => STATE.module === "patrimonio" ? openPat() : openImport();
 document.querySelector(".modsw").addEventListener("click", e => { const b = e.target.closest("button[data-mod]"); if (!b || b.dataset.mod === STATE.module) return; STATE.module = b.dataset.mod; saveUi(); render(); window.scrollTo({top: 0}); });
 document.addEventListener("click", e => {
-  const t = e.target.closest("[data-act],[data-cat],[data-ign],[data-askdel],[data-del],[data-undel],[data-delrule],[data-delcat],[data-delcard],[data-patedit],[data-patask],[data-patdel],#aiBtn"); if (!t) return;
+  const t = e.target.closest("[data-act],[data-cat],[data-ign],[data-askdel],[data-del],[data-undel],[data-delrule],[data-delcat],[data-delcard],[data-patedit],[data-patask],[data-patdel],[data-evo],#aiBtn"); if (!t) return;
+  if (t.dataset.evo) { const id = t.dataset.evo; if (id === "__total") PAT_SHOW_TOTAL = !PAT_SHOW_TOTAL; else if (PAT_HIDE.has(id)) PAT_HIDE.delete(id); else PAT_HIDE.add(id); return render(); }
   if (t.dataset.act === "newPat") return openPat();
   if (t.dataset.act === "metaEdit") { STATE.editMeta = true; render(); const i = $("#metaIn"); if (i) i.focus(); return; }
   if (t.dataset.act === "metaCancel") { STATE.editMeta = false; return render(); }
