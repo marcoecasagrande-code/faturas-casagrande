@@ -26,7 +26,7 @@
   --up:#B42318; --down:#14794A; --warn:#9A5B00; --warn-soft:#FDF0D8;
   --c0:#2341C9; --c1:#C2410C; --c2:#0F7A6E; --c3:#B4235A; --c4:#7A3EC2; --c5:#8A6400; --c6:#36577A; --c7:#4D6B12;
   --c8:#1D86B8; --c9:#C9720A; --c10:#9B3F8A; --c11:#23824F; --c12:#7A5630; --c13:#5664D2; --c14:#C0563A;
-  --c-outros:#7C869A; --c-rest:#AEB6C4; --dollar:#9FAFD3;
+  --c-outros:#7C869A; --c-rest:#AEB6C4; --dollar:#9FAFD3; --chartbg:#F6F8FB;
   --f-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
   --f-body:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-num:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
@@ -39,7 +39,7 @@
   --up:#FF8A80; --down:#5BD49A; --warn:#F2B866; --warn-soft:#33260E;
   --c0:#8EA2FF; --c1:#FF9F6B; --c2:#5FD3C3; --c3:#FF8DB8; --c4:#C9A3F5; --c5:#F0C75E; --c6:#9DBCE0; --c7:#B5D66A;
   --c8:#6CC6F0; --c9:#FBBF5A; --c10:#E59AD6; --c11:#6FD49B; --c12:#D2AE84; --c13:#A7B2FF; --c14:#F39C82;
-  --c-outros:#8D96A8; --c-rest:#4A5466; --dollar:#42537A; color-scheme:dark}}
+  --c-outros:#8D96A8; --c-rest:#4A5466; --dollar:#42537A; --chartbg:#1C2433; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0E131D; --surface:#161D2A; --surface-2:#1F2735; --fg:#E8ECF4; --muted:#9AA4B6; --line:#283244; --dots:#222C3D;
   --accent:#8EA2FF; --accent-fg:#0E131D; --accent-soft:#1E2747;
@@ -47,7 +47,7 @@
   --up:#FF8A80; --down:#5BD49A; --warn:#F2B866; --warn-soft:#33260E;
   --c0:#8EA2FF; --c1:#FF9F6B; --c2:#5FD3C3; --c3:#FF8DB8; --c4:#C9A3F5; --c5:#F0C75E; --c6:#9DBCE0; --c7:#B5D66A;
   --c8:#6CC6F0; --c9:#FBBF5A; --c10:#E59AD6; --c11:#6FD49B; --c12:#D2AE84; --c13:#A7B2FF; --c14:#F39C82;
-  --c-outros:#8D96A8; --c-rest:#4A5466; --dollar:#42537A; color-scheme:dark}
+  --c-outros:#8D96A8; --c-rest:#4A5466; --dollar:#42537A; --chartbg:#1C2433; color-scheme:dark}
 *{box-sizing:border-box}
 html,body{background:var(--bg);color:var(--fg);overflow-x:clip}
 body{font-family:var(--f-body);font-size:14.5px;line-height:1.5}
@@ -136,6 +136,8 @@ tr.tot td{border-top:2px solid var(--line)}
 .evochip.tot i{height:3px;background:repeating-linear-gradient(90deg,var(--lc) 0 4px,transparent 4px 6px)}
 .evochip.tot[aria-pressed="false"] i{background:repeating-linear-gradient(90deg,var(--line) 0 4px,transparent 4px 6px)}
 .evowrap{position:relative;touch-action:pan-y}
+.evo-svg .evobg{fill:var(--chartbg)}
+.evo-svg .evotexdot{fill:var(--fg);opacity:.06}
 .evo-svg .evogrid{stroke:var(--line);stroke-width:1;stroke-dasharray:2 5}
 .evo-svg .evobase{stroke:var(--line);stroke-width:1.2}
 .evo-svg .ax{font-size:11.5px}
@@ -1680,6 +1682,7 @@ const PAT_ASSETS = [
   {id: "btc", inst: "Bitcoin", who: "Família", nome: "Bitcoin", cur: "BTC"},
 ];
 const PAT_BASE = PAT_ASSETS.slice();
+const subCurto = t => !t ? "" : ({"Nacional": "Nac.", "Internacional": "Int.", "Conta corrente": "C/C"})[t] || (t.length > 10 ? t.split(" ")[0] : t);
 // contas cadastradas pela família ficam em settings.patAssets; arquivadas em settings.patArch
 function syncAssets() {
   const custom = (STATE.settings.patAssets || []).filter(a => a && a.id && a.inst);
@@ -1747,7 +1750,7 @@ function renderPat(v) {
     ${metaPanel(totalHoje != null ? totalHoje : total, recs)}
     <div class="panel c12 evo">
       <div class="ph"><div><h2>Evolução do patrimônio</h2><p class="hint">Cada linha é um ativo, em reais, a cada registro · toque nos nomes para mostrar ou esconder</p></div><button class="btn small primary" type="button" data-act="newPat">+ Novo registro</button></div>
-      <div class="evochips">${PAT_ASSETS.filter(a => recs.some(r => patVals(r)[a.id] != null)).map(a => `<button type="button" class="evochip" data-evo="${a.id}" aria-pressed="${!PAT_HIDE.has(a.id)}" style="--lc:${assetColor(a)}"><i></i>${esc(a.nome)}${a.sub ? " " + esc(a.sub.slice(0, 5)) + "." : ""}</button>`).join("")}<button type="button" class="evochip tot" data-evo="__total" aria-pressed="${PAT_SHOW_TOTAL}" style="--lc:var(--fg)"><i></i>Total da família</button></div>
+      <div class="evochips">${PAT_ASSETS.filter(a => recs.some(r => patVals(r)[a.id] != null)).map(a => `<button type="button" class="evochip" data-evo="${a.id}" aria-pressed="${!PAT_HIDE.has(a.id)}" style="--lc:${assetColor(a)}"><i></i>${esc(a.nome)}${a.sub ? " " + esc(subCurto(a.sub)) : ""}</button>`).join("")}<button type="button" class="evochip tot" data-evo="__total" aria-pressed="${PAT_SHOW_TOTAL}" style="--lc:var(--fg)"><i></i>Total da família</button></div>
       <div class="evowrap" id="evoWrap">${patSVG(recs)}<div class="evotip" id="evoTip" hidden></div></div>
     </div>
     <div class="panel c6"><h2>Por pessoa</h2><p class="hint">Bitcoin conta como da família</p><div class="pbars">${bars(byWho, PAT_WHO)}</div></div>
@@ -1827,7 +1830,10 @@ function smoothPath(pts) {
 function patSVG(recs) {
   const phone = window.innerWidth < 600;
   const vis = PAT_ASSETS.filter(a => !PAT_HIDE.has(a.id) && recs.some(r => patVals(r)[a.id] != null));
-  const W = phone ? 420 : 1000, H = phone ? 300 : 380, L = phone ? 62 : 70, R = phone ? 16 : 190, T = 22, B = 34;
+  // altura cresce com o número de linhas, para todos os nomes caberem no fim das linhas
+  const nSer = vis.length + (PAT_SHOW_TOTAL ? 1 : 0), umaLinha = !phone && nSer > 9, passo = umaLinha ? 21 : 31;
+  const W = phone ? 420 : 1000, T = 22, B = 34, L = phone ? 62 : 70, R = phone ? 16 : (umaLinha ? 250 : 190);
+  const H = phone ? 300 : Math.max(380, T + B + nSer * passo + 8);
   const vals = recs.map(patVals), totals = recs.map(patTotal);
   const metaV = PAT_SHOW_TOTAL ? (STATE.settings.patMetas || {})[new Date().getFullYear()] : null;
   let maxV = 0; vis.forEach(a => vals.forEach(v => { if (v[a.id] != null) maxV = Math.max(maxV, v[a.id]); }));
@@ -1839,7 +1845,8 @@ function patSVG(recs) {
   const lbl = v => v >= 1e6 ? (v / 1e6).toLocaleString("pt-BR", {maximumFractionDigits: 2}) + " mi" : v >= 1e3 ? Math.round(v / 1e3).toLocaleString("pt-BR") + " mil" : Math.round(v).toLocaleString("pt-BR");
   let g = `<svg class="chart evo-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Evolução de cada ativo do patrimônio"><defs>`;
   vis.forEach(a => g += `<linearGradient id="gf-${a.id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:${assetColor(a)};stop-opacity:.16"/><stop offset="1" style="stop-color:${assetColor(a)};stop-opacity:0"/></linearGradient>`);
-  g += `</defs>`;
+  g += `<pattern id="evotex" width="9" height="9" patternUnits="userSpaceOnUse"><circle cx="4.5" cy="4.5" r=".9" class="evotexdot"/></pattern></defs>`;
+  g += `<rect x="${L - 4}" y="${T - 10}" width="${W - R - L + (phone ? 8 : 16)}" height="${H - T - B + 14}" rx="12" class="evobg"/><rect x="${L - 4}" y="${T - 10}" width="${W - R - L + (phone ? 8 : 16)}" height="${H - T - B + 14}" rx="12" fill="url(#evotex)"/>`;
   for (let i = 0; i <= 4; i++) { const v = max * i / 4; g += `<line class="${i ? "evogrid" : "evobase"}" x1="${L}" x2="${W - R + (phone ? 0 : 8)}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}"/><text class="ax" x="${L - 10}" y="${(y(v) + 4).toFixed(1)}" text-anchor="end">${i ? lbl(v) : "R$ 0"}</text>`; }
   const step = n > (phone ? 5 : 10) ? Math.ceil(n / (phone ? 5 : 10)) : 1;
   recs.forEach((r, i) => { if (i % step === 0 || i === n - 1) g += `<text class="ax" x="${x(i).toFixed(1)}" y="${H - 10}" text-anchor="${n > 1 && i === 0 ? "start" : n > 1 && i === n - 1 ? "end" : "middle"}">${fmtDate(r.date)}</text>`; });
@@ -1856,13 +1863,18 @@ function patSVG(recs) {
   // rótulos no fim de cada linha, sem se sobrepor (computador)
   if (!phone) {
     const ends = series.filter(s3 => s3.pts.length).map(s3 => ({s: s3, y: s3.pts[s3.pts.length - 1][1], v: s3.pts[s3.pts.length - 1][2]})).sort((a, b) => a.y - b.y);
-    const gap = 30; for (let i = 1; i < ends.length; i++) if (ends[i].y - ends[i - 1].y < gap) ends[i].y = ends[i - 1].y + gap;
-    const over = ends.length ? ends[ends.length - 1].y - (H - B + 6) : 0; if (over > 0) ends.forEach(e => e.y -= over);
+    const gap = passo, yMin = T + 4, yMax = H - B + 4;
+    for (let i = 1; i < ends.length; i++) if (ends[i].y - ends[i - 1].y < gap) ends[i].y = ends[i - 1].y + gap;
+    const over = ends.length ? ends[ends.length - 1].y - yMax : 0; if (over > 0) ends.forEach(e => e.y -= over);
     for (let i = ends.length - 2; i >= 0; i--) if (ends[i + 1].y - ends[i].y < gap) ends[i].y = ends[i + 1].y - gap;
+    if (ends.length && ends[0].y < yMin) ends.forEach((e, i) => e.y = yMin + i * gap);
     const lx = W - R + 18;
     ends.forEach(e => { const a = e.s.a, col = e.s.total ? "var(--fg)" : assetColor(a), px = e.s.pts[e.s.pts.length - 1];
       g += `<path d="M${(px[0] + 6).toFixed(1)},${px[1].toFixed(1)} C${(lx - 8).toFixed(1)},${px[1].toFixed(1)} ${(lx - 12).toFixed(1)},${e.y.toFixed(1)} ${(lx - 4).toFixed(1)},${e.y.toFixed(1)}" class="evolead" style="stroke:${col}"/>`;
-      g += `<text x="${lx}" y="${(e.y - 3).toFixed(1)}" class="evolab"><tspan style="fill:${col}">●</tspan> ${esc(a.nome)}${a.sub ? " " + esc(a.sub.slice(0, 5)) + "." : ""}</text><text x="${lx + 13}" y="${(e.y + 12).toFixed(1)}" class="evoval">${BRL0.format(e.v)}</text>`; });
+      const nome = esc(a.nome) + (a.sub ? " " + esc(subCurto(a.sub)) : "");
+      g += umaLinha
+        ? `<text x="${lx}" y="${(e.y + 4).toFixed(1)}" class="evolab"><tspan style="fill:${col}">●</tspan> ${nome}<tspan class="evoval" dx="8">${BRL0.format(e.v)}</tspan></text>`
+        : `<text x="${lx}" y="${(e.y - 3).toFixed(1)}" class="evolab"><tspan style="fill:${col}">●</tspan> ${nome}</text><text x="${lx + 13}" y="${(e.y + 12).toFixed(1)}" class="evoval">${BRL0.format(e.v)}</text>`; });
   }
   g += `<line id="evoX" class="evox" x1="0" x2="0" y1="${T}" y2="${T + ih}" style="opacity:0"/><rect id="evoHit" x="${L}" y="${T}" width="${iw}" height="${ih}" fill="transparent"/>`;
   EVO = {W, L, iw, xs: recs.map((r, i) => x(i)), recs, series};
