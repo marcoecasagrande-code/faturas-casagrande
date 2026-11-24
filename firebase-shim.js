@@ -49,7 +49,7 @@
   let tela = null;
   function mostrarLogin(msg, sair) {
     if (!tela) { const st = document.createElement("style"); st.textContent = css; document.head.appendChild(st); tela = document.createElement("div"); tela.id = "fb-login"; document.body.appendChild(tela); }
-    tela.innerHTML = `<div class="box"><img src="icon-192.png" alt=""><h1>Financeiro <span>Casagrande</span></h1><p>Entre com a sua conta Google da família.</p>
+    tela.innerHTML = `<div class="box"><img src="icon-192-v2.png" alt=""><h1>Financeiro <span>Casagrande</span></h1><p>Entre com a sua conta Google da família.</p>
       ${sair ? `<button id="fb-sair">Entrar com outra conta</button>` : `<div id="fb-gis"></div><button id="fb-entrar" class="sec">Outra forma de entrar</button>`}<div class="err"></div></div>`;
     tela.querySelector(".err").textContent = msg || "";
     tela.hidden = false;
@@ -88,10 +88,25 @@
     catch (e) { if (e && e.code === "permission-denied") return mostrarLogin(`A conta ${u.email} não tem acesso às faturas da família.`, true); }
     atual = u;
     if (tela) tela.hidden = true;
+    setTimeout(mostraInstalar, 1500);
     await portaPin();
     aberto = true; liberar();
     addSair(u);
   });
+  // botão "Instalar app": usa o instalador do próprio navegador (Chrome/Edge no PC e no Android)
+  let pedidoInstalar = null;
+  const jaInstalado = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+  addEventListener("beforeinstallprompt", e => { e.preventDefault(); pedidoInstalar = e; mostraInstalar(); });
+  addEventListener("appinstalled", () => { pedidoInstalar = null; const b = document.getElementById("fb-inst"); if (b) b.remove(); });
+  function mostraInstalar() {
+    if (!pedidoInstalar || jaInstalado() || document.getElementById("fb-inst")) return;
+    const st = document.getElementById("status"); if (!st) return setTimeout(mostraInstalar, 800);
+    const b = document.createElement("button"); b.id = "fb-inst"; b.type = "button"; b.className = "btn small";
+    b.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>Instalar app';
+    b.title = "Instalar o Financeiro Casagrande neste computador ou celular";
+    b.onclick = async () => { const p = pedidoInstalar; if (!p) return; pedidoInstalar = null; p.prompt(); try { const r = await p.userChoice; if (r && r.outcome === "accepted") b.remove(); else { pedidoInstalar = p; } } catch (e) {} };
+    st.after(b);
+  }
   function addSair(u) {
     if (document.getElementById("fb-out")) return;
     const st = document.getElementById("status"); if (!st) return;
@@ -127,7 +142,7 @@
   const ICONE_BIO = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 11v3a8 8 0 0 1-1.2 4.2M8.5 8.8A4 4 0 0 1 16 11v1.5M7.8 20A11 11 0 0 0 8 11a4 4 0 0 1 .2-1.3M16 15.5a15 15 0 0 1-.9 4.5M4.5 15.5A12 12 0 0 0 5 11a7 7 0 0 1 12.6-4.2M19 10.5c.2 2 .1 4-.3 6"/></svg>`;
   function escolha(titulo, texto, sim, nao) {
     return new Promise(resolve => {
-      pinEl.innerHTML = `<div class="box"><img src="icon-192.png" alt=""><h2></h2><p></p><button type="button" class="ok" data-r="1"></button><button type="button" class="ok sec" data-r="0"></button></div>`;
+      pinEl.innerHTML = `<div class="box"><img src="icon-192-v2.png" alt=""><h2></h2><p></p><button type="button" class="ok" data-r="1"></button><button type="button" class="ok sec" data-r="0"></button></div>`;
       pinEl.querySelector("h2").textContent = titulo; pinEl.querySelector("p").textContent = texto;
       const [a, b] = pinEl.querySelectorAll("button"); a.textContent = sim; b.textContent = nao; pinEl.hidden = false;
       pinEl.onclick = e => { const x = e.target.closest("button"); if (x) resolve(x.dataset.r === "1"); };
@@ -138,7 +153,7 @@
     return new Promise(resolve => {
       if (!pinEl) { const st = document.createElement("style"); st.textContent = pinCss; document.head.appendChild(st); pinEl = document.createElement("div"); pinEl.id = "fb-pin"; pinEl.setAttribute("role", "dialog"); pinEl.setAttribute("aria-modal", "true"); document.body.appendChild(pinEl); }
       const max = tamanho || 6;
-      pinEl.innerHTML = `<div class="box"><img src="icon-192.png" alt=""><h2></h2><p></p>${bio ? `<button type="button" class="ok bio" data-x="bio">${ICONE_BIO} Usar digital ou Face ID</button>` : ""}<div class="dots" aria-live="polite"></div><div class="err"></div>
+      pinEl.innerHTML = `<div class="box"><img src="icon-192-v2.png" alt=""><h2></h2><p></p>${bio ? `<button type="button" class="ok bio" data-x="bio">${ICONE_BIO} Usar digital ou Face ID</button>` : ""}<div class="dots" aria-live="polite"></div><div class="err"></div>
         <div class="pad">${[1,2,3,4,5,6,7,8,9].map(n => `<button type="button" data-n="${n}">${n}</button>`).join("")}
         <button type="button" class="txt" data-x="${esqueci ? "esqueci" : cancelar ? "cancelar" : ""}">${esqueci ? "Esqueci" : cancelar ? "Cancelar" : ""}</button><button type="button" data-n="0">0</button><button type="button" data-x="apagar" aria-label="Apagar">⌫</button></div>
         <button type="button" class="ok" ${criar ? "" : "hidden"} disabled>Continuar</button></div>`;
