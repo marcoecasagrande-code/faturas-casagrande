@@ -100,6 +100,17 @@ header.top{position:relative;isolation:isolate;padding-top:20px}
 .ii{display:inline-grid;place-items:center;flex:none;width:30px;height:30px;border-radius:9px;font:800 11px/1 var(--f-body);letter-spacing:-.02em}
 .ii-btg{background:#0D2240;color:#fff;text-transform:lowercase;font-size:11.5px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.22)}
 .ii-xp{background:#111;color:#fff;font-size:12px;box-shadow:inset 0 0 0 1px #333}
+.ii-itau{background:#EC7000;color:#fff;text-transform:lowercase;font-size:10.5px;letter-spacing:-.03em;box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
+.ii-gen{background:var(--surface-2);color:var(--fg);font-size:10.5px;box-shadow:inset 0 0 0 1px var(--line)}
+.newacc{border:1px dashed var(--line);border-radius:12px;padding:10px 12px}
+.newacc summary{font-weight:600;color:var(--accent);font-size:14px}
+.newacc[open] summary{margin-bottom:10px}
+.newaccgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:10px;margin-bottom:10px}
+.patin.novo{box-shadow:0 0 0 2px var(--accent)}
+.acclist{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:8px}
+.accrow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;background:var(--surface-2);border-radius:12px;padding:8px 10px}
+.accrow.arq{opacity:.6}
+.accacts{display:flex;gap:6px}
 .ii-btc{background:#F7931A;color:#fff;font-size:17px;border-radius:50%}
 .iiwrap{position:relative;display:inline-flex;flex:none;margin-right:6px}
 .ii-flag{position:absolute;right:-9px;bottom:-8px;width:18px;height:18px;border-radius:50%;box-shadow:0 0 0 2.5px var(--surface-2)}
@@ -569,7 +580,7 @@ const Store = {
     this.col.onSnapshot(snap => {
       const sts = [], pats = [], st = {rules: {}, customCats: [], cards: {}};
       snap.docs.forEach(d => { const b = d.data(); if (!b) return; if (b.kind === "statement") sts.push(b); else if (b.kind === "patrimonio") pats.push(b); else if (b.kind === "settings") Object.assign(st, b); });
-      STATE.statements = sts; STATE.pats = pats; STATE.settings = {rules: st.rules || {}, customCats: st.customCats || [], cards: st.cards || {}, patMetas: st.patMetas || {}, ignoredGaps: st.ignoredGaps || []};
+      STATE.statements = sts; STATE.pats = pats; STATE.settings = {rules: st.rules || {}, customCats: st.customCats || [], cards: st.cards || {}, patMetas: st.patMetas || {}, ignoredGaps: st.ignoredGaps || [], patAssets: st.patAssets || [], patArch: st.patArch || []};
       if (!snap.metadata.fromCache) { first = false; clearTimeout(timer); }
       STATE.mode = "cloud"; setStatus("ok", this.family ? "Salvo para a família" : "Salvo na sua conta (privado)");
       render();
@@ -609,7 +620,7 @@ const Store = {
   },
   saveSettings() {
     if (this.local) return this.persistLocal();
-    const body = {kind: "settings", rules: STATE.settings.rules, customCats: STATE.settings.customCats, cards: STATE.settings.cards || {}, patMetas: STATE.settings.patMetas || {}, ignoredGaps: STATE.settings.ignoredGaps || []};
+    const body = {kind: "settings", rules: STATE.settings.rules, customCats: STATE.settings.customCats, cards: STATE.settings.cards || {}, patMetas: STATE.settings.patMetas || {}, ignoredGaps: STATE.settings.ignoredGaps || [], patAssets: STATE.settings.patAssets || [], patArch: STATE.settings.patArch || []};
     this.enqueue("settings", () => this.col.doc("settings").set(body));
   },
 };
@@ -1251,6 +1262,8 @@ async function importBackup(file) {
       STATE.settings.cards = Object.assign({}, j.settings.cards || {}, STATE.settings.cards || {});
       STATE.settings.patMetas = Object.assign({}, j.settings.patMetas || {}, STATE.settings.patMetas || {});
       STATE.settings.ignoredGaps = [...new Set((STATE.settings.ignoredGaps || []).concat(j.settings.ignoredGaps || []))];
+      const ids = new Set((STATE.settings.patAssets || []).map(a => a.id)); STATE.settings.patAssets = (STATE.settings.patAssets || []).concat((j.settings.patAssets || []).filter(a => a && !ids.has(a.id)));
+      STATE.settings.patArch = [...new Set((STATE.settings.patArch || []).concat(j.settings.patArch || []))];
       Store.saveSettings();
     }
     render(); toast(sts.length + " fatura" + (sts.length === 1 ? "" : "s") + " importada" + (sts.length === 1 ? "" : "s") + ".");
@@ -1655,18 +1668,34 @@ Responda somente um objeto JSON que mapeia cada estabelecimento à categoria mai
 const PAT_ASSETS = [
   {id: "btg-marco-br", inst: "BTG", who: "Marco", nome: "BTG · Marco", sub: "Nacional", cur: "BRL"},
   {id: "btg-marco-us", inst: "BTG", who: "Marco", nome: "BTG · Marco", sub: "Internacional", cur: "USD"},
+  {id: "btg-cc-marco", inst: "BTG", who: "Marco", nome: "BTG · Marco", sub: "Conta corrente", cur: "BRL"},
   {id: "btg-alice", inst: "BTG", who: "Alice", nome: "BTG · Alice", cur: "BRL"},
+  {id: "btg-cc-alice", inst: "BTG", who: "Alice", nome: "BTG · Alice", sub: "Conta corrente", cur: "BRL"},
   {id: "btg-moema", inst: "BTG", who: "Moema", nome: "BTG · Moema", cur: "BRL"},
-  {id: "btc", inst: "Bitcoin", who: "Família", nome: "Bitcoin", cur: "BTC"},
+  {id: "xp-marco", inst: "XP", who: "Marco", nome: "XP · Marco", cur: "BRL"},
   {id: "xp-moema", inst: "XP", who: "Moema", nome: "XP · Moema", cur: "BRL"},
   {id: "xp-alice", inst: "XP", who: "Alice", nome: "XP · Alice", cur: "BRL"},
-  {id: "xp-marco", inst: "XP", who: "Marco", nome: "XP · Marco", cur: "BRL"},
+  {id: "itau-marco", inst: "Itaú", who: "Marco", nome: "Itaú · Marco", cur: "BRL"},
+  {id: "itau-moema", inst: "Itaú", who: "Moema", nome: "Itaú · Moema", cur: "BRL"},
+  {id: "btc", inst: "Bitcoin", who: "Família", nome: "Bitcoin", cur: "BTC"},
 ];
+const PAT_BASE = PAT_ASSETS.slice();
+// contas cadastradas pela família ficam em settings.patAssets; arquivadas em settings.patArch
+function syncAssets() {
+  const custom = (STATE.settings.patAssets || []).filter(a => a && a.id && a.inst);
+  PAT_ASSETS.length = 0; PAT_BASE.concat(custom).forEach(a => PAT_ASSETS.push(a));
+}
+const isArch = a => (STATE.settings.patArch || []).includes(a.id);
+const PALETA_EXTRA = ["var(--c1)", "var(--c5)", "var(--c6)", "var(--c12)", "var(--c14)", "var(--c7)", "var(--c9)", "var(--c10)"];
+function assetColor(a) { if (ASSET_COLOR[a.id]) return ASSET_COLOR[a.id]; const i = PAT_ASSETS.findIndex(x => x.id === a.id); return PALETA_EXTRA[Math.max(0, i) % PALETA_EXTRA.length]; }
 const PAT_WHO = {Marco: "var(--c13)", Moema: "var(--c3)", Alice: "var(--c2)", "Família": "var(--c9)"};
-const PAT_INST = {BTG: "#1C3F94", XP: "var(--fg)", Bitcoin: "#F7931A"};
+const PAT_INST = {BTG: "#1C3F94", XP: "var(--fg)", Bitcoin: "#F7931A", "Itaú": "#EC7000"};
 // selo simples com as iniciais (não é o logotipo oficial do banco)
 function instIcon(inst, cur) {
-  const b = inst === "BTG" ? '<span class="ii ii-btg" aria-hidden="true">btg</span>' : inst === "XP" ? '<span class="ii ii-xp" aria-hidden="true">XP</span>' : '<span class="ii ii-btc" aria-hidden="true">₿</span>';
+  const ini = String(inst || "?").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9 ]/g, "").split(/\s+/).filter(Boolean);
+  const b = inst === "BTG" ? '<span class="ii ii-btg" aria-hidden="true">btg</span>' : inst === "XP" ? '<span class="ii ii-xp" aria-hidden="true">XP</span>' : inst === "Bitcoin" ? '<span class="ii ii-btc" aria-hidden="true">₿</span>'
+    : inst === "Itaú" ? '<span class="ii ii-itau" aria-hidden="true">itaú</span>'
+    : '<span class="ii ii-gen" aria-hidden="true">' + esc((ini.length > 1 ? ini.map(w => w[0]).join("") : (ini[0] || "?")).slice(0, 3).toUpperCase()) + "</span>";
   return cur === "USD" ? '<span class="iiwrap">' + b + '<svg class="ii-flag" viewBox="0 0 20 20" aria-hidden="true"><defs><clipPath id="flagc"><circle cx="10" cy="10" r="10"/></clipPath></defs><g clip-path="url(#flagc)"><rect width="20" height="20" fill="#fff"/><rect y="0.0000" width="20" height="2.8571" fill="#C8102E"/><rect y="5.7143" width="20" height="2.8571" fill="#C8102E"/><rect y="11.4286" width="20" height="2.8571" fill="#C8102E"/><rect y="17.1429" width="20" height="2.8571" fill="#C8102E"/><rect width="10" height="11.4286" fill="#1B2A6B"/><circle cx="2.500" cy="2.857" r=".85" fill="#fff"/><circle cx="5.000" cy="2.857" r=".85" fill="#fff"/><circle cx="7.500" cy="2.857" r=".85" fill="#fff"/><circle cx="2.500" cy="5.714" r=".85" fill="#fff"/><circle cx="5.000" cy="5.714" r=".85" fill="#fff"/><circle cx="7.500" cy="5.714" r=".85" fill="#fff"/><circle cx="2.500" cy="8.571" r=".85" fill="#fff"/><circle cx="5.000" cy="8.571" r=".85" fill="#fff"/><circle cx="7.500" cy="8.571" r=".85" fill="#fff"/></g><circle cx="10" cy="10" r="9.6" fill="none" stroke="rgba(0,0,0,.18)" stroke-width=".8"/></svg></span>' : b;
 }
 const patSorted = () => STATE.pats.slice().sort((a, b) => a.date.localeCompare(b.date));
@@ -1682,6 +1711,7 @@ function patVals(r) {
 const patTotal = r => Object.values(patVals(r)).reduce((a, x) => a + (x || 0), 0);
 
 function renderPat(v) {
+  syncAssets();
   const recs = patSorted();
   cotacaoHoje();
   setTimeout(wireEvo);
@@ -1717,14 +1747,14 @@ function renderPat(v) {
     ${metaPanel(totalHoje != null ? totalHoje : total, recs)}
     <div class="panel c12 evo">
       <div class="ph"><div><h2>Evolução do patrimônio</h2><p class="hint">Cada linha é um ativo, em reais, a cada registro · toque nos nomes para mostrar ou esconder</p></div><button class="btn small primary" type="button" data-act="newPat">+ Novo registro</button></div>
-      <div class="evochips">${PAT_ASSETS.filter(a => recs.some(r => patVals(r)[a.id] != null)).map(a => `<button type="button" class="evochip" data-evo="${a.id}" aria-pressed="${!PAT_HIDE.has(a.id)}" style="--lc:${ASSET_COLOR[a.id]}"><i></i>${esc(a.nome)}${a.sub ? " " + esc(a.sub.slice(0, 5)) + "." : ""}</button>`).join("")}<button type="button" class="evochip tot" data-evo="__total" aria-pressed="${PAT_SHOW_TOTAL}" style="--lc:var(--fg)"><i></i>Total da família</button></div>
+      <div class="evochips">${PAT_ASSETS.filter(a => recs.some(r => patVals(r)[a.id] != null)).map(a => `<button type="button" class="evochip" data-evo="${a.id}" aria-pressed="${!PAT_HIDE.has(a.id)}" style="--lc:${assetColor(a)}"><i></i>${esc(a.nome)}${a.sub ? " " + esc(a.sub.slice(0, 5)) + "." : ""}</button>`).join("")}<button type="button" class="evochip tot" data-evo="__total" aria-pressed="${PAT_SHOW_TOTAL}" style="--lc:var(--fg)"><i></i>Total da família</button></div>
       <div class="evowrap" id="evoWrap">${patSVG(recs)}<div class="evotip" id="evoTip" hidden></div></div>
     </div>
     <div class="panel c6"><h2>Por pessoa</h2><p class="hint">Bitcoin conta como da família</p><div class="pbars">${bars(byWho, PAT_WHO)}</div></div>
     <div class="panel c6"><h2>Por instituição</h2><p class="hint">Onde está guardado</p><div class="pbars">${bars(byInst, PAT_INST)}</div></div>
     <div class="panel c12"><h2>Ativos</h2><p class="hint">Valores do registro de ${fmtDate(last.date)}${last.fx ? " · dólar a " + BRL.format(last.fx) : ""}${last.btcPrice ? " · bitcoin a " + BRL0.format(last.btcPrice) : ""}</p>
       <div class="tablewrap" style="border:0"><table><thead><tr><th>Ativo</th><th>Pessoa</th><th class="r">Saldo</th><th class="r">Em reais</th><th class="r">Variação</th><th class="r">% do total</th></tr></thead><tbody>
-      ${PAT_ASSETS.map(a => { const x = lv[a.id], raw = last.v[a.id], px = pv ? pv[a.id] : null, dd = x != null && px != null ? x - px : null;
+      ${PAT_ASSETS.filter(a => !isArch(a) || last.v[a.id] != null).map(a => { const x = lv[a.id], raw = last.v[a.id], px = pv ? pv[a.id] : null, dd = x != null && px != null ? x - px : null;
         const rawTxt = raw == null || raw === "" ? "—" : a.cur === "USD" ? "US$ " + Number(raw).toLocaleString("pt-BR", {minimumFractionDigits: 2, maximumFractionDigits: 2}) : a.cur === "BTC" ? Number(raw).toLocaleString("pt-BR", {maximumFractionDigits: 8}) + " BTC" : BRL.format(raw);
         return `<tr><td><span class="assetcell">${instIcon(a.inst, a.cur)}<span><b>${esc(a.nome)}</b>${a.sub ? '<span class="note">' + esc(a.sub) + "</span>" : ""}</span></span></td><td>${esc(a.who)}</td>
         <td class="r num">${rawTxt}</td><td class="r num">${x == null ? "—" : BRL.format(x)}${a.cur === "USD" && raw && COT.hoje ? '<span class="note" style="display:block">hoje ' + BRL0.format(raw * COT.hoje.fx) + " (US$ " + COT.hoje.fx.toLocaleString("pt-BR", {minimumFractionDigits: 2, maximumFractionDigits: 4}) + ")</span>" : a.cur === "BTC" && raw && COT.hoje ? '<span class="note" style="display:block">hoje ' + BRL0.format(raw * COT.hoje.btc) + "</span>" : ""}</td>
@@ -1732,6 +1762,10 @@ function renderPat(v) {
         <td class="r num">${x == null || !total ? "—" : (x / total * 100).toLocaleString("pt-BR", {maximumFractionDigits: 1}) + "%"}</td></tr>`; }).join("")}
       <tr class="tot"><td colspan="3"><b>Total</b></td><td class="r num"><b>${BRL.format(total)}</b></td><td class="r num">${d == null ? "" : '<span class="' + (d >= 0 ? "down" : "up") + '">' + (d >= 0 ? "+" : "−") + BRL0.format(Math.abs(d)) + "</span>"}</td><td class="r num">100%</td></tr>
       </tbody></table></div></div>
+    <div class="panel c12"><div class="ph"><div><h2>Contas</h2><p class="hint">Contas que aparecem no registro. Arquivar tira a conta do formulário e mantém o histórico.</p></div><button class="btn small" type="button" data-act="newConta">+ Nova conta</button></div>
+      <div class="acclist">${PAT_ASSETS.map(a => { const usada = STATE.pats.some(r => r.v && r.v[a.id] != null), arq = isArch(a);
+        return `<div class="accrow${arq ? " arq" : ""}">${instIcon(a.inst, a.cur)}<span class="pname"><b>${esc(a.nome)}</b><span class="note">${a.sub ? esc(a.sub) + " · " : ""}${a.cur === "USD" ? "em dólar" : a.cur === "BTC" ? "quantidade em BTC" : "em reais"}${arq ? " · arquivada" : ""}</span></span>
+          <span class="accacts">${arq ? `<button class="btn small" type="button" data-accun="${a.id}">Reativar</button>` : `<button class="btn small" type="button" data-accarch="${a.id}">Arquivar</button>`}${a.custom && !usada ? `<button class="btn small danger" type="button" data-accdel="${a.id}">Excluir</button>` : ""}</span></div>`; }).join("")}</div></div>
     <div class="panel c12"><h2>Histórico de registros</h2><p class="hint">Cada registro guarda os saldos daquele dia</p>
       <div class="cards-list">${recs.slice().reverse().map((r, i, arr) => { const t = patTotal(r), pr = arr[i + 1], dt = pr ? t - patTotal(pr) : null;
         return `<div class="st" style="--tc:var(--accent)"><i class="sw"></i><div><div class="t">${fmtDate(r.date)}</div><div class="m">${r.fx ? "dólar " + BRL.format(r.fx) : "sem cotação do dólar"}${r.btcPrice ? " · BTC " + BRL0.format(r.btcPrice) : ""}${r.note ? " · " + esc(r.note) : ""}</div></div>
@@ -1774,7 +1808,7 @@ function metaPanel(atual, recs) {
     </div></div>`;
 }
 
-const ASSET_COLOR = {"btg-marco-br": "var(--c0)", "btg-marco-us": "var(--c8)", "btg-alice": "var(--c2)", "btg-moema": "var(--c3)", "btc": "#F7931A", "xp-moema": "var(--c10)", "xp-alice": "var(--c11)", "xp-marco": "var(--c4)"};
+const ASSET_COLOR = {"btg-cc-marco": "var(--c13)", "btg-cc-alice": "var(--c7)", "itau-marco": "var(--c9)", "itau-moema": "var(--c14)", "btg-marco-br": "var(--c0)", "btg-marco-us": "var(--c8)", "btg-alice": "var(--c2)", "btg-moema": "var(--c3)", "btc": "#F7931A", "xp-moema": "var(--c10)", "xp-alice": "var(--c11)", "xp-marco": "var(--c4)"};
 const PAT_HIDE = new Set();
 let PAT_SHOW_TOTAL = false;
 let EVO = null;  // geometria do último gráfico, usada pela dica
@@ -1804,7 +1838,7 @@ function patSVG(recs) {
   const y = v => T + ih - v / max * ih;
   const lbl = v => v >= 1e6 ? (v / 1e6).toLocaleString("pt-BR", {maximumFractionDigits: 2}) + " mi" : v >= 1e3 ? Math.round(v / 1e3).toLocaleString("pt-BR") + " mil" : Math.round(v).toLocaleString("pt-BR");
   let g = `<svg class="chart evo-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Evolução de cada ativo do patrimônio"><defs>`;
-  vis.forEach(a => g += `<linearGradient id="gf-${a.id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:${ASSET_COLOR[a.id]};stop-opacity:.16"/><stop offset="1" style="stop-color:${ASSET_COLOR[a.id]};stop-opacity:0"/></linearGradient>`);
+  vis.forEach(a => g += `<linearGradient id="gf-${a.id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:${assetColor(a)};stop-opacity:.16"/><stop offset="1" style="stop-color:${assetColor(a)};stop-opacity:0"/></linearGradient>`);
   g += `</defs>`;
   for (let i = 0; i <= 4; i++) { const v = max * i / 4; g += `<line class="${i ? "evogrid" : "evobase"}" x1="${L}" x2="${W - R + (phone ? 0 : 8)}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}"/><text class="ax" x="${L - 10}" y="${(y(v) + 4).toFixed(1)}" text-anchor="end">${i ? lbl(v) : "R$ 0"}</text>`; }
   const step = n > (phone ? 5 : 10) ? Math.ceil(n / (phone ? 5 : 10)) : 1;
@@ -1815,7 +1849,7 @@ function patSVG(recs) {
   // área suave só sob cada linha (bem leve) + linha + ponto final
   series.forEach(({a, pts, total}) => {
     if (!pts.length) return;
-    const col = total ? "var(--fg)" : ASSET_COLOR[a.id], d = smoothPath(pts);
+    const col = total ? "var(--fg)" : assetColor(a), d = smoothPath(pts);
     if (d) g += `<path class="evoline${total ? " tot" : ""}" d="${d}" pathLength="1" style="stroke:${col}"/>`;
     pts.forEach((p, i) => { const end = i === pts.length - 1; if (end || n <= 12) g += `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${end ? 4.6 : 2.6}" style="fill:${end ? col : "var(--surface)"};stroke:${col};stroke-width:${end ? 2.4 : 1.8}"/>`; });
   });
@@ -1826,7 +1860,7 @@ function patSVG(recs) {
     const over = ends.length ? ends[ends.length - 1].y - (H - B + 6) : 0; if (over > 0) ends.forEach(e => e.y -= over);
     for (let i = ends.length - 2; i >= 0; i--) if (ends[i + 1].y - ends[i].y < gap) ends[i].y = ends[i + 1].y - gap;
     const lx = W - R + 18;
-    ends.forEach(e => { const a = e.s.a, col = e.s.total ? "var(--fg)" : ASSET_COLOR[a.id], px = e.s.pts[e.s.pts.length - 1];
+    ends.forEach(e => { const a = e.s.a, col = e.s.total ? "var(--fg)" : assetColor(a), px = e.s.pts[e.s.pts.length - 1];
       g += `<path d="M${(px[0] + 6).toFixed(1)},${px[1].toFixed(1)} C${(lx - 8).toFixed(1)},${px[1].toFixed(1)} ${(lx - 12).toFixed(1)},${e.y.toFixed(1)} ${(lx - 4).toFixed(1)},${e.y.toFixed(1)}" class="evolead" style="stroke:${col}"/>`;
       g += `<text x="${lx}" y="${(e.y - 3).toFixed(1)}" class="evolab"><tspan style="fill:${col}">●</tspan> ${esc(a.nome)}${a.sub ? " " + esc(a.sub.slice(0, 5)) + "." : ""}</text><text x="${lx + 13}" y="${(e.y + 12).toFixed(1)}" class="evoval">${BRL0.format(e.v)}</text>`; });
   }
@@ -1844,7 +1878,7 @@ function wireEvo() {
     xl.setAttribute("x1", EVO.xs[i]); xl.setAttribute("x2", EVO.xs[i]); xl.style.opacity = 1;
     const rows = PAT_ASSETS.filter(a => !PAT_HIDE.has(a.id) && v[a.id] != null).sort((a, b) => v[b.id] - v[a.id]).map(a => {
       const dd = pv && pv[a.id] != null ? v[a.id] - pv[a.id] : null;
-      return `<div class="tr"><i style="background:${ASSET_COLOR[a.id]}"></i><span>${esc(a.nome)}${a.sub ? " " + (a.cur === "USD" ? "🇺🇸" : "Nac.") : ""}</span><b class="num">${BRL0.format(v[a.id])}</b>${dd == null || Math.abs(dd) < .5 ? "<em></em>" : '<em class="' + (dd > 0 ? "down" : "up") + '">' + (dd > 0 ? "+" : "−") + BRL0.format(Math.abs(dd)) + "</em>"}</div>`; }).join("");
+      return `<div class="tr"><i style="background:${assetColor(a)}"></i><span>${esc(a.nome)}${a.sub ? " " + (a.cur === "USD" ? "🇺🇸" : "Nac.") : ""}</span><b class="num">${BRL0.format(v[a.id])}</b>${dd == null || Math.abs(dd) < .5 ? "<em></em>" : '<em class="' + (dd > 0 ? "down" : "up") + '">' + (dd > 0 ? "+" : "−") + BRL0.format(Math.abs(dd)) + "</em>"}</div>`; }).join("");
     tip.innerHTML = `<div class="th">${fmtDate(r.date)}<b class="num">${BRL0.format(patTotal(r))}</b></div>${rows}`;
     tip.hidden = false;
     const wr = wrap.getBoundingClientRect(), px = EVO.xs[i] / EVO.W * rc.width + (rc.left - wr.left);
@@ -1899,11 +1933,12 @@ const patDlg = $("#patDlg");
 let PAT_EDIT = null;
 const todayISO = () => { const d = new Date(); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); };
 const numIn = x => x == null || x === "" ? "" : Number(x).toLocaleString("pt-BR", {maximumFractionDigits: 8});
-function openPat(id) {
+function openPat(id, draft) {
+  syncAssets();
   const recs = patSorted();
-  const base = id ? STATE.pats.find(r => r.id === id) : recs[recs.length - 1];
+  const base = draft || (id ? STATE.pats.find(r => r.id === id) : recs[recs.length - 1]);
   PAT_EDIT = id || null;
-  const date = id ? base.date : todayISO();
+  const date = draft ? draft.date : id ? base.date : todayISO();
   $("#patTitle").textContent = id ? "Editar registro de " + fmtDate(base.date) : "Registrar patrimônio";
   const v = (base && base.v) || {};
   const row = a => `<label class="patin" for="pv-${a.id}">${instIcon(a.inst, a.cur)}<span class="pname"><b>${esc(a.nome)}</b>${a.sub ? '<span class="note">' + esc(a.sub) + "</span>" : ""}</span>
@@ -1911,20 +1946,42 @@ function openPat(id) {
   $("#patBody").innerHTML = `
     <div class="row">
       <label class="lbl">Data do registro<input type="date" id="patDate" value="${date}"></label>
-      <label class="lbl">Dólar do dia (R$)<input id="patFx" inputmode="decimal" data-auto="1" value="${esc(numIn(id && base ? base.fx : ""))}" placeholder="buscando…"></label>
-      <label class="lbl">Bitcoin do dia (R$ por BTC)<input id="patBtc" inputmode="decimal" data-auto="1" value="${esc(numIn(id && base ? base.btcPrice : ""))}" placeholder="buscando…"></label>
+      <label class="lbl">Dólar do dia (R$)<input id="patFx" inputmode="decimal" data-auto="${draft ? draft.fxAuto : "1"}" value="${esc(numIn((id || draft) && base ? base.fx : ""))}" placeholder="buscando…"></label>
+      <label class="lbl">Bitcoin do dia (R$ por BTC)<input id="patBtc" inputmode="decimal" data-auto="${draft ? draft.btcAuto : "1"}" value="${esc(numIn((id || draft) && base ? base.btcPrice : ""))}" placeholder="buscando…"></label>
     </div>
     <p class="note" id="patCot" style="margin:-6px 0 0"></p>
-    <p class="note" style="margin:0">${base && !id ? "Já preenchido com o último registro (" + fmtDate(base.date) + "). Atualize só o que mudou." : "Deixe em branco o que não quiser registrar."}</p>
+    <p class="note" style="margin:0">${draft ? "Conta adicionada. Os valores que você já tinha digitado foram mantidos." : base && !id ? "Já preenchido com o último registro (" + fmtDate(base.date) + "). Atualize só o que mudou." : "Deixe em branco o que não quiser registrar."}</p>
     <div class="patgrid">
-      <div class="pgroup"><h3>BTG</h3>${PAT_ASSETS.filter(a => a.inst === "BTG").map(row).join("")}</div>
-      <div class="pgroup"><h3>XP</h3>${PAT_ASSETS.filter(a => a.inst === "XP").map(row).join("")}</div>
-      <div class="pgroup"><h3>Bitcoin</h3>${PAT_ASSETS.filter(a => a.inst === "Bitcoin").map(row).join("")}</div>
+      ${[...new Set(PAT_ASSETS.filter(a => !isArch(a) || v[a.id] != null).map(a => a.inst))].map(inst => `<div class="pgroup"><h3>${esc(inst)}</h3>${PAT_ASSETS.filter(a => a.inst === inst && (!isArch(a) || v[a.id] != null)).map(row).join("")}</div>`).join("")}
     </div>
-    <label class="lbl">Observação (opcional)<input type="text" id="patNote" maxlength="120" value="${esc(id && base.note || "")}" placeholder="ex.: depois do bônus de fim de ano"></label>`;
+    <details class="newacc" id="newAcc"><summary>+ Cadastrar nova conta</summary>
+      <div class="newaccgrid">
+        <label class="lbl">Banco ou instituição<input id="naInst" list="naInstList" placeholder="ex.: Nubank, Itaú, Inter" maxlength="30"><datalist id="naInstList">${[...new Set(["BTG", "XP", "Itaú", "Nubank", "Inter", "Bradesco", "Santander", "Caixa", "Banco do Brasil", "C6 Bank", "Rico", "Avenue", "Bitcoin"].concat(PAT_ASSETS.map(a => a.inst)))].map(x => `<option value="${esc(x)}">`).join("")}</datalist></label>
+        <label class="lbl">De quem é<input id="naWho" list="naWhoList" placeholder="ex.: Marco" maxlength="24"><datalist id="naWhoList">${["Marco", "Moema", "Alice", "Família"].map(x => `<option value="${x}">`).join("")}</datalist></label>
+        <label class="lbl">Tipo (opcional)<input id="naSub" placeholder="ex.: Conta corrente, Previdência" maxlength="30"></label>
+        <label class="lbl">Moeda<select id="naCur"><option value="BRL">Real (R$)</option><option value="USD">Dólar (US$)</option></select></label>
+      </div>
+      <button class="btn" type="button" id="naAdd">Adicionar conta</button> <span class="note" id="naMsg"></span>
+    </details>
+    <label class="lbl">Observação (opcional)<input type="text" id="patNote" maxlength="120" value="${esc((id || draft) && base.note || "")}" placeholder="ex.: depois do bônus de fim de ano"></label>`;
   updPatSum();
-  if (typeof patDlg.showModal === "function") patDlg.showModal(); else patDlg.setAttribute("open", "");
+  if (!patDlg.open) { if (typeof patDlg.showModal === "function") patDlg.showModal(); else patDlg.setAttribute("open", ""); }
+  if (draft) { $("#patCot").textContent = draft.cotTxt || ""; return; }
   if (!id) puxaCotacao(); else $("#patCot").textContent = "Cotações gravadas neste registro. Mude a data para buscar as daquele dia.";
+}
+function addConta() {
+  const inst = $("#naInst").value.trim().replace(/\s+/g, " "), who = $("#naWho").value.trim().replace(/\s+/g, " "), sub = $("#naSub").value.trim(), cur = $("#naCur").value;
+  if (!inst || !who) { $("#naMsg").textContent = "Informe o banco e de quem é a conta."; return; }
+  const cap = t => t.charAt(0).toUpperCase() + t.slice(1);
+  const instN = (PAT_ASSETS.find(a => norm(a.inst) === norm(inst)) || {}).inst || cap(inst);
+  const whoN = (Object.keys(PAT_WHO).concat(PAT_ASSETS.map(a => a.who)).find(w => norm(w) === norm(who))) || cap(who);
+  if (PAT_ASSETS.some(a => norm(a.inst) === norm(instN) && norm(a.who) === norm(whoN) && norm(a.sub || "") === norm(sub) && a.cur === cur)) { $("#naMsg").textContent = "Essa conta já existe."; return; }
+  const conta = {id: "c-" + uid(), inst: instN, who: whoN, nome: instN + " · " + whoN, cur, custom: true}; if (sub) conta.sub = sub;
+  const draft = readPatForm(); draft.fxAuto = $("#patFx").dataset.auto; draft.btcAuto = $("#patBtc").dataset.auto; draft.cotTxt = $("#patCot").textContent;
+  STATE.settings.patAssets = (STATE.settings.patAssets || []).concat([conta]); Store.saveSettings();
+  openPat(PAT_EDIT, draft);
+  const i = document.getElementById("pv-" + conta.id); if (i) { i.focus(); i.closest(".patin").classList.add("novo"); }
+  toast("Conta " + conta.nome + (sub ? " (" + sub + ")" : "") + " cadastrada.");
 }
 let cotSeq = 0;
 async function puxaCotacao() {
@@ -1967,6 +2024,8 @@ function savePat() {
 patDlg.addEventListener("input", e => { if (!e.target.matches("input")) return; if (e.target.id === "patFx" || e.target.id === "patBtc") e.target.dataset.auto = "0"; updPatSum(); });
 patDlg.addEventListener("change", e => { if (e.target.id === "patDate") { $("#patFx").dataset.auto = "1"; $("#patBtc").dataset.auto = "1"; puxaCotacao(); } });
 $("#patSave").onclick = savePat;
+patDlg.addEventListener("click", e => { if (e.target.id === "naAdd") addConta(); });
+patDlg.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.closest && e.target.closest("#newAcc") && e.target.tagName === "INPUT") { e.preventDefault(); addConta(); } });
 $("#patCancel").onclick = $("#patClose").onclick = () => patDlg.open && patDlg.close();
 
 /* ---------- toast e tooltip ---------- */
@@ -1992,11 +2051,15 @@ $("#personSeg").addEventListener("click", e => { const b = e.target.closest("but
 $("#btnImport").onclick = () => STATE.module === "patrimonio" ? openPat() : openImport();
 document.querySelector(".modsw").addEventListener("click", e => { const b = e.target.closest("button[data-mod]"); if (!b || b.dataset.mod === STATE.module) return; STATE.module = b.dataset.mod; saveUi(); render(); window.scrollTo({top: 0}); });
 document.addEventListener("click", e => {
-  const t = e.target.closest("[data-act],[data-cat],[data-ign],[data-askdel],[data-del],[data-undel],[data-delrule],[data-delcat],[data-delcard],[data-patedit],[data-patask],[data-patdel],[data-evo],[data-gapign],[data-gapun],#aiBtn"); if (!t) return;
+  const t = e.target.closest("[data-act],[data-cat],[data-ign],[data-askdel],[data-del],[data-undel],[data-delrule],[data-delcat],[data-delcard],[data-patedit],[data-patask],[data-patdel],[data-evo],[data-gapign],[data-gapun],[data-accarch],[data-accun],[data-accdel],#aiBtn"); if (!t) return;
   if (t.dataset.evo) { const id = t.dataset.evo; if (id === "__total") PAT_SHOW_TOTAL = !PAT_SHOW_TOTAL; else if (PAT_HIDE.has(id)) PAT_HIDE.delete(id); else PAT_HIDE.add(id); return render(); }
   if (t.dataset.act === "verFaltas") { STATE.view = "statements"; saveUi(); render(); const gp = $("#gapPanel"); if (gp) gp.scrollIntoView({behavior: "smooth", block: "start"}); return; }
   if (t.dataset.gapign) { STATE.settings.ignoredGaps = [...new Set((STATE.settings.ignoredGaps || []).concat([t.dataset.gapign]))]; Store.saveSettings(); render(); const [c, m] = t.dataset.gapign.split("|"); toast(c + ": " + monthLong(m) + " marcado como sem fatura."); return; }
   if (t.dataset.gapun) { STATE.settings.ignoredGaps = (STATE.settings.ignoredGaps || []).filter(k => k !== t.dataset.gapun); Store.saveSettings(); return render(); }
+  if (t.dataset.act === "newConta") { openPat(); setTimeout(() => { const d = $("#newAcc"); if (d) { d.open = true; d.scrollIntoView({block: "center"}); $("#naInst").focus(); } }, 50); return; }
+  if (t.dataset.accarch) { STATE.settings.patArch = [...new Set((STATE.settings.patArch || []).concat([t.dataset.accarch]))]; Store.saveSettings(); return render(); }
+  if (t.dataset.accun) { STATE.settings.patArch = (STATE.settings.patArch || []).filter(x => x !== t.dataset.accun); Store.saveSettings(); return render(); }
+  if (t.dataset.accdel) { STATE.settings.patAssets = (STATE.settings.patAssets || []).filter(x => x.id !== t.dataset.accdel); Store.saveSettings(); render(); toast("Conta excluída."); return; }
   if (t.dataset.act === "newPat") return openPat();
   if (t.dataset.act === "metaEdit") { STATE.editMeta = true; render(); const i = $("#metaIn"); if (i) i.focus(); return; }
   if (t.dataset.act === "metaCancel") { STATE.editMeta = false; return render(); }
