@@ -199,7 +199,11 @@ tr.tot td{border-top:2px solid var(--line)}
 .evotip .tr span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
 .evotip .tr em{font-style:normal;font:500 11px var(--f-num);min-width:58px;text-align:right}
 @media (prefers-reduced-motion:no-preference){.evoline{stroke-dasharray:1;stroke-dashoffset:1;animation:evodraw 1.1s cubic-bezier(.3,.7,.2,1) forwards}.evoline.tot{animation:none;stroke-dasharray:7 5;stroke-dashoffset:0}@keyframes evodraw{to{stroke-dashoffset:0}}}
-.metastage{padding-top:96px}
+.metastage{padding-top:74px}
+.metapanel .ph{margin-bottom:4px}
+.metaacts{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.metaacts-mob{display:none}
+@media (max-width:720px){.metapanel .ph .metaacts{display:none}.metaacts-mob{display:flex;justify-content:space-between;margin-top:14px}.metastage{padding-top:70px}.metacoin{width:64px;height:78px;margin-left:-32px;bottom:16px}.metapanel .metabar{margin-bottom:12px}}
 .metacoin{position:absolute;bottom:18px;width:76px;height:92px;margin-left:-38px;pointer-events:none}
 .metacoin svg{width:100%;height:100%;overflow:visible;display:block}
 /* ---------- movimento base: flutua, gira de leve (3D), brilho passando, mcSombra acompanhando ---------- */
@@ -2020,7 +2024,7 @@ function metaPanel(atual, recs) {
   const status = atingida ? '<span class="pill p-ok">Meta atingida</span>' : proj == null ? '<span class="pill p-idle">Faça mais registros para ver o ritmo</span>' : proj >= meta ? '<span class="pill p-ok">No ritmo para bater a meta</span>' : '<span class="pill p-warn">Abaixo do ritmo necessário</span>';
   return `<div class="panel c12 metapanel">
     <div class="ph"><div><h2>Meta de fim de ano</h2><p class="hint">Patrimônio da família em 31/12/${ano} · faltam ${dias} dia${dias === 1 ? "" : "s"}</p></div>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${status}<button class="btn small" type="button" data-act="metaEdit">Alterar meta</button></div></div>
+      <div class="metaacts">${status}<button class="btn small" type="button" data-act="metaEdit">Alterar meta</button></div></div>
     <div class="metastage"><div class="metabar"><i style="width:${pctv.toFixed(1)}%"></i><span class="metamark" style="left:${pctv.toFixed(1)}%"></span>
       <div class="metacoin" style="left:clamp(30px, ${pctv.toFixed(1)}%, calc(100% - 30px))" title="${atingida ? "Meta atingida!" : pctv >= 90 ? "Quase lá" : pctv >= 80 ? "No caminho" : "Abaixo do esperado"}">${coinSVG(atingida ? "happy" : pctv >= 90 ? "sweat" : pctv >= 80 ? "neutral" : "worry", "mc")}</div></div></div>
     <div class="metanums">
@@ -2028,7 +2032,8 @@ function metaPanel(atual, recs) {
       <div><span class="eyebrow">Meta</span><b class="num">${BRL0.format(meta)}</b><span class="note">até 31/12/${ano}</span></div>
       <div><span class="eyebrow">${atingida ? "Acima da meta" : "Falta"}</span><b class="num ${atingida ? "down" : ""}">${BRL0.format(Math.abs(falta))}</b><span class="note">${atingida ? "parabéns à família" : porMes ? "≈ " + BRL0.format(porMes) + " por mês" : ""}</span></div>
       <div><span class="eyebrow">No ritmo atual</span><b class="num ${proj == null ? "" : proj >= meta ? "down" : "up"}">${proj == null ? "—" : BRL0.format(proj)}</b><span class="note">${ritmoMes == null ? "precisa de registros com 1 semana ou mais de distância" : (ritmoMes >= 0 ? "+" : "−") + BRL0.format(Math.abs(ritmoMes)) + " por mês desde " + fmtDate(recs[0].date)}</span></div>
-    </div></div>`;
+    </div>
+    <div class="metaacts metaacts-mob">${status}<button class="btn small" type="button" data-act="metaEdit">Alterar meta</button></div></div>`;
 }
 
 const ASSET_COLOR = {"btg-cc-marco": "var(--c13)", "btg-cc-alice": "var(--c7)", "itau-marco": "var(--c9)", "itau-moema": "var(--c14)", "btg-marco-br": "var(--c0)", "btg-marco-us": "var(--c8)", "btg-alice": "var(--c2)", "btg-moema": "var(--c3)", "btc": "#F7931A", "xp-moema": "var(--c10)", "xp-alice": "var(--c11)", "xp-marco": "var(--c4)"};

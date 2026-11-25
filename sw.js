@@ -1,5 +1,5 @@
 // Rede primeiro (sempre a versão mais nova); sem internet, usa a cópia guardada.
-const CACHE = "faturas-v42";
+const CACHE = "faturas-v43";
 self.addEventListener("install", e => self.skipWaiting());
 self.addEventListener("activate", e => e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())));
 self.addEventListener("fetch", e => {
