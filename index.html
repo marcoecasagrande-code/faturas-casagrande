@@ -153,6 +153,9 @@ header.top{position:relative;isolation:isolate;padding-top:20px}
 .qins div{border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13px;color:var(--muted)}.qins b{color:var(--fg)}
 .quando .ph{margin-bottom:12px}
 @media (max-width:760px){.qgrid,.qins{grid-template-columns:1fr}.qwk{gap:5px}.qv{font-size:9.5px}.qhm{gap:2px}.qbox{padding:12px}.qeps{gap:6px}.qep{padding:8px 8px}.qep b{font-size:13px;letter-spacing:-.03em}.qep .note{font-size:11px}.quando .qctl{gap:8px}}
+#btcChip #cotBtc,#btcChip #cotBtcPct{transition:opacity .25s,transform .25s}
+#btcChip.troca #cotBtc,#btcChip.troca #cotBtcPct{opacity:0;transform:translateY(-3px)}
+#cotBtc{min-width:7.6ch;display:inline-block}
 .status{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:6px}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
 .dot.ok{background:var(--down)} .dot.warn{background:var(--warn)}
@@ -2220,8 +2223,8 @@ async function cotacao(date) {
   if (COT.cache[date]) return COT.cache[date];
   let out;
   if (date >= todayISO()) {
-    const j = await getJSON("https://economia.awesomeapi.com.br/json/last/USD-BRL,BTC-BRL");
-    out = {fx: +j.USDBRL.bid, btc: +j.BTCBRL.bid, quando: j.USDBRL.create_date, hoje: true, fxPct: +j.USDBRL.pctChange, btcPct: +j.BTCBRL.pctChange};
+    const j = await getJSON("https://economia.awesomeapi.com.br/json/last/USD-BRL,BTC-BRL,BTC-USD");
+    out = {fx: +j.USDBRL.bid, btc: +j.BTCBRL.bid, quando: j.USDBRL.create_date, hoje: true, fxPct: +j.USDBRL.pctChange, btcPct: +j.BTCBRL.pctChange, btcUsd: j.BTCUSD ? +j.BTCUSD.bid : null, btcUsdPct: j.BTCUSD ? +j.BTCUSD.pctChange : null};
   } else {
     const ds = isoMinus(date, 7).replace(/-/g, ""), de = date.replace(/-/g, "");
     const [u, b] = await Promise.all(["USD-BRL", "BTC-BRL"].map(par => getJSON("https://economia.awesomeapi.com.br/json/daily/" + par + "/1?start_date=" + ds + "&end_date=" + de)));
@@ -2269,12 +2272,23 @@ function cotChip() {
   $("#cotFx").textContent = "R$ " + q.fx.toLocaleString("pt-BR", {minimumFractionDigits: 2, maximumFractionDigits: 4});
   const pc = $("#cotPct"), v = q.fxPct;
   if (isFinite(v)) { pc.textContent = (v > 0 ? "▲ " : v < 0 ? "▼ " : "") + Math.abs(v).toLocaleString("pt-BR", {maximumFractionDigits: 2}) + "%"; pc.className = "cp num " + (v > 0 ? "pos" : v < 0 ? "neg" : ""); }
-  $("#cotBtc").textContent = BRL0.format(q.btc);
-  const pb = $("#cotBtcPct"), vb = q.btcPct;
-  pb.textContent = isFinite(vb) ? (vb > 0 ? "▲ " : vb < 0 ? "▼ " : "") + Math.abs(vb).toLocaleString("pt-BR", {maximumFractionDigits: 2}) + "%" : "";
-  pb.className = "cp num " + (vb > 0 ? "pos" : vb < 0 ? "neg" : "");
+  btcMostra(q);
+  if (!COT.btcTimer) COT.btcTimer = setInterval(() => {
+    const qq = COT.hoje; if (!qq) return;
+    const usd = qq.btcUsd || (qq.btc && qq.fx ? qq.btc / qq.fx : null); if (!usd) return;
+    COT.btcEmUsd = !COT.btcEmUsd; const ch = $("#btcChip"); ch.classList.add("troca");
+    setTimeout(() => { btcMostra(qq); ch.classList.remove("troca"); }, 260);
+  }, 4000);
   el.title = "Cotações de compra · atualizado " + fmtHora(q) + " · fonte AwesomeAPI";
   el.hidden = false;
+}
+function btcMostra(q) {
+  const usd = q.btcUsd || (q.btc && q.fx ? q.btc / q.fx : null), emUsd = COT.btcEmUsd && usd;
+  $("#cotBtc").textContent = emUsd ? "US$ " + Math.round(usd).toLocaleString("pt-BR") : BRL0.format(q.btc);
+  const pb = $("#cotBtcPct"), vb = emUsd && isFinite(q.btcUsdPct) && q.btcUsdPct != null ? q.btcUsdPct : q.btcPct;
+  pb.textContent = isFinite(vb) ? (vb > 0 ? "▲ " : vb < 0 ? "▼ " : "") + Math.abs(vb).toLocaleString("pt-BR", {maximumFractionDigits: 2}) + "%" : "";
+  pb.className = "cp num " + (vb > 0 ? "pos" : vb < 0 ? "neg" : "");
+  $("#btcChip").title = emUsd ? "Bitcoin em dólar" : "Bitcoin em real";
 }
 const fmtHora = q => q && q.quando ? q.quando.slice(8, 10) + "/" + q.quando.slice(5, 7) + " às " + q.quando.slice(11, 16) : "";
 
