@@ -128,7 +128,8 @@ header.top{position:relative;isolation:isolate;padding-top:20px}
 .foldhead h2{margin:0}
 .foldhead .chev{width:30px;height:30px;padding:5px;border-radius:50%;background:var(--surface-2);color:var(--muted);flex:none;transition:transform .2s}
 .foldpanel.aberto .foldhead .chev{transform:rotate(180deg)}
-.foldbody{margin-top:12px}
+.foldbody{margin-top:10px}
+.foldpanel{align-self:start}
 .foldbody>.ph{margin-bottom:12px}
 .status{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:6px}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
@@ -677,8 +678,8 @@ let STATE = {
   view: "overview", period: 6, card: "all", person: "all", focusCat: null,
   txSearch: "", txCat: "all", txMonth: "all", showCredits: false,
 };
-try { const v = localStorage.getItem("faturas.ui"); if (v) { const o = JSON.parse(v); if (o.period != null) STATE.period = o.period; if (o.view) STATE.view = o.view; if (o.module) STATE.module = o.module; if (o.contasAbertas != null) STATE.contasAbertas = o.contasAbertas; } } catch (e) {}
-const saveUi = () => { try { localStorage.setItem("faturas.ui", JSON.stringify({period: STATE.period, view: STATE.view, module: STATE.module, contasAbertas: !!STATE.contasAbertas})); } catch (e) {} };
+try { const v = localStorage.getItem("faturas.ui"); if (v) { const o = JSON.parse(v); if (o.period != null) STATE.period = o.period; if (o.view) STATE.view = o.view; if (o.module) STATE.module = o.module; STATE.fold = Object.assign({}, o.fold || {}); if (o.contasAbertas != null && STATE.fold.contas == null) STATE.fold.contas = o.contasAbertas; } } catch (e) {}
+const saveUi = () => { try { localStorage.setItem("faturas.ui", JSON.stringify({period: STATE.period, view: STATE.view, module: STATE.module, fold: STATE.fold || {}})); } catch (e) {} };
 
 const allCats = () => { const extra = (STATE.settings.customCats || []).filter(c => !CAT_NAMES.includes(c)); return CAT_NAMES.slice(0, -1).concat(extra, ["Outros"]); };
 const CAT_TOKEN = {"Compras online": 0, "Lazer e viagem": 1, "Transporte": 2, "Alimentação": 3, "Assinaturas": 4, "Combustível": 5, "Educação": 6, "Pets": 7, "Saúde": 8, "Tarifas e juros": 9, "Vestuário": 10, "Mercado": 11, "Casa": 12, "Contas e serviços": 13, "Beleza e cuidados": 14};
@@ -1928,9 +1929,9 @@ function renderPat(v) {
       <div class="evochips">${PAT_ASSETS.filter(a => recs.some(r => patVals(r)[a.id] != null)).map(a => `<button type="button" class="evochip" data-evo="${a.id}" aria-pressed="${!PAT_HIDE.has(a.id)}" style="--lc:${assetColor(a)}"><i></i>${esc(a.nome)}${a.sub ? " " + esc(subCurto(a.sub)) : ""}</button>`).join("")}<button type="button" class="evochip tot" data-evo="__total" aria-pressed="${PAT_SHOW_TOTAL}" style="--lc:var(--fg)"><i></i>Total da família</button></div>
       <div class="evowrap" id="evoWrap">${patSVG(recs)}<div class="evotip" id="evoTip" hidden></div></div>
     </div>
-    <div class="panel c6"><h2>Por pessoa</h2><p class="hint">Bitcoin conta como da família</p><div class="pbars">${bars(byWho, PAT_WHO)}</div></div>
-    <div class="panel c6"><h2>Por instituição</h2><p class="hint">Onde está guardado</p><div class="pbars">${bars(byInst, PAT_INST)}</div></div>
-    <div class="panel c12"><h2>Ativos</h2><p class="hint">Valores do registro de ${fmtDate(last.date)}${last.fx ? " · dólar a " + BRL.format(last.fx) : ""}${last.btcPrice ? " · bitcoin a " + BRL0.format(last.btcPrice) : ""}</p>
+    <div class="panel c6 ${foldCls("pessoa")}">${foldHead("pessoa", "Por pessoa", Object.keys(byWho).length + " pessoas")}${foldBody("pessoa")}<p class="hint">Bitcoin conta como da família</p><div class="pbars">${bars(byWho, PAT_WHO)}</div></div></div>
+    <div class="panel c6 ${foldCls("inst")}">${foldHead("inst", "Por instituição", Object.keys(byInst).length + " instituições")}${foldBody("inst")}<p class="hint">Onde está guardado</p><div class="pbars">${bars(byInst, PAT_INST)}</div></div></div>
+    <div class="panel c12 ${foldCls("ativos")}">${foldHead("ativos", "Ativos", PAT_ASSETS.filter(a => lv[a.id] != null).length + " com saldo")}${foldBody("ativos")}<p class="hint">Valores do registro de ${fmtDate(last.date)}${last.fx ? " · dólar a " + BRL.format(last.fx) : ""}${last.btcPrice ? " · bitcoin a " + BRL0.format(last.btcPrice) : ""}</p>
       <div class="tablewrap" style="border:0"><table><thead><tr><th>Ativo</th><th>Pessoa</th><th class="r">Saldo</th><th class="r">Em reais</th><th class="r">Variação</th><th class="r">% do total</th></tr></thead><tbody>
       ${PAT_ASSETS.filter(a => !isArch(a) || last.v[a.id] != null).map(a => { const x = lv[a.id], raw = last.v[a.id], px = pv ? pv[a.id] : null, dd = x != null && px != null ? x - px : null;
         const rawTxt = raw == null || raw === "" ? "—" : a.cur === "USD" ? "US$ " + Number(raw).toLocaleString("pt-BR", {minimumFractionDigits: 2, maximumFractionDigits: 2}) : a.cur === "BTC" ? Number(raw).toLocaleString("pt-BR", {maximumFractionDigits: 8}) + " BTC" : BRL.format(raw);
@@ -1939,9 +1940,9 @@ function renderPat(v) {
         <td class="r num">${dd == null ? '<span class="note">—</span>' : Math.abs(dd) < 0.5 ? '<span class="note">sem mudança</span>' : '<span class="' + (dd > 0 ? "down" : "up") + '">' + (dd > 0 ? "+" : "−") + BRL0.format(Math.abs(dd)) + "</span>"}</td>
         <td class="r num">${x == null || !total ? "—" : (x / total * 100).toLocaleString("pt-BR", {maximumFractionDigits: 1}) + "%"}</td></tr>`; }).join("")}
       <tr class="tot"><td colspan="3"><b>Total</b></td><td class="r num"><b>${BRL.format(total)}</b></td><td class="r num">${d == null ? "" : '<span class="' + (d >= 0 ? "down" : "up") + '">' + (d >= 0 ? "+" : "−") + BRL0.format(Math.abs(d)) + "</span>"}</td><td class="r num">100%</td></tr>
-      </tbody></table></div></div>
-    <div class="panel c12 foldpanel${STATE.contasAbertas ? " aberto" : ""}"><button class="foldhead" type="button" data-act="foldContas" aria-expanded="${STATE.contasAbertas ? "true" : "false"}"><span><h2>Contas</h2><span class="note">${PAT_ASSETS.filter(a => !isArch(a)).length} ativas${PAT_ASSETS.some(isArch) ? " · " + PAT_ASSETS.filter(isArch).length + " arquivadas" : ""}</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
-      <div class="foldbody"${STATE.contasAbertas ? "" : " hidden"}><div class="ph"><p class="hint" style="margin:0">Contas que aparecem no registro. Arquivar tira a conta do formulário e mantém o histórico.</p><button class="btn small" type="button" data-act="newConta">+ Nova conta</button></div>
+      </tbody></table></div></div></div>
+    <div class="panel c12 ${foldCls("contas")}">${foldHead("contas", "Contas", PAT_ASSETS.filter(a => !isArch(a)).length + " ativas" + (PAT_ASSETS.some(isArch) ? " · " + PAT_ASSETS.filter(isArch).length + " arquivadas" : ""))}
+      ${foldBody("contas")}<div class="ph"><p class="hint" style="margin:0">Contas que aparecem no registro. Arquivar tira a conta do formulário e mantém o histórico.</p><button class="btn small" type="button" data-act="newConta">+ Nova conta</button></div>
       <div class="acclist">${PAT_ASSETS.map(a => { const usada = STATE.pats.some(r => r.v && r.v[a.id] != null), arq = isArch(a);
         return `<div class="accrow${arq ? " arq" : ""}">${instIcon(a.inst, a.cur)}<span class="pname"><b>${esc(a.nome)}</b><span class="note">${a.sub ? esc(a.sub) + " · " : ""}${a.cur === "USD" ? "em dólar" : a.cur === "BTC" ? "quantidade em BTC" : "em reais"}${arq ? " · arquivada" : ""}</span></span>
           <span class="accacts">${arq ? `<button class="btn small" type="button" data-accun="${a.id}">Reativar</button>` : `<button class="btn small" type="button" data-accarch="${a.id}">Arquivar</button>`}${a.custom && !usada ? `<button class="btn small danger" type="button" data-accdel="${a.id}">Excluir</button>` : ""}</span></div>`; }).join("")}</div></div></div>
@@ -2008,6 +2009,12 @@ function coinSVG(st, id) {
       </g>
     </svg>`;
 }
+/* quadros recolhíveis (setinha); cada aparelho lembra o que deixou aberto */
+const isOpen = k => !!(STATE.fold || {})[k];
+const foldHead = (k, titulo, resumo) => `<button class="foldhead" type="button" data-fold="${k}" aria-expanded="${isOpen(k)}"><span><h2>${titulo}</h2><span class="note">${resumo}</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>`;
+const foldCls = k => "foldpanel" + (isOpen(k) ? " aberto" : "");
+const foldBody = k => '<div class="foldbody"' + (isOpen(k) ? "" : " hidden") + ">";
+
 function metaPanel(atual, recs) {
   const ano = new Date().getFullYear(), fim = ano + "-12-31";
   const meta = (STATE.settings.patMetas || {})[ano];
@@ -2323,7 +2330,7 @@ $("#personSeg").addEventListener("click", e => { const b = e.target.closest("but
 $("#btnImport").onclick = () => STATE.module === "patrimonio" ? openPat() : openImport();
 document.querySelector(".modsw").addEventListener("click", e => { const b = e.target.closest("button[data-mod]"); if (!b || b.dataset.mod === STATE.module) return; STATE.module = b.dataset.mod; saveUi(); render(); window.scrollTo({top: 0}); });
 document.addEventListener("click", e => {
-  const t = e.target.closest("[data-act],[data-cat],[data-ign],[data-askdel],[data-del],[data-undel],[data-delrule],[data-delcat],[data-delcard],[data-patedit],[data-patask],[data-patdel],[data-evo],[data-gapign],[data-gapun],[data-accarch],[data-accun],[data-accdel],#aiBtn"); if (!t) return;
+  const t = e.target.closest("[data-fold],[data-act],[data-cat],[data-ign],[data-askdel],[data-del],[data-undel],[data-delrule],[data-delcat],[data-delcard],[data-patedit],[data-patask],[data-patdel],[data-evo],[data-gapign],[data-gapun],[data-accarch],[data-accun],[data-accdel],#aiBtn"); if (!t) return;
   if (t.dataset.evo) { const id = t.dataset.evo; if (id === "__total") PAT_SHOW_TOTAL = !PAT_SHOW_TOTAL; else if (PAT_HIDE.has(id)) PAT_HIDE.delete(id); else PAT_HIDE.add(id); return render(); }
   if (t.dataset.act === "verFaltas") { STATE.view = "statements"; saveUi(); render(); const gp = $("#gapPanel"); if (gp) gp.scrollIntoView({behavior: "smooth", block: "start"}); return; }
   if (t.dataset.gapign) { STATE.settings.ignoredGaps = [...new Set((STATE.settings.ignoredGaps || []).concat([t.dataset.gapign]))]; Store.saveSettings(); render(); const [c, m] = t.dataset.gapign.split("|"); toast(c + ": " + monthLong(m) + " marcado como sem fatura."); return; }
@@ -2333,7 +2340,7 @@ document.addEventListener("click", e => {
   if (t.dataset.accun) { STATE.settings.patArch = (STATE.settings.patArch || []).filter(x => x !== t.dataset.accun); Store.saveSettings(); return render(); }
   if (t.dataset.accdel) { STATE.settings.patAssets = (STATE.settings.patAssets || []).filter(x => x.id !== t.dataset.accdel); Store.saveSettings(); render(); toast("Conta excluída."); return; }
   if (t.dataset.act === "newPat") return openPat();
-  if (t.dataset.act === "foldContas") { STATE.contasAbertas = !STATE.contasAbertas; saveUi(); render(); return; }
+  if (t.dataset.fold) { STATE.fold = Object.assign({}, STATE.fold); STATE.fold[t.dataset.fold] = !STATE.fold[t.dataset.fold]; saveUi(); render(); return; }
   if (t.dataset.act === "metaEdit") { STATE.editMeta = true; render(); const i = $("#metaIn"); if (i) i.focus(); return; }
   if (t.dataset.act === "metaCancel") { STATE.editMeta = false; return render(); }
   if (t.dataset.act === "metaSave") { const v2 = parseNum($("#metaIn").value); if (!(v2 > 0)) { toast("Digite o valor da meta."); return; }
