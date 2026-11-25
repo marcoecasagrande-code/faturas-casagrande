@@ -83,13 +83,13 @@ header.top{position:relative;isolation:isolate;padding-top:20px}
 .cotchip .cp.neg{color:var(--up)}
 .foot{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;padding-block:8px 28px}
 .cot-selic{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:#0F7A4A;color:#fff;font:800 10.5px/1 var(--f-body);flex:none}
-.newsbtn{position:relative;z-index:1;align-self:stretch;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:150px;padding:10px 18px;border:0;border-radius:14px;color:#5A2A0C;background:linear-gradient(140deg,#FFD3AE 0%,#FDBA87 55%,#F6A06A 100%);box-shadow:0 6px 18px rgba(214,120,60,.22),inset 0 1px 0 rgba(255,255,255,.25);font-family:var(--f-display);cursor:pointer;transition:transform .15s,box-shadow .15s}
-.newsbtn:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(214,120,60,.3),inset 0 1px 0 rgba(255,255,255,.25)}
+.newsbtn{position:relative;z-index:1;align-self:stretch;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:150px;padding:10px 18px;border:2px solid #F6A06A;border-radius:14px;color:var(--orange);background:var(--surface);box-shadow:var(--cardsh);font-family:var(--f-display);cursor:pointer;transition:transform .15s,box-shadow .15s}
+.newsbtn:hover{transform:translateY(-1px);background:color-mix(in srgb,#F6A06A 10%,var(--surface))}
 .newsbtn:active{transform:translateY(0)}
-.newsbtn svg{width:26px;height:26px;color:#7A3A12}
+.newsbtn svg{width:26px;height:26px;color:var(--orange)}
 .newsbtn{text-shadow:none}
 .newsbtn .nb1{font-weight:700;font-size:17px;letter-spacing:-.01em;line-height:1}
-.newsbtn .nb2{font-family:var(--f-body);font-size:11px;opacity:.85;line-height:1.1;text-align:center}
+.newsbtn .nb2{font-family:var(--f-body);font-size:11px;color:var(--muted);line-height:1.1;text-align:center}
 .newsbar{display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between}
 .newslist{display:flex;flex-direction:column}
 .newsitem{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 14px;padding:12px 2px;border-bottom:1px solid var(--line);color:var(--fg);text-decoration:none}
