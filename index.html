@@ -131,6 +131,28 @@ header.top{position:relative;isolation:isolate;padding-top:20px}
 .foldbody{margin-top:10px}
 .foldpanel{align-self:start}
 .foldbody>.ph{margin-bottom:12px}
+.quando .qctl{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.qck{display:flex;gap:6px;align-items:center}
+.qgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.qbox{background:color-mix(in srgb,var(--surface-2) 55%,transparent);border-radius:12px;padding:14px 16px;min-width:0}
+.qbox h3{margin:0;font-size:14px}.qbox .hint{margin:2px 0 12px}
+.qwk{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;align-items:end;height:168px}
+.qc{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;height:100%;min-width:0}
+.qbar{width:100%;max-width:44px;border-radius:8px 8px 4px 4px;overflow:hidden;display:flex;flex-direction:column-reverse}
+.qbar s{display:block;width:100%;text-decoration:none}
+.qv{font-size:11px;color:var(--muted);white-space:nowrap}
+.qd{font-weight:600;font-size:12.5px}.qc.top .qd{color:var(--orange)}
+.qeps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.qep{background:var(--surface);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0;border:2px solid transparent}
+.qep.top{border-color:var(--orange)}
+.qep .ql{font-weight:600;font-size:13px}.qep b{font-size:16px;font-family:var(--f-num)}
+.qsp{display:flex;height:6px;border-radius:99px;overflow:hidden;margin-top:6px;background:var(--surface-2)}.qsp i{display:block;height:100%}
+.qhm{display:grid;grid-template-columns:repeat(31,minmax(0,1fr));gap:3px;margin-top:14px}.qhm i{display:block;aspect-ratio:1/1.6;border-radius:3px}
+.qhml{display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);margin-top:4px}
+.qins{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px}
+.qins div{border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13px;color:var(--muted)}.qins b{color:var(--fg)}
+.quando .ph{margin-bottom:12px}
+@media (max-width:760px){.qgrid,.qins{grid-template-columns:1fr}.qwk{gap:5px}.qv{font-size:9.5px}.qhm{gap:2px}.qbox{padding:12px}.qeps{gap:6px}.qep{padding:8px 8px}.qep b{font-size:13px;letter-spacing:-.03em}.qep .note{font-size:11px}.quando .qctl{gap:8px}}
 .status{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:6px}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
 .dot.ok{background:var(--down)} .dot.warn{background:var(--warn)}
@@ -1010,6 +1032,49 @@ function scopeTx() {
   return {txs, range, months, prevMonths};
 }
 
+/* ---------- quando mais gasta: dia da semana e época do mês ---------- */
+function quandoPanel(inP) {
+  const Q = STATE.q || (STATE.q = {who: "all", mode: "sum", semViagem: true});
+  const base = inP.filter(t => t.date && !(t.inst && t.inst[0] > 1) && (!Q.semViagem || t.c !== "Lazer e viagem"));
+  const pessoas = [...new Set(base.map(t => t.who).filter(Boolean))];
+  if (STATE.person !== "all" || !pessoas.includes(Q.who)) Q.who = "all";
+  const L = base.filter(t => Q.who === "all" || t.who === Q.who);
+  const agg = list => { const ws = Array(7).fill(0), wn = Array(7).fill(0), ms = Array(32).fill(0), es = [0, 0, 0], en = [0, 0, 0];
+    list.forEach(t => { const dt = new Date(t.date + "T12:00:00"), w = dt.getDay(), d = dt.getDate(), e = d <= 10 ? 0 : d <= 20 ? 1 : 2; ws[w] += t.amount; wn[w]++; ms[d] += t.amount; es[e] += t.amount; en[e]++; });
+    return {ws, wn, ms, es, en}; };
+  const A = agg(L), P = {}; pessoas.forEach(p => P[p] = agg(base.filter(t => t.who === p)));
+  const tot = L.reduce((a, t) => a + t.amount, 0);
+  const DN = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"], DL = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
+  const art = i => (i === 0 || i === 6 ? "no " : "na ") + "<b>" + DL[i] + "</b>";
+  const soma = Q.mode === "sum", porPessoa = Q.who === "all" && pessoas.length > 1 && STATE.person === "all";
+  const wv = [0, 1, 2, 3, 4, 5, 6].map(i => soma ? A.ws[i] : (A.wn[i] ? A.ws[i] / A.wn[i] : 0)), mx = Math.max(...wv, 1), top = wv.indexOf(Math.max(...wv));
+  const corUma = Q.who !== "all" ? personColor(Q.who) : STATE.person !== "all" ? personColor(STATE.person) : "var(--orange)";
+  const mil = v => (v / 1000).toLocaleString("pt-BR", {maximumFractionDigits: 1}) + " mil";
+  const barras = [1, 2, 3, 4, 5, 6, 0].map(i => {
+    const segs = soma && porPessoa ? pessoas.map(p => `<s style="height:${wv[i] ? P[p].ws[i] / wv[i] * 100 : 0}%;background:${personColor(p)}"></s>`).join("") : `<s style="height:100%;background:${corUma}"></s>`;
+    return `<div class="qc${i === top && tot ? " top" : ""}"><span class="qv num">${wv[i] ? mil(wv[i]) : "—"}</span><div class="qbar" style="height:${Math.max(3, wv[i] / mx * 118)}px">${segs}</div><span class="qd">${DN[i]}</span></div>`; }).join("");
+  const ev = A.es.map((x, i) => soma ? x : (A.en[i] ? x / A.en[i] : 0)), et = ev.indexOf(Math.max(...ev));
+  const epocas = ["Início", "Meio", "Fim"].map((n, i) => `<div class="qep${i === et && tot ? " top" : ""}"><span class="ql">${n}</span><b class="num">${BRL0.format(ev[i])}</b><span class="note">${soma ? (tot ? Math.round(A.es[i] / tot * 100) : 0) + "% do total" : A.en[i] + " compra" + (A.en[i] === 1 ? "" : "s")}</span>${soma && porPessoa ? `<span class="qsp">${pessoas.map(p => `<i style="width:${A.es[i] ? P[p].es[i] / A.es[i] * 100 : 0}%;background:${personColor(p)}"></i>`).join("")}</span>` : ""}</div>`).join("");
+  const mm = Math.max(...A.ms, 1), dmax = A.ms.indexOf(Math.max(...A.ms));
+  const heat = A.ms.slice(1).map((x, i) => `<i title="dia ${i + 1}: ${BRL0.format(x)}" style="background:color-mix(in srgb,${corUma} ${Math.round(6 + x / mm * 94)}%,var(--surface-2))"></i>`).join("");
+  const fds = tot ? (A.ws[0] + A.ws[6]) / tot * 100 : 0;
+  const topDe = p => { const a = P[p].ws; return art(a.indexOf(Math.max(...a))); };
+  const ins = !tot ? "" : `<div class="qins"><div>O dia que mais pesa${Q.who !== "all" ? " para " + esc(Q.who) : ""} é <b>${DL[top]}</b>${soma ? ", com " + Math.round(A.ws[top] / tot * 100) + "% dos gastos" : ""}.</div>
+    <div>${porPessoa ? pessoas.map((p, k) => (k ? esc(p) + ", " : esc(p) + " gasta mais ") + topDe(p)).join("; ") + "." : "O fim de semana concentra <b>" + Math.round(fds) + "%</b> dos gastos (são 2 de 7 dias, ou 29%)."}</div>
+    <div>Dia do mês mais pesado: <b>dia ${dmax}</b>, com ${BRL0.format(A.ms[dmax])}. A ${["primeira", "segunda", "última"][et]} dezena é a mais cara.</div></div>`;
+  const seg = (attr, items, cur) => `<div class="seg">${items.map(([v, t]) => `<button type="button" data-q${attr}="${esc(v)}" aria-pressed="${v === cur}">${esc(t)}</button>`).join("")}</div>`;
+  return `<div class="panel c12 quando">
+    <div class="ph"><div><h2>Quando vocês mais gastam</h2><p class="hint">Pela data de cada compra, no período escolhido · parcelas de compras antigas ficam de fora</p></div>
+      <div class="qctl">${STATE.person === "all" && pessoas.length > 1 ? seg("who", [["all", "Família"]].concat(pessoas.map(p => [p, p])), Q.who) : ""}
+      <label class="note qck"><input type="checkbox" data-qsv="1" ${Q.semViagem ? "checked" : ""}> Sem viagens</label>
+      ${seg("mode", [["sum", "Total"], ["avg", "Média por compra"]], Q.mode)}</div></div>
+    ${!tot ? '<p class="empty">Nenhuma compra com data neste filtro.</p>' : `<div class="qgrid">
+      <div class="qbox"><h3>Dia da semana</h3><p class="hint">${soma ? "Soma das compras em cada dia" : "Valor médio de cada compra"}</p><div class="qwk">${barras}</div>${soma && porPessoa ? `<div class="legend" style="justify-content:center">${pessoas.map(p => `<span><i class="sw" style="background:${personColor(p)};border-radius:50%"></i>${esc(p)}</span>`).join("")}</div>` : ""}</div>
+      <div class="qbox"><h3>Época do mês</h3><p class="hint">Início 1–10 · meio 11–20 · fim 21–31</p><div class="qeps">${epocas}</div><div class="qhm">${heat}</div><div class="qhml num"><span>dia 1</span><span>10</span><span>20</span><span>31</span></div></div>
+    </div>${ins}`}
+  </div>`;
+}
+
 function renderOverview(v) {
   const {txs, months, prevMonths} = scopeTx();
   const spend = txs.filter(isSpend);
@@ -1123,6 +1188,7 @@ function renderOverview(v) {
         return `<button class="rrow" type="button" data-cat="${esc(c)}" aria-pressed="${focus === c}"><span class="pos">${i + 1}</span><span class="nm"><i class="sw" style="background:${catColor(c)}"></i>${esc(c)}</span><span class="amt">${BRL0.format(val)}</span><span class="track"><span class="fill" style="display:block;width:${(val / maxCat * 100).toFixed(1)}%;background:${catColor(c)}"></span></span><span class="meta"><span>${(val / total * 100).toLocaleString("pt-BR", {maximumFractionDigits: 1})}% do total</span><span>${!hasPrev ? "" : p == null ? "novo" : '<span class="' + (p > 0 ? "up" : "down") + '">' + (p > 0 ? "▲ " : "▼ ") + fmtPct(p) + "</span>"}</span></span></button>`; }).join("")}</div>
     </div>
 
+    ${quandoPanel(inP)}
     <div class="panel c6">
       <h2>Por cartão</h2><p class="hint">Total de cada fatura no período</p>
       ${cardSVG(months, byCard, cardColor)}
@@ -2335,7 +2401,7 @@ $("#personSeg").addEventListener("click", e => { const b = e.target.closest("but
 $("#btnImport").onclick = () => STATE.module === "patrimonio" ? openPat() : openImport();
 document.querySelector(".modsw").addEventListener("click", e => { const b = e.target.closest("button[data-mod]"); if (!b || b.dataset.mod === STATE.module) return; STATE.module = b.dataset.mod; saveUi(); render(); window.scrollTo({top: 0}); });
 document.addEventListener("click", e => {
-  const t = e.target.closest("[data-fold],[data-act],[data-cat],[data-ign],[data-askdel],[data-del],[data-undel],[data-delrule],[data-delcat],[data-delcard],[data-patedit],[data-patask],[data-patdel],[data-evo],[data-gapign],[data-gapun],[data-accarch],[data-accun],[data-accdel],#aiBtn"); if (!t) return;
+  const t = e.target.closest("[data-qwho],[data-qmode],[data-fold],[data-act],[data-cat],[data-ign],[data-askdel],[data-del],[data-undel],[data-delrule],[data-delcat],[data-delcard],[data-patedit],[data-patask],[data-patdel],[data-evo],[data-gapign],[data-gapun],[data-accarch],[data-accun],[data-accdel],#aiBtn"); if (!t) return;
   if (t.dataset.evo) { const id = t.dataset.evo; if (id === "__total") PAT_SHOW_TOTAL = !PAT_SHOW_TOTAL; else if (PAT_HIDE.has(id)) PAT_HIDE.delete(id); else PAT_HIDE.add(id); return render(); }
   if (t.dataset.act === "verFaltas") { STATE.view = "statements"; saveUi(); render(); const gp = $("#gapPanel"); if (gp) gp.scrollIntoView({behavior: "smooth", block: "start"}); return; }
   if (t.dataset.gapign) { STATE.settings.ignoredGaps = [...new Set((STATE.settings.ignoredGaps || []).concat([t.dataset.gapign]))]; Store.saveSettings(); render(); const [c, m] = t.dataset.gapign.split("|"); toast(c + ": " + monthLong(m) + " marcado como sem fatura."); return; }
@@ -2345,6 +2411,7 @@ document.addEventListener("click", e => {
   if (t.dataset.accun) { STATE.settings.patArch = (STATE.settings.patArch || []).filter(x => x !== t.dataset.accun); Store.saveSettings(); return render(); }
   if (t.dataset.accdel) { STATE.settings.patAssets = (STATE.settings.patAssets || []).filter(x => x.id !== t.dataset.accdel); Store.saveSettings(); render(); toast("Conta excluída."); return; }
   if (t.dataset.act === "newPat") return openPat();
+  if (t.dataset.qwho != null || t.dataset.qmode != null) { STATE.q = Object.assign({who: "all", mode: "sum", semViagem: true}, STATE.q); if (t.dataset.qwho != null) STATE.q.who = t.dataset.qwho; else STATE.q.mode = t.dataset.qmode; render(); return; }
   if (t.dataset.fold) { STATE.fold = Object.assign({}, STATE.fold); STATE.fold[t.dataset.fold] = !STATE.fold[t.dataset.fold]; saveUi(); render(); return; }
   if (t.dataset.act === "metaEdit") { STATE.editMeta = true; render(); const i = $("#metaIn"); if (i) i.focus(); return; }
   if (t.dataset.act === "metaCancel") { STATE.editMeta = false; return render(); }
@@ -2464,6 +2531,7 @@ newsDlg.addEventListener("click", e => { if (e.target === newsDlg) newsDlg.close
 $("#newsTema").addEventListener("click", e => { const b = e.target.closest("button[data-t]"); if (!b) return; NEWS.tema = b.dataset.t; renderNews(); });
 $("#newsPer").addEventListener("click", e => { const b = e.target.closest("button[data-p]"); if (!b) return; NEWS.dias = +b.dataset.p; renderNews(); });
 
+document.addEventListener("change", e => { if (e.target.matches && e.target.matches("[data-qsv]")) { STATE.q = Object.assign({who: "all", mode: "sum", semViagem: true}, STATE.q); STATE.q.semViagem = e.target.checked; render(); } });
 render();
 Store.init();
 })();
