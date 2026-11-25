@@ -316,13 +316,13 @@ tr.tot td{border-top:2px solid var(--line)}
 .patin .pfield{grid-column:1/-1;display:flex;align-items:center;gap:6px}
 .patin .pcur{font:600 13px var(--f-num);color:var(--muted);min-width:34px}
 .patin input{flex:1;min-width:0;font:600 16px var(--f-num);text-align:right}
-nav.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+nav.tabs{position:relative;z-index:1;display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
 nav.tabs::-webkit-scrollbar{display:none}
 nav.tabs button{border:0;background:none;padding:10px 14px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
 nav.tabs button[aria-selected="true"]{color:var(--orange);border-bottom-color:var(--orange)}
 
 /* filtros em pílulas */
-.filters{display:flex;gap:8px 10px;flex-wrap:wrap;align-items:center;padding-block:16px}
+.filters{position:relative;z-index:1;display:flex;gap:8px 10px;flex-wrap:wrap;align-items:center;padding-block:16px}
 .seg{display:inline-flex;gap:6px;flex-wrap:wrap}
 .seg button,.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:13px;font-weight:500;color:var(--fg)}
 .seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
