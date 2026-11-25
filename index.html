@@ -123,6 +123,13 @@ header.top{position:relative;isolation:isolate;padding-top:20px}
 .cardcol{white-space:nowrap}
 @media (max-width:560px){.tablewrap td,.tablewrap th{padding-left:7px;padding-right:7px}.yr{display:none}.tablewrap .desc{white-space:normal;word-break:break-word;min-width:110px;display:inline-block}}
 @media (max-width:900px){.cardcol .cardnm{display:none}.cardcol .note{font-size:inherit}.colfat{display:none}}
+.foldhead{display:flex;width:100%;align-items:center;justify-content:space-between;gap:12px;background:none;border:0;padding:0;color:inherit;text-align:left;cursor:pointer;font:inherit}
+.foldhead>span{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.foldhead h2{margin:0}
+.foldhead .chev{width:30px;height:30px;padding:5px;border-radius:50%;background:var(--surface-2);color:var(--muted);flex:none;transition:transform .2s}
+.foldpanel.aberto .foldhead .chev{transform:rotate(180deg)}
+.foldbody{margin-top:12px}
+.foldbody>.ph{margin-bottom:12px}
 .status{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:6px}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
 .dot.ok{background:var(--down)} .dot.warn{background:var(--warn)}
@@ -670,8 +677,8 @@ let STATE = {
   view: "overview", period: 6, card: "all", person: "all", focusCat: null,
   txSearch: "", txCat: "all", txMonth: "all", showCredits: false,
 };
-try { const v = localStorage.getItem("faturas.ui"); if (v) { const o = JSON.parse(v); if (o.period != null) STATE.period = o.period; if (o.view) STATE.view = o.view; if (o.module) STATE.module = o.module; } } catch (e) {}
-const saveUi = () => { try { localStorage.setItem("faturas.ui", JSON.stringify({period: STATE.period, view: STATE.view, module: STATE.module})); } catch (e) {} };
+try { const v = localStorage.getItem("faturas.ui"); if (v) { const o = JSON.parse(v); if (o.period != null) STATE.period = o.period; if (o.view) STATE.view = o.view; if (o.module) STATE.module = o.module; if (o.contasAbertas != null) STATE.contasAbertas = o.contasAbertas; } } catch (e) {}
+const saveUi = () => { try { localStorage.setItem("faturas.ui", JSON.stringify({period: STATE.period, view: STATE.view, module: STATE.module, contasAbertas: !!STATE.contasAbertas})); } catch (e) {} };
 
 const allCats = () => { const extra = (STATE.settings.customCats || []).filter(c => !CAT_NAMES.includes(c)); return CAT_NAMES.slice(0, -1).concat(extra, ["Outros"]); };
 const CAT_TOKEN = {"Compras online": 0, "Lazer e viagem": 1, "Transporte": 2, "Alimentação": 3, "Assinaturas": 4, "Combustível": 5, "Educação": 6, "Pets": 7, "Saúde": 8, "Tarifas e juros": 9, "Vestuário": 10, "Mercado": 11, "Casa": 12, "Contas e serviços": 13, "Beleza e cuidados": 14};
@@ -1933,10 +1940,11 @@ function renderPat(v) {
         <td class="r num">${x == null || !total ? "—" : (x / total * 100).toLocaleString("pt-BR", {maximumFractionDigits: 1}) + "%"}</td></tr>`; }).join("")}
       <tr class="tot"><td colspan="3"><b>Total</b></td><td class="r num"><b>${BRL.format(total)}</b></td><td class="r num">${d == null ? "" : '<span class="' + (d >= 0 ? "down" : "up") + '">' + (d >= 0 ? "+" : "−") + BRL0.format(Math.abs(d)) + "</span>"}</td><td class="r num">100%</td></tr>
       </tbody></table></div></div>
-    <div class="panel c12"><div class="ph"><div><h2>Contas</h2><p class="hint">Contas que aparecem no registro. Arquivar tira a conta do formulário e mantém o histórico.</p></div><button class="btn small" type="button" data-act="newConta">+ Nova conta</button></div>
+    <div class="panel c12 foldpanel${STATE.contasAbertas ? " aberto" : ""}"><button class="foldhead" type="button" data-act="foldContas" aria-expanded="${STATE.contasAbertas ? "true" : "false"}"><span><h2>Contas</h2><span class="note">${PAT_ASSETS.filter(a => !isArch(a)).length} ativas${PAT_ASSETS.some(isArch) ? " · " + PAT_ASSETS.filter(isArch).length + " arquivadas" : ""}</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+      <div class="foldbody"${STATE.contasAbertas ? "" : " hidden"}><div class="ph"><p class="hint" style="margin:0">Contas que aparecem no registro. Arquivar tira a conta do formulário e mantém o histórico.</p><button class="btn small" type="button" data-act="newConta">+ Nova conta</button></div>
       <div class="acclist">${PAT_ASSETS.map(a => { const usada = STATE.pats.some(r => r.v && r.v[a.id] != null), arq = isArch(a);
         return `<div class="accrow${arq ? " arq" : ""}">${instIcon(a.inst, a.cur)}<span class="pname"><b>${esc(a.nome)}</b><span class="note">${a.sub ? esc(a.sub) + " · " : ""}${a.cur === "USD" ? "em dólar" : a.cur === "BTC" ? "quantidade em BTC" : "em reais"}${arq ? " · arquivada" : ""}</span></span>
-          <span class="accacts">${arq ? `<button class="btn small" type="button" data-accun="${a.id}">Reativar</button>` : `<button class="btn small" type="button" data-accarch="${a.id}">Arquivar</button>`}${a.custom && !usada ? `<button class="btn small danger" type="button" data-accdel="${a.id}">Excluir</button>` : ""}</span></div>`; }).join("")}</div></div>
+          <span class="accacts">${arq ? `<button class="btn small" type="button" data-accun="${a.id}">Reativar</button>` : `<button class="btn small" type="button" data-accarch="${a.id}">Arquivar</button>`}${a.custom && !usada ? `<button class="btn small danger" type="button" data-accdel="${a.id}">Excluir</button>` : ""}</span></div>`; }).join("")}</div></div></div>
     <div class="panel c12"><h2>Histórico de registros</h2><p class="hint">Cada registro guarda os saldos daquele dia</p>
       <div class="cards-list">${recs.slice().reverse().map((r, i, arr) => { const t = patTotal(r), pr = arr[i + 1], dt = pr ? t - patTotal(pr) : null;
         return `<div class="st" style="--tc:var(--accent)"><i class="sw"></i><div><div class="t">${fmtDate(r.date)}</div><div class="m">${r.fx ? "dólar " + BRL.format(r.fx) : "sem cotação do dólar"}${r.btcPrice ? " · BTC " + BRL0.format(r.btcPrice) : ""}${r.note ? " · " + esc(r.note) : ""}</div></div>
@@ -2325,6 +2333,7 @@ document.addEventListener("click", e => {
   if (t.dataset.accun) { STATE.settings.patArch = (STATE.settings.patArch || []).filter(x => x !== t.dataset.accun); Store.saveSettings(); return render(); }
   if (t.dataset.accdel) { STATE.settings.patAssets = (STATE.settings.patAssets || []).filter(x => x.id !== t.dataset.accdel); Store.saveSettings(); render(); toast("Conta excluída."); return; }
   if (t.dataset.act === "newPat") return openPat();
+  if (t.dataset.act === "foldContas") { STATE.contasAbertas = !STATE.contasAbertas; saveUi(); render(); return; }
   if (t.dataset.act === "metaEdit") { STATE.editMeta = true; render(); const i = $("#metaIn"); if (i) i.focus(); return; }
   if (t.dataset.act === "metaCancel") { STATE.editMeta = false; return render(); }
   if (t.dataset.act === "metaSave") { const v2 = parseNum($("#metaIn").value); if (!(v2 > 0)) { toast("Digite o valor da meta."); return; }
