@@ -179,7 +179,11 @@ header.top{position:relative;isolation:isolate;padding-top:20px}
 .pbar .ptrack{height:6px;background:var(--surface-2);border-radius:99px;overflow:hidden}
 .pbar .ptrack i{display:block;height:100%;border-radius:99px}
 tr.tot td{border-top:2px solid var(--line)}
-.evo .evochips{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 14px}
+.evo .evochips{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin:12px 0 14px}
+.evo .evochip{min-width:0;justify-content:flex-start}
+.evo .evochip span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.evo .evochip.tot{grid-column:1 / -1;justify-content:center}
+@media (max-width:560px){.evo .evochips{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .evochip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 11px;font-size:12.5px;font-weight:500;color:var(--fg)}
 .evochip i{width:14px;height:3px;border-radius:2px;background:var(--lc)}
 .evochip[aria-pressed="false"]{color:var(--muted);opacity:.55}
@@ -1926,7 +1930,7 @@ function renderPat(v) {
     ${metaPanel(totalHoje != null ? totalHoje : total, recs)}
     <div class="panel c12 evo">
       <div class="ph"><div><h2>Evolução do patrimônio</h2><p class="hint">Cada linha é um ativo, em reais, a cada registro · toque nos nomes para mostrar ou esconder</p></div><button class="btn small primary" type="button" data-act="newPat">+ Novo registro</button></div>
-      <div class="evochips">${PAT_ASSETS.filter(a => recs.some(r => patVals(r)[a.id] != null)).map(a => `<button type="button" class="evochip" data-evo="${a.id}" aria-pressed="${!PAT_HIDE.has(a.id)}" style="--lc:${assetColor(a)}"><i></i>${esc(a.nome)}${a.sub ? " " + esc(subCurto(a.sub)) : ""}</button>`).join("")}<button type="button" class="evochip tot" data-evo="__total" aria-pressed="${PAT_SHOW_TOTAL}" style="--lc:var(--fg)"><i></i>Total da família</button></div>
+      <div class="evochips">${PAT_ASSETS.filter(a => recs.some(r => patVals(r)[a.id] != null)).map(a => `<button type="button" class="evochip" data-evo="${a.id}" aria-pressed="${!PAT_HIDE.has(a.id)}" style="--lc:${assetColor(a)}"><i></i><span>${esc(a.nome)}${a.sub ? " " + esc(subCurto(a.sub)) : ""}</span></button>`).join("")}<button type="button" class="evochip tot" data-evo="__total" aria-pressed="${PAT_SHOW_TOTAL}" style="--lc:var(--fg)"><i></i><span>Total da família</span></button></div>
       <div class="evowrap" id="evoWrap">${patSVG(recs)}<div class="evotip" id="evoTip" hidden></div></div>
     </div>
     <div class="panel c6 ${foldCls("pessoa")}">${foldHead("pessoa", "Por pessoa", Object.keys(byWho).length + " pessoas")}${foldBody("pessoa")}<p class="hint">Bitcoin conta como da família</p><div class="pbars">${bars(byWho, PAT_WHO)}</div></div></div>
