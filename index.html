@@ -352,7 +352,8 @@ svg.chart .avg{stroke:var(--orange);stroke-width:2.4;fill:none;stroke-linejoin:r
 svg.chart .trend{stroke:var(--fg);stroke-width:1.4;stroke-dasharray:5 4;fill:none;opacity:.55}
 
 /* ranking */
-.rank{display:flex;flex-direction:column;gap:2px}
+.rank{columns:3 260px;column-gap:28px}
+.rank .rrow{break-inside:avoid;margin-bottom:2px}
 .rrow{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:4px 10px;align-items:center;padding:8px 8px;border-radius:10px;border:1px solid transparent;background:none;text-align:left;width:100%}
 .rrow:hover{background:var(--surface-2)}
 .rrow[aria-pressed="true"]{border-color:var(--orange);background:color-mix(in srgb,var(--orange) 9%,var(--surface))}
@@ -1110,13 +1111,13 @@ function renderOverview(v) {
       </tbody></table></div></div>` : ""}
 
     ${rewardsHTML}
-    <div class="panel c8">
+    <div class="panel c12">
       <div class="ph"><div><h2>${focus ? "Tendência: " + esc(focus) : "Gastos por mês e categoria"}</h2><p class="hint">Barras = total da fatura · linha laranja = média móvel de 3 meses · tracejada = tendência</p></div>
       ${focus ? '<button class="btn small" type="button" data-act="clearFocus">Ver todas as categorias</button>' : ""}</div>
       ${trendSVG(months, focus ? focusData : stackData, focus ? [focus] : stackCats)}
       <div class="legend">${(focus ? [focus] : stackCats).map(c => '<span><i class="sw" style="background:' + catColor(c) + '"></i>' + esc(c) + "</span>").join("")}</div>
     </div>
-    <div class="panel c4">
+    <div class="panel c12">
       <h2>Ranking de categorias</h2><p class="hint">Variação vs ${prevMonths.length ? "os " + prevMonths.length + " meses anteriores" : "período anterior"} · toque para ver a tendência · <b>segure 3 s</b> para ver os gastos e mudar a categoria</p>
       <div class="rank">${catRank.map(([c, val], i) => { const p = pct(catTot[c], catPrev[c] || 0); const hasPrev = inPrev.length > 0;
         return `<button class="rrow" type="button" data-cat="${esc(c)}" aria-pressed="${focus === c}"><span class="pos">${i + 1}</span><span class="nm"><i class="sw" style="background:${catColor(c)}"></i>${esc(c)}</span><span class="amt">${BRL0.format(val)}</span><span class="track"><span class="fill" style="display:block;width:${(val / maxCat * 100).toFixed(1)}%;background:${catColor(c)}"></span></span><span class="meta"><span>${(val / total * 100).toLocaleString("pt-BR", {maximumFractionDigits: 1})}% do total</span><span>${!hasPrev ? "" : p == null ? "novo" : '<span class="' + (p > 0 ? "up" : "down") + '">' + (p > 0 ? "▲ " : "▼ ") + fmtPct(p) + "</span>"}</span></span></button>`; }).join("")}</div>
@@ -1180,7 +1181,7 @@ function rewardsPanel(months) {
 }
 
 function trendSVG(months, data, cats) {
-  const W = 720, H = 270, L = 58, R = 14, T = 12, B = 30;
+  const W = window.innerWidth < 600 ? 720 : 1040, H = window.innerWidth < 600 ? 270 : 320, L = 66, R = 14, T = 12, B = 30;
   const totals = months.map(m => cats.reduce((a, c) => a + (data[m][c] || 0), 0));
   const max = niceMax(Math.max(...totals, 1));
   const iw = W - L - R, ih = H - T - B, bw = iw / months.length;
