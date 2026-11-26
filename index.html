@@ -125,6 +125,10 @@ a.dk:hover{outline:1px solid var(--line)}
 .doclist li.segurando{background-size:100% 100%;transition:background-size 3s linear}
 .doclist li.docrmconf{align-items:center;flex-wrap:wrap;gap:8px;background:color-mix(in srgb,#D14343 10%,transparent);border-radius:8px;padding:8px}
 .doclist li.docrmconf span{flex:1;min-width:0;overflow-wrap:anywhere}
+.dk.placa{border:0;cursor:pointer;font-size:12.5px}
+.dk.placa.semplaca{background:transparent;border:1px dashed #F6A06A;color:#C2410C;font-family:inherit;letter-spacing:0}
+.placaed{display:inline-flex;gap:6px;align-items:center}
+.placain{width:9ch;font:600 13px ui-monospace,Menlo,monospace;letter-spacing:.06em;text-transform:uppercase;padding:4px 8px;border-radius:8px;border:1px solid #F6A06A;background:var(--surface-2);color:var(--fg)}
 .docconf{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600}
 .venctab{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:8px}
 .venctab td{padding:7px 6px;border-top:1px solid var(--line)}
@@ -1664,7 +1668,7 @@ async function importBackup(file) {
         if (Array.isArray(J.notas)) { const ids = new Set(ir.notas.map(c => c.id)); ir.notas = ir.notas.concat(J.notas.filter(c => c && c.id && !ids.has(c.id))); }
         ["historico", "decl", "done", "items", "hide", "prazos", "recibos"].forEach(k => { if (J[k] && typeof J[k] === "object") ir[k] = Object.assign({}, ir[k], J[k]); });
         irImportado = (J.comprovantes || []).length + Object.keys(J.historico || {}).length; }
-      if (j.settings.docs && Array.isArray(j.settings.docs.ents)) { const st = (STATE.settings.docs || {}).st || {}; const oc0 = (STATE.settings.docs || {}).oc || []; STATE.settings.docs = Object.assign({}, j.settings.docs, {st: Object.assign({}, j.settings.docs.st || {}, st), oc: [...new Set(oc0.concat(j.settings.docs.oc || []))], rm: [...new Set(((STATE.settings.docs || {}).rm || []).concat(j.settings.docs.rm || []))]}); irImportado = -1; }
+      if (j.settings.docs && Array.isArray(j.settings.docs.ents)) { const st = (STATE.settings.docs || {}).st || {}; const oc0 = (STATE.settings.docs || {}).oc || []; STATE.settings.docs = Object.assign({}, j.settings.docs, {st: Object.assign({}, j.settings.docs.st || {}, st), oc: [...new Set(oc0.concat(j.settings.docs.oc || []))], rm: [...new Set(((STATE.settings.docs || {}).rm || []).concat(j.settings.docs.rm || []))], placas: Object.assign({}, j.settings.docs.placas || {}, (STATE.settings.docs || {}).placas || {})}); irImportado = -1; }
       Store.saveSettings();
     }
     render(); toast(irImportado === -1 ? "Catálogo de documentos importado." : irImportado && !sts.length ? "Dados do imposto de renda importados." : sts.length + " fatura" + (sts.length === 1 ? "" : "s") + " importada" + (sts.length === 1 ? "" : "s") + ".");
@@ -2994,7 +2998,11 @@ function docChip(e, c, f, mostraAno) {
 }
 function docKeys(e) {
   const out = [];
-  if (e.k === "v" && e.placa) out.push(`<span class="dk placa">${esc(e.placa)}</span>`);
+  if (e.k === "v") {
+    const pl = ((STATE.settings.docs || {}).placas || {})[e.id] || e.placa || "";
+    if (DOCUI.placaEdit === e.id) out.push(`<span class="placaed"><input class="placain" data-placain="${esc(e.id)}" maxlength="8" value="${esc(pl)}" placeholder="ABC1D23" aria-label="Placa" autocomplete="off" autocapitalize="characters"><button class="btn small primary" type="button" data-placaok="${esc(e.id)}">OK</button></span>`);
+    else out.push(`<button class="dk placa${pl ? "" : " semplaca"}" type="button" data-docplaca="${esc(e.id)}" title="${pl ? "Tocar para corrigir a placa" : "Adicionar a placa"}">${pl ? esc(pl.length === 7 ? pl.slice(0, 3) + "-" + pl.slice(3) : pl) : "+ placa"}</button>`);
+  }
   const keys = e.k === "p" && e.g !== "familia" ? [] : DOC_KEYS[e.k] || [];
   keys.forEach(c => {
     const f = docAtual(e, c);
@@ -3073,7 +3081,9 @@ function renderDocs(v) {
 document.addEventListener("click", e => {
   if (STATE.module !== "docs") return;
   if (DOCUI.segurouRm && e.target.closest("[data-docrm]")) { e.preventDefault(); DOCUI.segurouRm = false; return; }
-  const t = e.target.closest("[data-doctab],[data-docmais],[data-docst],[data-docstok],[data-docstno],[data-irimp],[data-dococ],[data-docrmok],[data-docrmno]"); if (!t) return;
+  const t = e.target.closest("[data-doctab],[data-docmais],[data-docst],[data-docstok],[data-docstno],[data-irimp],[data-dococ],[data-docrmok],[data-docrmno],[data-docplaca],[data-placaok]"); if (!t) return;
+  if (t.dataset.docplaca) { DOCUI.placaEdit = t.dataset.docplaca; render(); const i = document.querySelector("[data-placain]"); if (i) { i.focus(); i.select(); } return; }
+  if (t.dataset.placaok) return salvaPlaca(t.dataset.placaok);
   if (t.dataset.docrmno) { DOCUI.rmConf = null; return render(); }
   if (t.dataset.docrmok) { if (Date.now() - (DOCUI.confEm || 0) < 600) return; const D = STATE.settings.docs; D.rm = [...new Set((D.rm || []).concat(t.dataset.docrmok))]; DOCUI.rmConf = null; Store.saveSettings(); toast("Documento retirado da lista. O arquivo continua no Drive."); return render(); }
   if (t.dataset.dococ) { const id = t.dataset.dococ; if (DOCUI.conf !== id) { DOCUI.conf = id; return render(); } DOCUI.conf = null; const D = STATE.settings.docs; D.oc = [...new Set((D.oc || []).concat(id))]; Store.saveSettings(); toast("Removido da aba Documentos. Os arquivos continuam no Drive."); return render(); }
@@ -3084,6 +3094,11 @@ document.addEventListener("click", e => {
   if (t.dataset.docstno) { DOCUI.stConf = null; return render(); }
   if (t.dataset.docstok) { if (Date.now() - (DOCUI.confEm || 0) < 600) return; const D = STATE.settings.docs, e2 = D.ents.find(x => x.id === t.dataset.docstok); DOCUI.stConf = null; D.st = Object.assign({}, D.st, {[e2.id]: docAtivo(e2) ? "vendido" : "atual"}); Store.saveSettings(); toast(docAtivo(e2) ? "Voltou para a garagem." : "Retirado da garagem."); return render(); }
 });
+function salvaPlaca(id) {
+  const i = document.querySelector(`[data-placain="${id}"]`), v = i ? i.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 7) : "";
+  const D = STATE.settings.docs; D.placas = Object.assign({}, D.placas, {[id]: v}); DOCUI.placaEdit = null; Store.saveSettings(); render();
+}
+document.addEventListener("keydown", e => { if (e.target.dataset && e.target.dataset.placain) { if (e.key === "Enter") salvaPlaca(e.target.dataset.placain); if (e.key === "Escape") { DOCUI.placaEdit = null; render(); } } });
 let docHold = null;
 const docHoldFim = () => { if (docHold) { clearTimeout(docHold.t); docHold.b.classList.remove("segurando"); docHold = null; } };
 document.addEventListener("pointerdown", e => {
