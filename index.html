@@ -2774,14 +2774,15 @@ function irComprovantesPanel(ano) {
   const pes = [...new Set(lista.map(c => c.quem))];
   const soma = (q, t) => lista.filter(c => (q == null || c.quem === q) && c.tipo === t).reduce((a, c) => a + c.valor, 0);
   const T = {saude: ["Saúde", "ok"], edu: ["Educação", "ok"], estetico: ["Estético: não deduz", "no"]};
-  return `<div class="panel c12 ircomp"><div class="ph"><div><h2>Comprovantes · ${ano}</h2><p class="hint">Recibos e notas fiscais da pasta "Imposto de Renda" no Drive. Toque em "abrir" para ver o arquivo.</p></div><span class="irprog num">${lista.length}</span></div>
+  const kComp = "ir:comp";
+  return `<div class="panel c12 ircomp ${foldCls(kComp)}">${foldHead(kComp, `Comprovantes · ${ano}`, lista.length + (lista.length === 1 ? " comprovante" : " comprovantes"))}${foldBody(kComp)}<p class="hint">Recibos e notas fiscais da pasta "Imposto de Renda" no Drive. Toque em "abrir" para ver o arquivo.</p>
     <div class="irsum"><div><span class="note">Saúde (dedutível)</span><b class="num">${BRL.format(soma(null, "saude"))}</b><span class="note">sem limite</span></div>
       <div><span class="note">Educação</span><b class="num">${BRL.format(soma(null, "edu"))}</b><span class="note">limite R$ 3.561,50 por aluno</span></div>
       ${soma(null, "estetico") ? `<div><span class="note">Estético (não deduz)</span><b class="num">${BRL.format(soma(null, "estetico"))}</b></div>` : ""}</div>
     <div class="irppl">${pes.map(q => { const e = soma(q, "edu"); return `<div class="irpp"><span class="irpn"><i style="background:${personColor(q)}"></i>${esc(q)}</span><div><span class="note">Saúde</span><b class="num">${BRL.format(soma(q, "saude"))}</b></div><div><span class="note">Educação</span><b class="num">${BRL.format(Math.min(e, 3561.5))}</b><span class="note">${e > 3561.5 ? "de " + BRL.format(e) + " pagos" : e ? "" : "—"}</span></div><div><span class="note">Recibos</span><b class="num">${lista.filter(c => c.quem === q).length}</b></div></div>`; }).join("")}</div>
     <div class="tablewrap"><table class="irtab"><thead><tr><th>Data</th><th>Prestador</th><th>Para</th><th>Tipo</th><th class="r">Valor</th><th></th></tr></thead><tbody>
     ${lista.map(c => `<tr class="${T[c.tipo] && T[c.tipo][1] === "no" ? "irno" : ""}"><td class="num">${fmtDate(c.data)}</td><td>${esc(c.prestador)}<br><span class="note">${esc(c.desc || "")}${c.doc ? " · " + esc(c.doc) : ""}</span>${c.obs ? `<br><span class="irobs">⚠ ${esc(c.obs)}</span>` : ""}</td><td>${esc(c.quem)}</td><td><span class="irtag ${T[c.tipo] ? T[c.tipo][1] : "ok"}">${T[c.tipo] ? T[c.tipo][0] : esc(c.tipo)}</span></td><td class="r num">${BRL.format(c.valor)}</td><td>${/^https:\/\//.test(c.link || "") ? `<a class="linkbtn" href="${esc(c.link)}" target="_blank" rel="noopener">abrir</a>` : ""}</td></tr>`).join("")}
-    </tbody></table></div></div>`;
+    </tbody></table></div></div></div>`;
 }
 
 function renderIR(v) {
@@ -2818,7 +2819,8 @@ function renderIR(v) {
   const lista = Object.values(grp).sort((a, b) => b.total - a.total);
   const soma = (p, tp) => lista.filter(g => (p == null || g.who === p) && g.tipo === tp).reduce((a, g) => a + g.total, 0);
   const TIPO = {saude: ["Saúde dedutível", "ok"], edu: ["Educação (limite)", "ok"], saudex: ["Farmácia/academia: não deduz", "no"], edux: ["Cursos/livros: não deduz", "no"]};
-  const desp = `<div class="panel c12 irdesp"><div class="ph"><div><h2>Despesas dedutíveis · ${ano}</h2><p class="hint">Gastos de Saúde e Educação pagos nas faturas de ${ano}. O cartão não serve de comprovante: a Receita pede o recibo com CPF ou CNPJ de quem prestou o serviço.</p></div></div>
+  const kDesp = "ir:desp", nDesp = tx.length ? lista.length : 0;
+  const desp = `<div class="panel c12 irdesp ${foldCls(kDesp)}">${foldHead(kDesp, `Despesas dedutíveis · ${ano}`, nDesp ? nDesp + (nDesp === 1 ? " estabelecimento" : " estabelecimentos") : "nenhum gasto")}${foldBody(kDesp)}<p class="hint">Gastos de Saúde e Educação pagos nas faturas de ${ano}. O cartão não serve de comprovante: a Receita pede o recibo com CPF ou CNPJ de quem prestou o serviço.</p>
     ${!tx.length ? `<p class="empty">Nenhum gasto de Saúde ou Educação nas faturas de ${ano}${STATE.demo ? " (os dados de exemplo não entram aqui)" : ""}.</p>` : `
     <div class="irppl">${pessoas.map(p => { const s = soma(p, "saude"), e = soma(p, "edu"); return `<div class="irpp"><span class="irpn"><i style="background:${personColor(p)}"></i>${esc(p)}</span>
       <div><span class="note">Saúde dedutível</span><b class="num">${BRL.format(s)}</b><span class="note">sem limite</span></div>
@@ -2826,7 +2828,7 @@ function renderIR(v) {
       <div><span class="note">Não deduz</span><b class="num">${BRL.format(soma(p, "saudex") + soma(p, "edux"))}</b><span class="note">farmácia, academia, cursos livres</span></div></div>`; }).join("")}</div>
     <div class="tablewrap"><table class="irtab"><thead><tr><th>Recibo</th><th>Estabelecimento</th><th>Pessoa</th><th>Tipo</th><th class="r">Pago no ano</th></tr></thead><tbody>
     ${lista.map(g => `<tr class="${TIPO[g.tipo][1] === "no" ? "irno" : ""}"><td>${TIPO[g.tipo][1] === "no" ? '<span class="note">—</span>' : `<input type="checkbox" data-irrec="${esc(g.k)}" ${rec[g.k] ? "checked" : ""} aria-label="Recibo guardado">`}</td><td>${esc(g.nome)} <span class="note">· ${g.n}×</span></td><td>${esc(g.who)}</td><td><span class="irtag ${TIPO[g.tipo][1]}">${TIPO[g.tipo][0]}</span></td><td class="r num">${BRL.format(g.total)}</td></tr>`).join("")}
-    </tbody></table></div><p class="note" style="margin:8px 0 0">O limite de educação vale por aluno (titular ou dependente), não por cartão. Psicólogo, dentista, exames e plano de saúde deduzem sem limite. Regras do IRPF 2026; confira se mudarem.</p>`}</div>`;
+    </tbody></table></div><p class="note" style="margin:8px 0 0">O limite de educação vale por aluno (titular ou dependente), não por cartão. Psicólogo, dentista, exames e plano de saúde deduzem sem limite. Regras do IRPF 2026; confira se mudarem.</p>`}</div></div>`;
   // notas de corretagem
   const notas = ir.notas.filter(n => (n.data || "").slice(0, 4) === String(ano)).sort((a, b) => b.data.localeCompare(a.data));
   const tN = k => notas.reduce((a, n) => a + (+n[k] || 0), 0);
