@@ -120,6 +120,11 @@ a.dk:hover{outline:1px solid var(--line)}
 .docst[aria-pressed="true"]{border-color:#2E9E6A;color:#2E9E6A}
 .docst{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:manipulation;background-image:linear-gradient(90deg,color-mix(in srgb,currentColor 22%,transparent) 0 0);background-repeat:no-repeat;background-size:0% 100%}
 .docst.segurando{background-size:100% 100%;transition:background-size 3s linear}
+.doclist li[data-docrm]{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;border-radius:8px;background-image:linear-gradient(90deg,color-mix(in srgb,#D14343 16%,transparent) 0 0);background-repeat:no-repeat;background-size:0% 100%}
+.doclist li[data-docrm] a{-webkit-touch-callout:none;-webkit-user-drag:none}
+.doclist li.segurando{background-size:100% 100%;transition:background-size 3s linear}
+.doclist li.docrmconf{align-items:center;flex-wrap:wrap;gap:8px;background:color-mix(in srgb,#D14343 10%,transparent);border-radius:8px;padding:8px}
+.doclist li.docrmconf span{flex:1;min-width:0;overflow-wrap:anywhere}
 .docconf{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600}
 .venctab{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:8px}
 .venctab td{padding:7px 6px;border-top:1px solid var(--line)}
@@ -1659,7 +1664,7 @@ async function importBackup(file) {
         if (Array.isArray(J.notas)) { const ids = new Set(ir.notas.map(c => c.id)); ir.notas = ir.notas.concat(J.notas.filter(c => c && c.id && !ids.has(c.id))); }
         ["historico", "decl", "done", "items", "hide", "prazos", "recibos"].forEach(k => { if (J[k] && typeof J[k] === "object") ir[k] = Object.assign({}, ir[k], J[k]); });
         irImportado = (J.comprovantes || []).length + Object.keys(J.historico || {}).length; }
-      if (j.settings.docs && Array.isArray(j.settings.docs.ents)) { const st = (STATE.settings.docs || {}).st || {}; const oc0 = (STATE.settings.docs || {}).oc || []; STATE.settings.docs = Object.assign({}, j.settings.docs, {st: Object.assign({}, j.settings.docs.st || {}, st), oc: [...new Set(oc0.concat(j.settings.docs.oc || []))]}); irImportado = -1; }
+      if (j.settings.docs && Array.isArray(j.settings.docs.ents)) { const st = (STATE.settings.docs || {}).st || {}; const oc0 = (STATE.settings.docs || {}).oc || []; STATE.settings.docs = Object.assign({}, j.settings.docs, {st: Object.assign({}, j.settings.docs.st || {}, st), oc: [...new Set(oc0.concat(j.settings.docs.oc || []))], rm: [...new Set(((STATE.settings.docs || {}).rm || []).concat(j.settings.docs.rm || []))]}); irImportado = -1; }
       Store.saveSettings();
     }
     render(); toast(irImportado === -1 ? "Catálogo de documentos importado." : irImportado && !sts.length ? "Dados do imposto de renda importados." : sts.length + " fatura" + (sts.length === 1 ? "" : "s") + " importada" + (sts.length === 1 ? "" : "s") + ".");
@@ -3011,7 +3016,7 @@ function docCard(e, q) {
   const ativo = e.k === "v" ? docAtivo(e) : true;
   const lista = ordem.map(c => {
     const arr = cats[c], lim = DOCUI.mais[e.id + "|" + c] || q ? 999 : 6, atual = docAtual(e, c);
-    return `<div class="doccat">${esc(c)} · ${arr.length}</div><ul class="doclist">${arr.slice(0, lim).map(f => `<li class="${atual && atual !== f && f.v ? "old" : ""}"><a href="${esc(docQ(e, f))}" target="_blank" rel="noopener">${esc(f.n)}${f.s ? `<span class="sub">${esc(f.s)}</span>` : ""}</a><span class="dy">${f.v && f === atual && vencInfo(f.v).cls !== "ok" ? `<span class="vtag ${vencInfo(f.v).cls}">${vencInfo(f.v).cls === "bad" ? "Vencido" : "Vence em breve"}</span>` : f.v && atual !== f ? '<span class="vtag">substituído</span>' : ""}${f.v ? esc(vencInfo(f.v).txt) : f.y || ""}</span></li>`).join("")}</ul>${arr.length > lim ? `<button class="docmore" type="button" data-docmais="${esc(e.id + "|" + c)}">Ver mais ${arr.length - lim}</button>` : ""}`;
+    return `<div class="doccat">${esc(c)} · ${arr.length}</div><ul class="doclist">${arr.slice(0, lim).map(f => DOCUI.rmConf === e.id + "|" + f.n ? `<li class="docrmconf"><span>Retirar <b>${esc(f.n)}</b> da lista?</span><button class="btn small primary" type="button" data-docrmok="${esc(e.id + "|" + f.n)}">Sim</button><button class="btn small" type="button" data-docrmno="1">Não</button></li>` : `<li data-docrm="${esc(e.id + "|" + f.n)}" class="${atual && atual !== f && f.v ? "old" : ""}"><a href="${esc(docQ(e, f))}" target="_blank" rel="noopener">${esc(f.n)}${f.s ? `<span class="sub">${esc(f.s)}</span>` : ""}</a><span class="dy">${f.v && f === atual && vencInfo(f.v).cls !== "ok" ? `<span class="vtag ${vencInfo(f.v).cls}">${vencInfo(f.v).cls === "bad" ? "Vencido" : "Vence em breve"}</span>` : f.v && atual !== f ? '<span class="vtag">substituído</span>' : ""}${f.v ? esc(vencInfo(f.v).txt) : f.y || ""}</span></li>`).join("")}</ul>${arr.length > lim ? `<button class="docmore" type="button" data-docmais="${esc(e.id + "|" + c)}">Ver mais ${arr.length - lim}</button>` : ""}`;
   }).join("") + (cx.length ? `<div class="doccat">Pastas · ${cx.length}</div><ul class="doclist">${cx.map(c => `<li class="fold"><a href="${esc(docLink(c.n.split("/").pop()))}" target="_blank" rel="noopener">${esc(c.n)}</a><span class="dy">${c.q ? c.q + (c.t === "fotos" ? " fotos" : " arquivos") : "pasta"}</span></li>`).join("")}</ul>` : "");
   const nCx = e.cx.reduce((a, c) => a + (c.q || 0), 0), resumo = e.f.length ? e.f.length + (e.f.length === 1 ? " documento" : " documentos") : nCx + (nCx === 1 ? " foto" : " fotos");
   const venc = docVencidos(e), alerta = venc.length ? `<span class="vtag bad" title="${esc(venc.map(x => x.c).join(", "))}">⚠ ${venc.length} vencido${venc.length > 1 ? "s" : ""}</span>` : "";
@@ -3035,9 +3040,13 @@ function vencimentosPanel(ents) {
 function docVencidos(e) {
   return [...new Set(e.f.filter(f => f.v).map(f => f.c))].map(c => ({c, f: docAtual(e, c)})).filter(x => x.f && x.f.v && vencInfo(x.f.v).cls === "bad");
 }
+function docEnts(D) {
+  const oc = new Set(D.oc || []), rm = new Set(D.rm || []);
+  return D.ents.filter(e => !oc.has(e.id)).map(e => rm.size ? Object.assign({}, e, {f: e.f.filter(f => !rm.has(e.id + "|" + f.n))}) : e);
+}
 function docBadge() {
   const b = $("#docBadge"); if (!b) return;
-  const D = STATE.settings && STATE.settings.docs, n = D ? D.ents.filter(e => e.k === "p" && e.g === "familia" && !(D.oc || []).includes(e.id)).reduce((a, e) => a + docVencidos(e).length, 0) : 0;
+  const D = STATE.settings && STATE.settings.docs, n = D ? docEnts(D).filter(e => e.k === "p" && e.g === "familia").reduce((a, e) => a + docVencidos(e).length, 0) : 0;
   b.hidden = !n; b.textContent = n; b.title = n + (n > 1 ? " documentos vencidos" : " documento vencido");
 }
 function renderDocs(v) {
@@ -3045,7 +3054,7 @@ function renderDocs(v) {
   const head = `<div class="panel dochead"><div><h2>Documentos</h2><p class="hint">${D ? `Pasta <b>${esc(D.raiz || "Documentos")}</b> · lida em ${fmtDate(D.gerado)} · cada item abre a busca no seu Google Drive.` : "Importe o catálogo para ver os documentos da família por pessoa, imóvel e veículo."}</p></div>
     <div class="docbar">${D ? `<input type="search" placeholder="Buscar documento…" value="${esc(DOCUI.q)}" data-docq="1" aria-label="Buscar documento">` : ""}<button class="btn small${D ? "" : " primary"}" type="button" data-irimp="1">Importar catálogo (.json)</button></div></div>`;
   if (!D) { v.innerHTML = head; return; }
-  const oc = new Set(D.oc || []), ents = D.ents.filter(e => !oc.has(e.id)), q = norm(DOCUI.q.trim());
+  const ents = docEnts(D), q = norm(DOCUI.q.trim());
   const cnt = t => ents.filter(e => t === "p" ? (e.k === "p" && e.g !== "outros") || e.k === "e" : e.k === t).length;
   const seg = `<div class="docseg" role="tablist">${[["p", "Pessoas"], ["i", "Imóveis"], ["v", "Veículos"]].map(([t, n]) => `<button type="button" data-doctab="${t}" aria-pressed="${DOCUI.tab === t}">${n}<b>${cnt(t)}</b></button>`).join("")}</div>`;
   const bloco = (titulo, arr) => { const cs = arr.map(e => docCard(e, q)).filter(Boolean), n = cs.length, g = n % 3 === 0 ? " g3" : n % 2 === 0 ? " g2" : ""; return n ? `<div class="docsec">${titulo}</div><div class="docgrid${g}">${cs.join("")}</div>` : ""; };
@@ -3063,7 +3072,10 @@ function renderDocs(v) {
 }
 document.addEventListener("click", e => {
   if (STATE.module !== "docs") return;
-  const t = e.target.closest("[data-doctab],[data-docmais],[data-docst],[data-docstok],[data-docstno],[data-irimp],[data-dococ]"); if (!t) return;
+  if (DOCUI.segurouRm && e.target.closest("[data-docrm]")) { e.preventDefault(); DOCUI.segurouRm = false; return; }
+  const t = e.target.closest("[data-doctab],[data-docmais],[data-docst],[data-docstok],[data-docstno],[data-irimp],[data-dococ],[data-docrmok],[data-docrmno]"); if (!t) return;
+  if (t.dataset.docrmno) { DOCUI.rmConf = null; return render(); }
+  if (t.dataset.docrmok) { if (Date.now() - (DOCUI.confEm || 0) < 600) return; const D = STATE.settings.docs; D.rm = [...new Set((D.rm || []).concat(t.dataset.docrmok))]; DOCUI.rmConf = null; Store.saveSettings(); toast("Documento retirado da lista. O arquivo continua no Drive."); return render(); }
   if (t.dataset.dococ) { const id = t.dataset.dococ; if (DOCUI.conf !== id) { DOCUI.conf = id; return render(); } DOCUI.conf = null; const D = STATE.settings.docs; D.oc = [...new Set((D.oc || []).concat(id))]; Store.saveSettings(); toast("Removido da aba Documentos. Os arquivos continuam no Drive."); return render(); }
   if (t.dataset.irimp) { irJson.click(); return; }
   if (t.dataset.doctab) { DOCUI.tab = t.dataset.doctab; return render(); }
@@ -3075,12 +3087,12 @@ document.addEventListener("click", e => {
 let docHold = null;
 const docHoldFim = () => { if (docHold) { clearTimeout(docHold.t); docHold.b.classList.remove("segurando"); docHold = null; } };
 document.addEventListener("pointerdown", e => {
-  const b = e.target.closest && e.target.closest("[data-docst]"); if (!b || STATE.module !== "docs") return;
+  const b = e.target.closest && e.target.closest("[data-docst],[data-docrm]"); if (!b || STATE.module !== "docs") return;
   docHoldFim(); b.classList.add("segurando");
-  docHold = {b, t: setTimeout(() => { const id = b.dataset.docst; docHold = null; DOCUI.segurou = true; DOCUI.stConf = id; DOCUI.confEm = Date.now(); if (navigator.vibrate) try { navigator.vibrate(30); } catch (er) {} render(); }, 3000)};
+  docHold = {b, t: setTimeout(() => { docHold = null; DOCUI.confEm = Date.now(); if (b.dataset.docrm) { DOCUI.segurouRm = true; DOCUI.rmConf = b.dataset.docrm; } else { DOCUI.segurou = true; DOCUI.stConf = b.dataset.docst; } if (navigator.vibrate) try { navigator.vibrate(30); } catch (er) {} render(); }, 3000)};
 });
 ["pointerup", "pointercancel", "pointerleave"].forEach(ev => document.addEventListener(ev, e => { if (docHold && (ev !== "pointerleave" || e.target === docHold.b)) docHoldFim(); }, true));
-document.addEventListener("contextmenu", e => { if (e.target.closest && e.target.closest("[data-docst]")) e.preventDefault(); });
+document.addEventListener("contextmenu", e => { if (STATE.module === "docs" && e.target.closest && e.target.closest("[data-docst],[data-docrm]")) e.preventDefault(); });
 document.addEventListener("input", e => {
   if (!e.target.dataset || !e.target.dataset.docq) return;
   DOCUI.q = e.target.value; const pos = e.target.selectionStart; render();
