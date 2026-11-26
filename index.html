@@ -126,6 +126,11 @@ a.dk:hover{outline:1px solid var(--line)}
 .doclist li.docrmconf{align-items:center;flex-wrap:wrap;gap:8px;background:color-mix(in srgb,#D14343 10%,transparent);border-radius:8px;padding:8px}
 .doclist li.docrmconf span{flex:1;min-width:0;overflow-wrap:anywhere}
 .dk.placa{border:0;cursor:pointer;font-size:12.5px}
+.doccard{position:relative}
+.doccard.complaca .foldhead{align-items:flex-start}
+.doccard.complaca .foldhead>span{padding-right:96px}
+.placatop{position:absolute;top:14px;right:56px;display:flex;align-items:center}
+.placatop .dk.placa{padding:4px 10px}
 .dk.placa.semplaca{background:transparent;border:1px dashed #F6A06A;color:#C2410C;font-family:inherit;letter-spacing:0}
 .placaed{display:inline-flex;gap:6px;align-items:center}
 .placain{width:9ch;font:600 13px ui-monospace,Menlo,monospace;letter-spacing:.06em;text-transform:uppercase;padding:4px 8px;border-radius:8px;border:1px solid #F6A06A;background:var(--surface-2);color:var(--fg)}
@@ -2996,13 +3001,15 @@ function docChip(e, c, f, mostraAno) {
   const vi = vencInfo(f.v), nome = DOC_CURTO[c] || c;
   return `<a class="dk ${vi ? vi.cls : "ok"}" href="${esc(docQ(e, f))}" target="_blank" rel="noopener"><i></i>${esc(nome)}${vi ? " · " + vi.txt : mostraAno && f.y ? " · " + f.y : ""}</a>`;
 }
-function docKeys(e) {
+function docPlaca(e) {
   const out = [];
-  if (e.k === "v") {
     const pl = ((STATE.settings.docs || {}).placas || {})[e.id] || e.placa || "";
     if (DOCUI.placaEdit === e.id) out.push(`<span class="placaed"><input class="placain" data-placain="${esc(e.id)}" maxlength="8" value="${esc(pl)}" placeholder="ABC1D23" aria-label="Placa" autocomplete="off" autocapitalize="characters"><button class="btn small primary" type="button" data-placaok="${esc(e.id)}">OK</button></span>`);
     else out.push(`<button class="dk placa${pl ? "" : " semplaca"}" type="button" data-docplaca="${esc(e.id)}" title="${pl ? "Tocar para corrigir a placa" : "Adicionar a placa"}">${pl ? esc(pl.length === 7 ? pl.slice(0, 3) + "-" + pl.slice(3) : pl) : "+ placa"}</button>`);
-  }
+    return `<div class="placatop">${out.join("")}</div>`;
+}
+function docKeys(e) {
+  const out = [];
   const keys = e.k === "p" && e.g !== "familia" ? [] : DOC_KEYS[e.k] || [];
   keys.forEach(c => {
     const f = docAtual(e, c);
@@ -3029,7 +3036,7 @@ function docCard(e, q) {
   const nCx = e.cx.reduce((a, c) => a + (c.q || 0), 0), resumo = e.f.length ? e.f.length + (e.f.length === 1 ? " documento" : " documentos") : nCx + (nCx === 1 ? " foto" : " fotos");
   const venc = docVencidos(e), alerta = venc.length ? `<span class="vtag bad" title="${esc(venc.map(x => x.c).join(", "))}">⚠ ${venc.length} vencido${venc.length > 1 ? "s" : ""}</span>` : "";
   const hd = foldHead(k, esc(e.nome), resumo + alerta).replace(/aria-expanded="(true|false)"/, `aria-expanded="${aberto}"`);
-  return `<section class="panel doccard foldpanel${aberto ? " aberto" : ""}${ativo ? "" : " vendido"}">${hd}
+  return `<section class="panel doccard foldpanel${aberto ? " aberto" : ""}${ativo ? "" : " vendido"}${e.k === "v" ? " complaca" : ""}">${hd}${e.k === "v" ? docPlaca(e) : ""}
     <div class="dockeys">${docKeys(e)}${e.k !== "v" ? "" : DOCUI.stConf === e.id ? `<span class="docconf">${ativo ? "Tirar da garagem?" : "Voltar para a garagem?"}<button class="btn small primary" type="button" data-docstok="${esc(e.id)}">Sim</button><button class="btn small" type="button" data-docstno="1">Não</button></span>` : `<button class="docst" type="button" data-docst="${esc(e.id)}" aria-pressed="${ativo}" title="Segure por 3 segundos para mudar">${ativo ? "Na garagem" : "Vendido"}</button>`}</div>
     <div class="foldbody"${aberto ? "" : " hidden"}>${lista || '<p class="empty">Nada aqui.</p>'}<p class="note" style="margin:10px 0 0"><a class="linkbtn" href="${esc(docLink(e.nome))}" target="_blank" rel="noopener">Abrir a pasta no Drive</a> · <button class="docmore" type="button" data-dococ="${esc(e.id)}">${DOCUI.conf === e.id ? "Confirmar: tirar do app" : "Tirar do app"}</button></p></div></section>`;
 }
