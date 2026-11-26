@@ -2658,7 +2658,7 @@ function irEvolucaoPanel() {
   let g = ""; for (let v = 0; v <= mx; v += step) g += `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" class="gl"/><text x="${L - 8}" y="${Y(v) + 4}" text-anchor="end" class="ax">${v ? "R$ " + fmtM(v) : "R$ 0"}</text>`;
   const bars = pts.map((p, i) => { const prev = pts[i - 1], d = prev ? (p.bens - prev.bens) / prev.bens * 100 : null;
     return `<rect x="${X(i) - bw / 2}" y="${Y(p.bens)}" width="${bw}" height="${Y(0) - Y(p.bens)}" rx="5" class="irbarv"><title>${p.a}: ${BRL0.format(p.bens)}</title></rect>
-      <text x="${X(i)}" y="${Y(p.bens) - 6}" text-anchor="middle" class="irbl">${fmtM(p.bens)}</text>
+      ${(W - L - R) / n > 50 || i === 0 || i === pts.length - 1 || i % 2 === pts.length % 2 ? `<text x="${X(i)}" y="${Y(p.bens) - 6}" text-anchor="middle" class="irbl">${fmtM(p.bens)}</text>` : ""}
       <text x="${X(i)}" y="${Hh - 12}" text-anchor="middle" class="ax">${p.a}</text>${d != null && Math.abs(d) >= 0.5 ? `<text x="${X(i)}" y="${Hh - 0}" text-anchor="middle" class="irdl ${d >= 0 ? "pos" : "neg"}">${d >= 0 ? "+" : ""}${Math.round(d)}%</text>` : ""}`; }).join("");
   const line = pts.map((p, i) => (i ? "L" : "M") + X(i) + " " + Y(p.liq)).join(" ");
   const hj = hoje ? `<rect x="${X(n - 1) - bw / 2}" y="${Y(hoje)}" width="${bw}" height="${Y(0) - Y(hoje)}" rx="5" class="irbarh"><title>Hoje no app: ${BRL0.format(hoje)}</title></rect><text x="${X(n - 1)}" y="${Y(hoje) - 6}" text-anchor="middle" class="irbl">${fmtM(hoje)}</text><text x="${X(n - 1)}" y="${Hh - 12}" text-anchor="middle" class="ax">hoje*</text>` : "";
