@@ -3033,15 +3033,15 @@ function renderDocs(v) {
     <div class="docbar">${D ? `<input type="search" placeholder="Buscar documento…" value="${esc(DOCUI.q)}" data-docq="1" aria-label="Buscar documento">` : ""}<button class="btn small${D ? "" : " primary"}" type="button" data-irimp="1">Importar catálogo (.json)</button></div></div>`;
   if (!D) { v.innerHTML = head; return; }
   const oc = new Set(D.oc || []), ents = D.ents.filter(e => !oc.has(e.id)), q = norm(DOCUI.q.trim());
-  const cnt = t => ents.filter(e => t === "p" ? e.k === "p" || e.k === "e" : e.k === t).length;
+  const cnt = t => ents.filter(e => t === "p" ? (e.k === "p" && e.g !== "outros") || e.k === "e" : e.k === t).length;
   const seg = `<div class="docseg" role="tablist">${[["p", "Pessoas"], ["i", "Imóveis"], ["v", "Veículos"]].map(([t, n]) => `<button type="button" data-doctab="${t}" aria-pressed="${DOCUI.tab === t}">${n}<b>${cnt(t)}</b></button>`).join("")}</div>`;
   const bloco = (titulo, arr) => { const h = arr.map(e => docCard(e, q)).join(""); return h ? `<div class="docsec">${titulo}</div><div class="docgrid">${h}</div>` : ""; };
   let corpo = "";
   if (q) {
-    corpo = bloco("Pessoas", ents.filter(e => e.k === "p" || e.k === "e")) + bloco("Imóveis", ents.filter(e => e.k === "i")) + bloco("Veículos", ents.filter(e => e.k === "v"));
+    corpo = bloco("Pessoas", ents.filter(e => (e.k === "p" && e.g !== "outros") || e.k === "e")) + bloco("Imóveis", ents.filter(e => e.k === "i")) + bloco("Veículos", ents.filter(e => e.k === "v"));
   } else if (DOCUI.tab === "p") {
     const ord = ["Marco", "Moema", "Alice"], fam = ents.filter(e => e.k === "p" && e.g === "familia").sort((a, b) => ord.findIndex(x => a.nome.startsWith(x)) - ord.findIndex(x => b.nome.startsWith(x)));
-    corpo = vencimentosPanel(ents) + bloco("Família", fam) + bloco("Parentes", ents.filter(e => e.k === "p" && e.g === "parentes")) + bloco("Funcionárias domésticas", ents.filter(e => e.k === "e")) + bloco("Soltos na pasta", ents.filter(e => e.k === "p" && e.g === "outros"));
+    corpo = vencimentosPanel(ents) + bloco("Família", fam) + bloco("Parentes", ents.filter(e => e.k === "p" && e.g === "parentes")) + bloco("Funcionárias domésticas", ents.filter(e => e.k === "e"));
   } else if (DOCUI.tab === "v") {
     const vs = ents.filter(e => e.k === "v");
     corpo = bloco("Na garagem", vs.filter(docAtivo)) + bloco("Vendidos e antigos", vs.filter(e => !docAtivo(e)));
