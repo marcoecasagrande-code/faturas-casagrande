@@ -887,7 +887,7 @@ const Store = {
     this.col.onSnapshot(snap => {
       const sts = [], pats = [], st = {rules: {}, customCats: [], cards: {}};
       snap.docs.forEach(d => { const b = d.data(); if (!b) return; if (b.kind === "statement") sts.push(b); else if (b.kind === "patrimonio") pats.push(b); else if (b.kind === "settings") Object.assign(st, b); });
-      STATE.statements = sts; STATE.pats = pats; STATE.settings = {rules: st.rules || {}, customCats: st.customCats || [], cards: st.cards || {}, patMetas: st.patMetas || {}, ignoredGaps: st.ignoredGaps || [], patAssets: st.patAssets || [], patArch: st.patArch || [], ir: st.ir || {}};
+      STATE.statements = sts; STATE.pats = pats; STATE.settings = {rules: st.rules || {}, customCats: st.customCats || [], cards: st.cards || {}, patMetas: st.patMetas || {}, ignoredGaps: st.ignoredGaps || [], patAssets: st.patAssets || [], patArch: st.patArch || [], ir: st.ir || {}, docs: st.docs || null};
       if (!snap.metadata.fromCache) { first = false; clearTimeout(timer); }
       STATE.mode = "cloud"; setStatus("ok", this.family ? "Salvo para a família" : "Salvo na sua conta (privado)");
       render();
