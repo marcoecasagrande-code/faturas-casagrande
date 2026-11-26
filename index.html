@@ -131,6 +131,7 @@ a.dk:hover{outline:1px solid var(--line)}
 .doccard.complaca .foldhead>span{padding-right:96px}
 .placatop{position:absolute;top:14px;right:56px;display:flex;align-items:center}
 .placatop .dk.placa{padding:4px 10px}
+.placatop .vtag{margin:0;font-size:12px;padding:4px 10px}
 .placatop .dk.placa:not(.semplaca){background:linear-gradient(140deg,#FFD3AE 0%,#FDBA87 55%,#F6A06A 100%);color:#5A2A0C;box-shadow:0 2px 8px rgba(214,120,60,.22)}
 .placatop .dk.placa.semplaca{border-color:#F6A06A;color:#F6A06A}
 .dk.placa.semplaca{background:transparent;border:1px dashed #F6A06A;color:#C2410C;font-family:inherit;letter-spacing:0}
@@ -3037,8 +3038,8 @@ function docCard(e, q) {
   }).join("") + (cx.length ? `<div class="doccat">Pastas · ${cx.length}</div><ul class="doclist">${cx.map(c => `<li class="fold"><a href="${esc(docLink(c.n.split("/").pop()))}" target="_blank" rel="noopener">${esc(c.n)}</a><span class="dy">${c.q ? c.q + (c.t === "fotos" ? " fotos" : " arquivos") : "pasta"}</span></li>`).join("")}</ul>` : "");
   const nCx = e.cx.reduce((a, c) => a + (c.q || 0), 0), resumo = e.f.length ? e.f.length + (e.f.length === 1 ? " documento" : " documentos") : nCx + (nCx === 1 ? " foto" : " fotos");
   const venc = docVencidos(e), alerta = venc.length ? `<span class="vtag bad" title="${esc(venc.map(x => x.c).join(", "))}">⚠ ${venc.length} vencido${venc.length > 1 ? "s" : ""}</span>` : "";
-  const hd = foldHead(k, esc(e.nome), resumo + alerta).replace(/aria-expanded="(true|false)"/, `aria-expanded="${aberto}"`);
-  return `<section class="panel doccard foldpanel${aberto ? " aberto" : ""}${ativo ? "" : " vendido"}${e.k === "v" ? " complaca" : ""}">${hd}${e.k === "v" ? docPlaca(e) : ""}
+  const hd = foldHead(k, esc(e.nome), resumo).replace(/aria-expanded="(true|false)"/, `aria-expanded="${aberto}"`);
+  return `<section class="panel doccard foldpanel${aberto ? " aberto" : ""}${ativo ? "" : " vendido"}${e.k === "v" || alerta ? " complaca" : ""}">${hd}${e.k === "v" ? docPlaca(e) : alerta ? `<div class="placatop">${alerta}</div>` : ""}
     <div class="dockeys">${docKeys(e)}${e.k !== "v" ? "" : DOCUI.stConf === e.id ? `<span class="docconf">${ativo ? "Tirar da garagem?" : "Voltar para a garagem?"}<button class="btn small primary" type="button" data-docstok="${esc(e.id)}">Sim</button><button class="btn small" type="button" data-docstno="1">Não</button></span>` : `<button class="docst" type="button" data-docst="${esc(e.id)}" aria-pressed="${ativo}" title="Segure por 3 segundos para mudar">${ativo ? "Na garagem" : "Vendido"}</button>`}</div>
     <div class="foldbody"${aberto ? "" : " hidden"}>${lista || '<p class="empty">Nada aqui.</p>'}<p class="note" style="margin:10px 0 0"><a class="linkbtn" href="${esc(docLink(e.nome))}" target="_blank" rel="noopener">Abrir a pasta no Drive</a> · <button class="docmore" type="button" data-dococ="${esc(e.id)}">${DOCUI.conf === e.id ? "Confirmar: tirar do app" : "Tirar do app"}</button></p></div></section>`;
 }
