@@ -3041,7 +3041,7 @@ function docVencidos(e) {
   return [...new Set(e.f.filter(f => f.v).map(f => f.c))].map(c => ({c, f: docAtual(e, c)})).filter(x => x.f && x.f.v && vencInfo(x.f.v).cls === "bad");
 }
 function docEnts(D) {
-  const oc = new Set(D.oc || []), rm = new Set(D.rm || []);
+  const oc = new Set((D.oc || []).concat("e-geral-todas")), rm = new Set(D.rm || []);
   return D.ents.filter(e => !oc.has(e.id)).map(e => rm.size ? Object.assign({}, e, {f: e.f.filter(f => !rm.has(e.id + "|" + f.n))}) : e);
 }
 function docBadge() {
