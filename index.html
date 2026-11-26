@@ -184,7 +184,8 @@ header.top{position:relative;isolation:isolate;padding-top:20px}
 .irx{border:0;background:none;color:var(--muted);font-size:18px;line-height:1;padding:4px 6px;border-radius:6px;cursor:pointer}.irx:hover{background:var(--surface-2);color:var(--fg)}
 .iradd{display:flex;gap:8px;margin-top:12px}.iradd input{flex:1}
 .linkbtn{border:0;background:none;color:var(--accent);font:inherit;font-size:12.5px;padding:8px 0 0;cursor:pointer}
-.irppl{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin-bottom:14px}
+.irppl{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:10px;margin-bottom:14px}
+.irpp b{font-size:14.5px;overflow-wrap:anywhere}
 .irpp{background:color-mix(in srgb,var(--surface-2) 55%,transparent);border-radius:12px;padding:12px 14px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px 10px}
 .irpp .irpn{grid-column:1 / -1;font-weight:700;display:flex;align-items:center;gap:7px}.irpp .irpn i{width:9px;height:9px;border-radius:50%}
 .irpp>div{display:flex;flex-direction:column;gap:1px;min-width:0}.irpp b{font-size:15px}
@@ -200,6 +201,14 @@ header.top{position:relative;isolation:isolate;padding-top:20px}
 .irnf label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted);min-width:0}
 .irnfb{grid-column:1 / -1;display:flex;gap:8px}
 @media (max-width:760px){.irnf{grid-template-columns:repeat(2,minmax(0,1fr))}.irpp{grid-template-columns:1fr 1fr}.irbig b{font-size:34px}}
+.irevo .irchart{width:100%;height:auto;display:block}
+.irchart .gl{stroke:var(--line);stroke-width:1}.irchart .ax{fill:var(--muted);font:11px var(--f-num)}
+.irchart .irbarv{fill:color-mix(in srgb,var(--accent) 55%,var(--surface-2))}.irchart .irbarh{fill:none;stroke:#F6A06A;stroke-width:2;stroke-dasharray:5 4}
+.irchart .irbl{fill:var(--fg);font:600 11.5px var(--f-num)}.irchart .irdl{font:600 10.5px var(--f-num)}.irchart .irdl.pos{fill:var(--pos,#2E9E6A)}.irchart .irdl.neg{fill:var(--neg,#D14343)}
+.irchart .irliq{fill:none;stroke:#F6A06A;stroke-width:2.5;stroke-linejoin:round}.irchart .irliqd{fill:#F6A06A;stroke:var(--surface);stroke-width:2}
+.irobs{color:var(--orange);font-size:12px}
+.irtab td.pos{color:var(--pos,#2E9E6A)}.irtab td.neg{color:var(--neg,#D14343)}
+.irhead .irbtns{align-items:center}
 .status{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:6px}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
 .dot.ok{background:var(--down)} .dot.warn{background:var(--warn)}
@@ -912,7 +921,7 @@ function demoStatements() {
 
 /* ---------- agregação ---------- */
 function allTx() {
-  const src = STATE.demo ? DEMO : STATE.statements;
+  const src = STATE.demo ? (DEMO || []) : STATE.statements;
   const out = [];
   src.forEach(s => s.tx.forEach(t => { const ci = effCatInfo(t); out.push(Object.assign({}, t, {card: s.card, month: s.month, stId: s.id, c: ci.c, palpite: !!ci.palpite})); }));
   return out;
@@ -1552,8 +1561,9 @@ async function exportBackup() {
   document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
   msgEl.textContent = "Backup baixado.";
 }
+let irImportado = 0;
 async function importBackup(file) {
-  const msgEl = $("#bkMsg");
+  const msgEl = $("#bkMsg"); irImportado = 0;
   try {
     const j = JSON.parse(await file.text());
     const sts = (j.statements || []).filter(s => s && s.kind === "statement" && s.id && s.card && /^\d{4}-\d{2}$/.test(s.month) && Array.isArray(s.tx));
@@ -1569,10 +1579,15 @@ async function importBackup(file) {
       STATE.settings.ignoredGaps = [...new Set((STATE.settings.ignoredGaps || []).concat(j.settings.ignoredGaps || []))];
       const ids = new Set((STATE.settings.patAssets || []).map(a => a.id)); STATE.settings.patAssets = (STATE.settings.patAssets || []).concat((j.settings.patAssets || []).filter(a => a && !ids.has(a.id)));
       STATE.settings.patArch = [...new Set((STATE.settings.patArch || []).concat(j.settings.patArch || []))];
+      if (j.settings.ir) { const ir = irS(), J = j.settings.ir;
+        if (Array.isArray(J.comprovantes)) { const ids = new Set(ir.comprovantes.map(c => c.id)); ir.comprovantes = ir.comprovantes.concat(J.comprovantes.filter(c => c && c.id && !ids.has(c.id))); }
+        if (Array.isArray(J.notas)) { const ids = new Set(ir.notas.map(c => c.id)); ir.notas = ir.notas.concat(J.notas.filter(c => c && c.id && !ids.has(c.id))); }
+        ["historico", "decl", "done", "items", "hide", "prazos", "recibos"].forEach(k => { if (J[k] && typeof J[k] === "object") ir[k] = Object.assign({}, ir[k], J[k]); });
+        irImportado = (J.comprovantes || []).length + Object.keys(J.historico || {}).length; }
       Store.saveSettings();
     }
-    render(); toast(sts.length + " fatura" + (sts.length === 1 ? "" : "s") + " importada" + (sts.length === 1 ? "" : "s") + ".");
-  } catch (e) { if (msgEl) msgEl.textContent = "Arquivo de backup inválido."; }
+    render(); toast(irImportado && !sts.length ? "Dados do imposto de renda importados." : sts.length + " fatura" + (sts.length === 1 ? "" : "s") + " importada" + (sts.length === 1 ? "" : "s") + ".");
+  } catch (e) { console.error(e); if (msgEl) msgEl.textContent = "Arquivo de backup inválido."; else toast("Arquivo inválido."); }
 }
 
 /* ---------- importação: leitura ---------- */
@@ -2601,7 +2616,7 @@ $("#newsPer").addEventListener("click", e => { const b = e.target.closest("butto
 document.addEventListener("change", e => { if (e.target.matches && e.target.matches("[data-qsv]")) { STATE.q = Object.assign({who: "all", mode: "sum", semViagem: true}, STATE.q); STATE.q.semViagem = e.target.checked; render(); } });
 /* ======================= IMPOSTO DE RENDA ======================= */
 const IRUI = {ano: null, notaForm: false};
-const irS = () => { const s = STATE.settings; if (!s.ir) s.ir = {}; const ir = s.ir; ["done", "items", "hide", "prazos", "recibos", "decl"].forEach(k => { if (!ir[k] || typeof ir[k] !== "object") ir[k] = {}; }); if (!Array.isArray(ir.notas)) ir.notas = []; return ir; };
+const irS = () => { const s = STATE.settings; if (!s.ir) s.ir = {}; const ir = s.ir; ["done", "items", "hide", "prazos", "recibos", "decl"].forEach(k => { if (!ir[k] || typeof ir[k] !== "object") ir[k] = {}; }); if (!Array.isArray(ir.notas)) ir.notas = []; if (!Array.isArray(ir.comprovantes)) ir.comprovantes = []; if (!ir.historico || typeof ir.historico !== "object") ir.historico = {}; return ir; };
 const irSave = () => { Store.saveSettings(); render(); };
 const anoBasePadrao = () => { const d = new Date(); return d.getMonth() < 5 ? d.getFullYear() - 1 : d.getFullYear(); };
 const iso = (y, m, d) => y + "-" + pad(m) + "-" + pad(d);
@@ -2630,9 +2645,55 @@ function irItensPadrao() {
   return out;
 }
 
+/* evolução do patrimônio declarado (Bens e direitos em 31/12 de cada declaração) */
+function irEvolucaoPanel() {
+  const H = irS().historico, anos = Object.keys(H).map(Number).filter(a => H[a] && H[a].bens != null).sort((a, b) => a - b);
+  if (!anos.length) return `<div class="panel c12"><h2>Evolução do patrimônio declarado</h2><p class="empty">Envie as declarações dos anos anteriores para ver a evolução.</p></div>`;
+  const recs = patSorted(), ult = recs[recs.length - 1], hoje = ult ? patTotal(ult) : null;
+  const pts = anos.map(a => ({a, bens: H[a].bens, liq: H[a].bens - (H[a].dividas || 0)}));
+  const W = window.innerWidth < 600 ? 640 : 1040, Hh = window.innerWidth < 600 ? 260 : 280, L = 70, R = 16, T = 18, B = 34;
+  const mx = Math.max(...pts.map(p => p.bens), hoje || 0) * 1.08, step = mx > 8e6 ? 2e6 : mx > 3e6 ? 1e6 : 5e5;
+  const n = pts.length + (hoje ? 1 : 0), bw = Math.min(58, (W - L - R) / n * 0.62), X = i => L + (i + 0.5) * (W - L - R) / n, Y = v => T + (1 - v / mx) * (Hh - T - B);
+  const fmtM = v => v >= 1e6 ? (v / 1e6).toLocaleString("pt-BR", {maximumFractionDigits: 1}) + " mi" : Math.round(v / 1e3) + " mil";
+  let g = ""; for (let v = 0; v <= mx; v += step) g += `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" class="gl"/><text x="${L - 8}" y="${Y(v) + 4}" text-anchor="end" class="ax">${v ? "R$ " + fmtM(v) : "R$ 0"}</text>`;
+  const bars = pts.map((p, i) => { const prev = pts[i - 1], d = prev ? (p.bens - prev.bens) / prev.bens * 100 : null;
+    return `<rect x="${X(i) - bw / 2}" y="${Y(p.bens)}" width="${bw}" height="${Y(0) - Y(p.bens)}" rx="5" class="irbarv"><title>${p.a}: ${BRL0.format(p.bens)}</title></rect>
+      <text x="${X(i)}" y="${Y(p.bens) - 6}" text-anchor="middle" class="irbl">${fmtM(p.bens)}</text>
+      <text x="${X(i)}" y="${Hh - 12}" text-anchor="middle" class="ax">${p.a}</text>${d != null && Math.abs(d) >= 0.5 ? `<text x="${X(i)}" y="${Hh - 0}" text-anchor="middle" class="irdl ${d >= 0 ? "pos" : "neg"}">${d >= 0 ? "+" : ""}${Math.round(d)}%</text>` : ""}`; }).join("");
+  const line = pts.map((p, i) => (i ? "L" : "M") + X(i) + " " + Y(p.liq)).join(" ");
+  const hj = hoje ? `<rect x="${X(n - 1) - bw / 2}" y="${Y(hoje)}" width="${bw}" height="${Y(0) - Y(hoje)}" rx="5" class="irbarh"><title>Hoje no app: ${BRL0.format(hoje)}</title></rect><text x="${X(n - 1)}" y="${Y(hoje) - 6}" text-anchor="middle" class="irbl">${fmtM(hoje)}</text><text x="${X(n - 1)}" y="${Hh - 12}" text-anchor="middle" class="ax">hoje*</text>` : "";
+  const f = pts[0], l = pts[pts.length - 1], cagr = pts.length > 1 ? (Math.pow(l.bens / f.bens, 1 / (l.a - f.a)) - 1) * 100 : null;
+  return `<div class="panel c12 irevo"><div class="ph"><div><h2>Evolução do patrimônio declarado</h2><p class="hint">Bens e direitos em 31/12 de cada declaração (valor de custo, como a Receita pede). A linha mostra o patrimônio líquido, já sem as dívidas.</p></div></div>
+    <div class="irsum"><div><span class="note">31/12/${f.a}</span><b class="num">${BRL0.format(f.bens)}</b></div><div><span class="note">31/12/${l.a}</span><b class="num">${BRL0.format(l.bens)}</b></div>
+      <div><span class="note">Crescimento</span><b class="num">${(l.bens / f.bens).toLocaleString("pt-BR", {maximumFractionDigits: 1})}×</b><span class="note">${cagr != null ? Math.round(cagr) + "% ao ano em média" : ""}</span></div>
+      ${hoje ? `<div><span class="note">Hoje no app (${fmtDate(ult.date)})</span><b class="num">${BRL0.format(hoje)}</b><span class="note">valor de mercado das contas registradas</span></div>` : ""}</div>
+    <div class="chartwrap"><svg class="chart irchart" viewBox="0 0 ${W} ${Hh + 6}" role="img" aria-label="Evolução dos bens declarados por ano">${g}${bars}${hj}<path d="${line}" class="irliq"/>${pts.map((p, i) => `<circle cx="${X(i)}" cy="${Y(p.liq)}" r="3.5" class="irliqd"><title>Patrimônio líquido ${p.a}: ${BRL0.format(p.liq)}</title></circle>`).join("")}</svg></div>
+    ${hoje ? '<p class="note" style="margin:4px 0 10px">* "Hoje" vem do último registro do Patrimônio e usa valor de mercado; a declaração usa custo de aquisição. Por isso os dois não batem.</p>' : ""}
+    <div class="tablewrap"><table class="irtab"><thead><tr><th>Ano-base</th><th class="r">Bens 31/12</th><th class="r">Dívidas</th><th class="r">Líquido</th><th class="r">Variação</th><th class="r">Rend. tributáveis</th><th class="r">Isentos</th><th class="r">Despesas médicas</th><th class="r">Restituição</th></tr></thead><tbody>
+    ${pts.slice().reverse().map((p, k, arr) => { const h = H[p.a], pr = arr[k + 1], v = pr ? p.liq - pr.liq : null; const m = x => x == null ? "—" : BRL0.format(x);
+      return `<tr><td class="num"><b>${p.a}</b></td><td class="r num">${m(h.bens)}</td><td class="r num">${m(h.dividas)}</td><td class="r num">${m(p.liq)}</td><td class="r num ${v == null ? "" : v >= 0 ? "pos" : "neg"}">${v == null ? "—" : (v >= 0 ? "+" : "") + BRL0.format(v)}</td><td class="r num">${m(h.rendTrib)}</td><td class="r num">${m(h.isentos)}</td><td class="r num">${m(h.medicas)}</td><td class="r num">${m(h.restituir)}</td></tr>`; }).join("")}
+    </tbody></table></div></div>`;
+}
+/* comprovantes (recibos e notas fiscais guardados na pasta do Drive) */
+function irComprovantesPanel(ano) {
+  const lista = irS().comprovantes.filter(c => String(c.data || "").slice(0, 4) === String(ano)).sort((a, b) => a.data.localeCompare(b.data));
+  if (!lista.length) return `<div class="panel c12"><h2>Comprovantes · ${ano}</h2><p class="empty">Nenhum recibo ou nota fiscal cadastrado neste ano.</p></div>`;
+  const pes = [...new Set(lista.map(c => c.quem))];
+  const soma = (q, t) => lista.filter(c => (q == null || c.quem === q) && c.tipo === t).reduce((a, c) => a + c.valor, 0);
+  const T = {saude: ["Saúde", "ok"], edu: ["Educação", "ok"], estetico: ["Estético: não deduz", "no"]};
+  return `<div class="panel c12 ircomp"><div class="ph"><div><h2>Comprovantes · ${ano}</h2><p class="hint">Recibos e notas fiscais da pasta "Imposto de Renda" no Drive. Toque em "abrir" para ver o arquivo.</p></div><span class="irprog num">${lista.length}</span></div>
+    <div class="irsum"><div><span class="note">Saúde (dedutível)</span><b class="num">${BRL.format(soma(null, "saude"))}</b><span class="note">sem limite</span></div>
+      <div><span class="note">Educação</span><b class="num">${BRL.format(soma(null, "edu"))}</b><span class="note">limite R$ 3.561,50 por aluno</span></div>
+      ${soma(null, "estetico") ? `<div><span class="note">Estético (não deduz)</span><b class="num">${BRL.format(soma(null, "estetico"))}</b></div>` : ""}</div>
+    <div class="irppl">${pes.map(q => { const e = soma(q, "edu"); return `<div class="irpp"><span class="irpn"><i style="background:${personColor(q)}"></i>${esc(q)}</span><div><span class="note">Saúde</span><b class="num">${BRL.format(soma(q, "saude"))}</b></div><div><span class="note">Educação</span><b class="num">${BRL.format(Math.min(e, 3561.5))}</b><span class="note">${e > 3561.5 ? "de " + BRL.format(e) + " pagos" : e ? "" : "—"}</span></div><div><span class="note">Recibos</span><b class="num">${lista.filter(c => c.quem === q).length}</b></div></div>`; }).join("")}</div>
+    <div class="tablewrap"><table class="irtab"><thead><tr><th>Data</th><th>Prestador</th><th>Para</th><th>Tipo</th><th class="r">Valor</th><th></th></tr></thead><tbody>
+    ${lista.map(c => `<tr class="${T[c.tipo] && T[c.tipo][1] === "no" ? "irno" : ""}"><td class="num">${fmtDate(c.data)}</td><td>${esc(c.prestador)}<br><span class="note">${esc(c.desc || "")}${c.doc ? " · " + esc(c.doc) : ""}</span>${c.obs ? `<br><span class="irobs">⚠ ${esc(c.obs)}</span>` : ""}</td><td>${esc(c.quem)}</td><td><span class="irtag ${T[c.tipo] ? T[c.tipo][1] : "ok"}">${T[c.tipo] ? T[c.tipo][0] : esc(c.tipo)}</span></td><td class="r num">${BRL.format(c.valor)}</td><td>${/^https:\/\//.test(c.link || "") ? `<a class="linkbtn" href="${esc(c.link)}" target="_blank" rel="noopener">abrir</a>` : ""}</td></tr>`).join("")}
+    </tbody></table></div></div>`;
+}
+
 function renderIR(v) {
   const ir = irS();
-  const anos = [...new Set(STATE.statements.map(s => +s.month.slice(0, 4)).concat([anoBasePadrao()], Object.keys(ir.decl).map(Number)))].filter(Boolean).sort((a, b) => b - a);
+  const anos = [...new Set(STATE.statements.map(s => +s.month.slice(0, 4)).concat([anoBasePadrao()], Object.keys(ir.decl).map(Number), ir.comprovantes.map(c => +String(c.data).slice(0, 4))))].filter(Boolean).sort((a, b) => b - a);
   const ano = IRUI.ano && anos.includes(IRUI.ano) ? IRUI.ano : anoBasePadrao(); IRUI.ano = ano;
   const P = irPrazos(ano);
   // prazos
@@ -2654,7 +2715,7 @@ function renderIR(v) {
     <form class="iradd" data-iradd="1"><input type="text" name="txt" placeholder="Adicionar documento…" maxlength="120"><button class="btn small" type="submit">Adicionar</button></form>
     ${hide.length ? `<button type="button" class="linkbtn" data-irreset="1">Mostrar ${hide.length} item${hide.length > 1 ? "s" : ""} removido${hide.length > 1 ? "s" : ""}</button>` : ""}</div>`;
   // despesas dedutíveis (pela fatura do ano: é quando o pagamento aconteceu)
-  const tx = allTx().filter(t => !STATE.demo && t.amount > 0 && t.month && +t.month.slice(0, 4) === ano && (t.c === "Saúde" || t.c === "Educação"));
+  const tx = (STATE.demo || !STATE.statements.length ? [] : allTx()).filter(t => t.amount > 0 && t.month && +t.month.slice(0, 4) === ano && (t.c === "Saúde" || t.c === "Educação"));
   const FARMA = /DROGA|FARMA|RAIA|PANVEL|PACHECO|PAGUE ?MENOS|ARAUJO|VENANCIO|PHARMA|OTICA/;
   const ACAD = /ACADEMIA|SMART ?FIT|BLUEFIT|BODYTECH|SELFIT|GYM|CROSSFIT|PILATES/;
   const tipo = t => t.c === "Educação" ? (/ESCOLA|COLEGIO|FACULDADE|UNIVERSIDADE|MENSALIDADE|ENSINO|EDUCACIONAL/.test(norm(t.desc)) ? "edu" : "edux") : FARMA.test(norm(t.desc)) || ACAD.test(norm(t.desc)) ? "saudex" : "saude";
@@ -2700,10 +2761,10 @@ function renderIR(v) {
   const declP = `<div class="panel c12 irdecl"><div class="ph"><div><h2>Declaração entregue · ano-base ${ano}</h2><p class="hint">Envie o PDF da declaração (o arquivo que o programa da Receita gera ao imprimir). O app lê os Bens e direitos e o resumo e compara com o seu Patrimônio.</p></div>
       <div class="irbtns"><button class="btn small ${dc ? "" : "primary"}" type="button" data-irdecl="up">${dc ? "Trocar arquivo" : "Enviar declaração (PDF)"}</button>${dc ? '<button class="btn small" type="button" data-irdecl="del">Apagar</button>' : ""}</div></div>
     ${!dc ? '<p class="empty">Nenhuma declaração deste ano-base ainda.</p>' : (() => {
-      const bens = dc.bens || [], tA = bens.reduce((a, b) => a + (b.ant || 0), 0), tB = bens.reduce((a, b) => a + (b.atual || 0), 0), pt = r31 ? patTotal(r31) : null;
+      const bens = dc.bens || [], ev = dc.evolucao || {}, tA = ev.bensAnt != null ? ev.bensAnt : bens.reduce((a, b) => a + (b.ant || 0), 0), tB = ev.bensAtual != null ? ev.bensAtual : bens.reduce((a, b) => a + (b.atual || 0), 0), pt = r31 ? patTotal(r31) : null;
       const R = dc.resumo || {};
-      const res = [["Rendimentos tributáveis", R.rendTrib], ["Imposto devido", R.devido], ["Imposto a restituir", R.restituir], ["Saldo a pagar", R.pagar]].filter(x => x[1] != null);
-      return `<p class="note">Arquivo: ${esc(dc.arquivo || "declaração.pdf")} · lido em ${fmtDate(dc.em)}${dc.exercicio ? " · exercício " + dc.exercicio : ""}</p>
+      const res = [["Rendimentos tributáveis", R.rendTrib], ["Rendimentos isentos", R.isentos], ["Despesas médicas", R.medicas], ["Imposto a restituir", R.restituir], ["Saldo a pagar", R.pagar]].filter(x => x[1] != null && (x[1] || x[0] === "Imposto a restituir"));
+      return `<p class="note">Arquivo: ${esc(dc.arquivo || "declaração.pdf")} · lido em ${fmtDate(dc.em)}${dc.exercicio ? " · exercício " + dc.exercicio : ""}${/^https:\/\//.test(dc.link || "") ? ` · <a class="linkbtn" href="${esc(dc.link)}" target="_blank" rel="noopener">abrir no Drive</a>` : ""}</p>
       ${res.length ? `<div class="irsum">${res.map(([t, x]) => `<div><span class="note">${t}</span><b class="num">${BRL.format(x)}</b></div>`).join("")}</div>` : ""}
       <div class="irsum"><div><span class="note">Bens em 31/12/${ano - 1}</span><b class="num">${BRL.format(tA)}</b></div><div><span class="note">Bens em 31/12/${ano}</span><b class="num">${BRL.format(tB)}</b></div>
         <div><span class="note">Patrimônio no app${r31 ? " (" + fmtDate(r31.date) + ")" : ""}</span><b class="num">${pt != null ? BRL.format(pt) : "sem registro"}</b>${pt != null ? `<span class="note">${pt > tB ? "+" : ""}${BRL0.format(pt - tB)} vs declaração · o app usa valor de mercado; a declaração, custo de aquisição</span>` : ""}</div></div>
@@ -2711,8 +2772,8 @@ function renderIR(v) {
       ${bens.map(b => `<tr><td class="num">${esc([b.grupo, b.codigo].filter(Boolean).join("/") || "—")}</td><td class="irdisc">${esc(b.disc || "")}</td><td class="r num">${BRL.format(b.ant || 0)}</td><td class="r num">${BRL.format(b.atual || 0)}</td></tr>`).join("")}</tbody></table></div>` : `<p class="empty">Não consegui identificar os Bens e direitos neste PDF. Me mande o arquivo pelo chat que eu ajusto o leitor.</p>`}`;
     })()}</div>`;
   v.innerHTML = `<div class="panel c12 irhead"><div><h2>Imposto de renda</h2><p class="hint">Organize a declaração ${P.Y} da família: prazos, documentos, despesas dedutíveis, notas de corretagem e a declaração entregue.</p></div>
-    <label class="irano">Ano-base <select data-irano="1">${anos.map(a => `<option value="${a}" ${a === ano ? "selected" : ""}>${a} (declaração ${a + 1})</option>`).join("")}</select></label></div>
-    <div class="grid">${prazos}${check}${desp}${notasP}${declP}</div>`;
+    <div class="irbtns"><button class="btn small" type="button" data-irimp="1">Importar dados (.json)</button><label class="irano">Ano-base <select data-irano="1">${anos.map(a => `<option value="${a}" ${a === ano ? "selected" : ""}>${a} (declaração ${a + 1})</option>`).join("")}</select></label></div></div>
+    <div class="grid">${irEvolucaoPanel()}${prazos}${check}${irComprovantesPanel(ano)}${desp}${notasP}${declP}</div>`;
 }
 
 /* leitor da declaração (PDF gerado pelo programa IRPF) */
@@ -2721,11 +2782,14 @@ function lerDeclaracao(lines) {
   const MON = /(\d{1,3}(?:\.\d{3})*,\d{2})/g;
   const ex = /EXERC[IÍ]CIO\s*:?\s*(\d{4})/i.exec(txt), ac = /ANO[- ]CALEND[AÁ]RIO\s*:?\s*(\d{4})/i.exec(txt);
   const valApos = re => { const m = re.exec(up); if (!m) return null; const rest = up.slice(m.index + m[0].length, m.index + m[0].length + 120); const v = /(\d{1,3}(?:\.\d{3})*,\d{2})/.exec(rest); return v ? parseAmount(v[1]) : null; };
-  const resumo = {rendTrib: valApos(/TOTAL DE RENDIMENTOS TRIBUTAVEIS|RENDIMENTOS TRIBUTAVEIS\s*$/m), devido: valApos(/IMPOSTO DEVIDO(?! I| II)/), restituir: valApos(/IMPOSTO A RESTITUIR/), pagar: valApos(/SALDO DE IMPOSTO A PAGAR/)};
+  const ab0 = ac ? +ac[1] : (ex ? +ex[1] - 1 : null);
+  const resumo = {rendTrib: valApos(/RENDIMENTOS TRIBUTAVEIS[\s\S]{0,900}?\bTOTAL\b/), medicas: valApos(/DESPESAS MEDICAS/), instrucao: valApos(/DESPESAS COM INSTRUCAO/), restituir: valApos(/IMPOSTO A RESTITUIR/), pagar: valApos(/SALDO DE IMPOSTO A PAGAR/), isentos: valApos(/RENDIMENTOS ISENTOS E NAO TRIBUTAVEIS(?= *\d| *\n *\d)/), exclusivos: valApos(/RENDIMENTOS SUJEITOS A TRIBUTACAO EXCLUSIVA\/DEFINITIVA/)};
+  const evolucao = ab0 ? {bensAnt: valApos(new RegExp('BENS E DIREITOS EM 31/12/' + (ab0 - 1))), bensAtual: valApos(new RegExp('BENS E DIREITOS EM 31/12/' + ab0)), divAnt: valApos(new RegExp('DIVIDAS E ONUS REAIS EM 31/12/' + (ab0 - 1))), divAtual: valApos(new RegExp('DIVIDAS E ONUS REAIS EM 31/12/' + ab0))} : {};
   const nl = lines.map(l => norm(l));
-  let a = nl.findIndex(l => /^\s*BENS E DIREITOS/.test(l)), b = -1;
+  let a = nl.findIndex(l => /DECLARACAO DE BENS E DIREITOS/.test(l)), b = -1;
+  if (a < 0) a = nl.findIndex(l => /^\s*BENS E DIREITOS\s*(\(|$)/.test(l));
   if (a < 0) a = nl.findIndex(l => /BENS E DIREITOS/.test(l));
-  if (a >= 0) b = nl.findIndex((l, i) => i > a && /DIVIDAS E ONUS|^\s*DOACOES|ESPOLIO|^\s*RESUMO/.test(l));
+  if (a >= 0) b = nl.findIndex((l, i) => i > a && /^\s*DIVIDAS E ONUS|^\s*DOACOES|^\s*ESPOLIO|^\s*RESUMO/.test(l));
   const sec = a >= 0 ? lines.slice(a + 1, b > a ? b : undefined) : [];
   const bens = []; let cur = null, buf = [];
   sec.forEach(l => {
@@ -2750,7 +2814,7 @@ function lerDeclaracao(lines) {
     if (vals.length === 0 && l.trim()) buf.push(l.trim());
     if (buf.length > 8) buf = buf.slice(-8);
   });
-  return {exercicio: ex ? +ex[1] : null, anoBase: ac ? +ac[1] : (ex ? +ex[1] - 1 : null), resumo, bens};
+  return {exercicio: ex ? +ex[1] : null, anoBase: ab0, resumo, evolucao, bens};
 }
 function lerNota(lines) {
   const txt = lines.join("\n"), up = norm(txt);
@@ -2772,6 +2836,9 @@ async function irLerArquivo(kind, file) {
   if (kind === "decl") {
     const d = lerDeclaracao(r.lines); const ab = d.anoBase || IRUI.ano;
     ir.decl[ab] = Object.assign(d, {arquivo: file.name, em: todayISO()});
+    const ev = d.evolucao || {}, R = d.resumo || {};
+    if (ev.bensAtual != null) ir.historico[ab] = {bens: ev.bensAtual, dividas: ev.divAtual || 0, rendTrib: R.rendTrib, medicas: R.medicas, instrucao: R.instrucao, restituir: R.restituir, isentos: R.isentos, exclusivos: R.exclusivos};
+    if (ev.bensAnt != null && !ir.historico[ab - 1]) ir.historico[ab - 1] = {bens: ev.bensAnt, dividas: ev.divAnt || 0};
     IRUI.ano = ab; Store.saveSettings(); render();
     toast(d.bens.length ? `Declaração ${ab + 1} lida: ${d.bens.length} bens.` : "Declaração salva, mas não achei os Bens e direitos. Me mande o PDF pelo chat para eu ajustar.");
   } else {
@@ -2779,13 +2846,16 @@ async function irLerArquivo(kind, file) {
     toast("Confira os campos lidos da nota e salve.");
   }
 }
+const irJson = document.createElement("input"); irJson.type = "file"; irJson.accept = "application/json,.json"; irJson.hidden = true; document.body.appendChild(irJson);
+irJson.addEventListener("change", () => { const f = irJson.files[0]; irJson.value = ""; if (f) importBackup(f); });
 const irFile = document.createElement("input"); irFile.type = "file"; irFile.accept = "application/pdf,.pdf"; irFile.hidden = true; document.body.appendChild(irFile);
 irFile.addEventListener("change", () => { const f = irFile.files[0]; const k = irFile.dataset.kind; irFile.value = ""; if (f) irLerArquivo(k, f); });
 const numBR = s => { s = String(s || "").trim(); if (!s) return null; const n = parseAmount(s); return n == null ? null : n; };
 
 document.addEventListener("click", e => {
   if (STATE.module !== "ir") return;
-  const t = e.target.closest("[data-irdel],[data-irreset],[data-irnota],[data-irnotadel],[data-irdecl]"); if (!t) return;
+  const t = e.target.closest("[data-irdel],[data-irreset],[data-irnota],[data-irnotadel],[data-irdecl],[data-irimp]"); if (!t) return;
+  if (t.dataset.irimp) { irJson.click(); return; }
   const ir = irS(), ano = IRUI.ano;
   if (t.dataset.irdel) { const id = t.dataset.irdel; const mine = ir.items[ano] || []; if (mine.some(i => i.id === id)) ir.items[ano] = mine.filter(i => i.id !== id); else ir.hide[ano] = [...new Set((ir.hide[ano] || []).concat([id]))]; return irSave(); }
   if (t.dataset.irreset) { ir.hide[ano] = []; return irSave(); }
