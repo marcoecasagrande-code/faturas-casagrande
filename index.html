@@ -80,7 +80,15 @@ header.top{position:relative;isolation:isolate;padding-top:20px}
 .docseg button b{font-weight:600;opacity:.6;margin-left:6px}
 .docseg button[aria-pressed="true"]{border-color:#F6A06A;color:#5A2A0C;background:#FFE3CC}
 .docsec{font-family:var(--f-display);font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:18px 2px 8px}
-.docgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,360px),1fr));gap:12px;align-items:start}
+.docgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:12px;align-items:stretch;grid-auto-flow:row dense}
+.docgrid>.doccard{display:flex;flex-direction:column;align-self:stretch;height:auto;margin:0}
+.doccard .dockeys{margin-top:auto;padding-top:10px}
+.doccard.aberto{grid-column:1/-1}
+.doccard.aberto .dockeys{margin-top:10px;padding-top:0}
+.doccard.aberto .foldbody{columns:2 340px;column-gap:28px}
+.doccard.aberto .foldbody>.doccat{break-after:avoid}
+.doccard.aberto .foldbody>.doclist{break-inside:auto}
+.doccard .foldhead h2{overflow-wrap:anywhere}
 .doccard{padding:14px 16px;min-width:0}
 .doccard .foldhead h2{font-size:17px}
 .dockeys{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 2px;align-items:center}
@@ -101,13 +109,18 @@ a.dk:hover{outline:1px solid var(--line)}
 .doclist .old a{color:var(--muted)}
 .vtag{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:1px 8px;margin-right:6px;background:var(--surface-2);color:var(--muted);vertical-align:1px;white-space:nowrap}
 .vtag.bad{background:#FDE2E2;color:#B42318}.vtag.warn{background:#FFF1C2;color:#8A5A00}
-.foldhead .vtag{font-size:11.5px;margin:0}
+.foldhead .vtag{font-size:11.5px;margin:0 0 0 8px}
+.doccard .foldhead>span{flex-direction:column;align-items:flex-start;gap:4px}
+@media (min-width:900px){.docgrid.g3{grid-template-columns:repeat(3,minmax(0,1fr))}.docgrid.g2{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .modsw button{position:relative}
 .modbadge{position:absolute;top:-7px;right:-7px;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:#D14343;color:#fff;font:700 11.5px/20px var(--f-body,inherit);text-align:center;box-shadow:0 0 0 2px var(--bg)}
 .doclist .fold a::before{content:"📁 "}
 .docmore{background:none;border:0;padding:6px 0 0;color:var(--orange);font:inherit;font-size:13px;font-weight:600;cursor:pointer}
 .docst{border:1px solid var(--line);background:var(--surface);border-radius:999px;font:inherit;font-size:12px;padding:3px 10px;cursor:pointer;color:var(--muted);margin-left:auto}
 .docst[aria-pressed="true"]{border-color:#2E9E6A;color:#2E9E6A}
+.docst{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:manipulation;background-image:linear-gradient(90deg,color-mix(in srgb,currentColor 22%,transparent) 0 0);background-repeat:no-repeat;background-size:0% 100%}
+.docst.segurando{background-size:100% 100%;transition:background-size 3s linear}
+.docconf{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600}
 .venctab{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:8px}
 .venctab td{padding:7px 6px;border-top:1px solid var(--line)}
 .venctab tr:first-child td{border-top:0}
@@ -3000,11 +3013,11 @@ function docCard(e, q) {
     const arr = cats[c], lim = DOCUI.mais[e.id + "|" + c] || q ? 999 : 6, atual = docAtual(e, c);
     return `<div class="doccat">${esc(c)} · ${arr.length}</div><ul class="doclist">${arr.slice(0, lim).map(f => `<li class="${atual && atual !== f && f.v ? "old" : ""}"><a href="${esc(docQ(e, f))}" target="_blank" rel="noopener">${esc(f.n)}${f.s ? `<span class="sub">${esc(f.s)}</span>` : ""}</a><span class="dy">${f.v && f === atual && vencInfo(f.v).cls !== "ok" ? `<span class="vtag ${vencInfo(f.v).cls}">${vencInfo(f.v).cls === "bad" ? "Vencido" : "Vence em breve"}</span>` : f.v && atual !== f ? '<span class="vtag">substituído</span>' : ""}${f.v ? esc(vencInfo(f.v).txt) : f.y || ""}</span></li>`).join("")}</ul>${arr.length > lim ? `<button class="docmore" type="button" data-docmais="${esc(e.id + "|" + c)}">Ver mais ${arr.length - lim}</button>` : ""}`;
   }).join("") + (cx.length ? `<div class="doccat">Pastas · ${cx.length}</div><ul class="doclist">${cx.map(c => `<li class="fold"><a href="${esc(docLink(c.n.split("/").pop()))}" target="_blank" rel="noopener">${esc(c.n)}</a><span class="dy">${c.q ? c.q + (c.t === "fotos" ? " fotos" : " arquivos") : "pasta"}</span></li>`).join("")}</ul>` : "");
-  const nPastas = e.cx.reduce((a, c) => a + (c.q || 0), 0), resumo = e.f.length + (e.f.length === 1 ? " documento" : " documentos") + (nPastas ? " · +" + nPastas.toLocaleString("pt-BR") + " em pastas" : "");
+  const nCx = e.cx.reduce((a, c) => a + (c.q || 0), 0), resumo = e.f.length ? e.f.length + (e.f.length === 1 ? " documento" : " documentos") : nCx + (nCx === 1 ? " foto" : " fotos");
   const venc = docVencidos(e), alerta = venc.length ? `<span class="vtag bad" title="${esc(venc.map(x => x.c).join(", "))}">⚠ ${venc.length} vencido${venc.length > 1 ? "s" : ""}</span>` : "";
   const hd = foldHead(k, esc(e.nome), resumo + alerta).replace(/aria-expanded="(true|false)"/, `aria-expanded="${aberto}"`);
   return `<section class="panel doccard foldpanel${aberto ? " aberto" : ""}${ativo ? "" : " vendido"}">${hd}
-    <div class="dockeys">${docKeys(e)}${e.k === "v" ? `<button class="docst" type="button" data-docst="${esc(e.id)}" aria-pressed="${ativo}" title="Tocar para trocar">${ativo ? "Na garagem" : "Vendido"}</button>` : ""}</div>
+    <div class="dockeys">${docKeys(e)}${e.k !== "v" ? "" : DOCUI.stConf === e.id ? `<span class="docconf">${ativo ? "Tirar da garagem?" : "Voltar para a garagem?"}<button class="btn small primary" type="button" data-docstok="${esc(e.id)}">Sim</button><button class="btn small" type="button" data-docstno="1">Não</button></span>` : `<button class="docst" type="button" data-docst="${esc(e.id)}" aria-pressed="${ativo}" title="Segure por 3 segundos para mudar">${ativo ? "Na garagem" : "Vendido"}</button>`}</div>
     <div class="foldbody"${aberto ? "" : " hidden"}>${lista || '<p class="empty">Nada aqui.</p>'}<p class="note" style="margin:10px 0 0"><a class="linkbtn" href="${esc(docLink(e.nome))}" target="_blank" rel="noopener">Abrir a pasta no Drive</a> · <button class="docmore" type="button" data-dococ="${esc(e.id)}">${DOCUI.conf === e.id ? "Confirmar: tirar do app" : "Tirar do app"}</button></p></div></section>`;
 }
 function vencimentosPanel(ents) {
@@ -3035,12 +3048,12 @@ function renderDocs(v) {
   const oc = new Set(D.oc || []), ents = D.ents.filter(e => !oc.has(e.id)), q = norm(DOCUI.q.trim());
   const cnt = t => ents.filter(e => t === "p" ? (e.k === "p" && e.g !== "outros") || e.k === "e" : e.k === t).length;
   const seg = `<div class="docseg" role="tablist">${[["p", "Pessoas"], ["i", "Imóveis"], ["v", "Veículos"]].map(([t, n]) => `<button type="button" data-doctab="${t}" aria-pressed="${DOCUI.tab === t}">${n}<b>${cnt(t)}</b></button>`).join("")}</div>`;
-  const bloco = (titulo, arr) => { const h = arr.map(e => docCard(e, q)).join(""); return h ? `<div class="docsec">${titulo}</div><div class="docgrid">${h}</div>` : ""; };
+  const bloco = (titulo, arr) => { const cs = arr.map(e => docCard(e, q)).filter(Boolean), n = cs.length, g = n % 3 === 0 ? " g3" : n % 2 === 0 ? " g2" : ""; return n ? `<div class="docsec">${titulo}</div><div class="docgrid${g}">${cs.join("")}</div>` : ""; };
   let corpo = "";
   if (q) {
     corpo = bloco("Pessoas", ents.filter(e => (e.k === "p" && e.g !== "outros") || e.k === "e")) + bloco("Imóveis", ents.filter(e => e.k === "i")) + bloco("Veículos", ents.filter(e => e.k === "v"));
   } else if (DOCUI.tab === "p") {
-    const ord = ["Marco", "Moema", "Alice"], fam = ents.filter(e => e.k === "p" && e.g === "familia").sort((a, b) => ord.findIndex(x => a.nome.startsWith(x)) - ord.findIndex(x => b.nome.startsWith(x)));
+    const ord = ["Marco", "Moema", "Alice", "Cindy"], fam = ents.filter(e => e.k === "p" && (e.g === "familia" || e.g === "pet")).sort((a, b) => ord.findIndex(x => a.nome.startsWith(x)) - ord.findIndex(x => b.nome.startsWith(x)));
     corpo = vencimentosPanel(ents) + bloco("Família", fam) + bloco("Parentes", ents.filter(e => e.k === "p" && e.g === "parentes")) + bloco("Funcionárias domésticas", ents.filter(e => e.k === "e"));
   } else if (DOCUI.tab === "v") {
     const vs = ents.filter(e => e.k === "v");
@@ -3050,13 +3063,24 @@ function renderDocs(v) {
 }
 document.addEventListener("click", e => {
   if (STATE.module !== "docs") return;
-  const t = e.target.closest("[data-doctab],[data-docmais],[data-docst],[data-irimp],[data-dococ]"); if (!t) return;
+  const t = e.target.closest("[data-doctab],[data-docmais],[data-docst],[data-docstok],[data-docstno],[data-irimp],[data-dococ]"); if (!t) return;
   if (t.dataset.dococ) { const id = t.dataset.dococ; if (DOCUI.conf !== id) { DOCUI.conf = id; return render(); } DOCUI.conf = null; const D = STATE.settings.docs; D.oc = [...new Set((D.oc || []).concat(id))]; Store.saveSettings(); toast("Removido da aba Documentos. Os arquivos continuam no Drive."); return render(); }
   if (t.dataset.irimp) { irJson.click(); return; }
   if (t.dataset.doctab) { DOCUI.tab = t.dataset.doctab; return render(); }
   if (t.dataset.docmais) { DOCUI.mais[t.dataset.docmais] = 1; return render(); }
-  if (t.dataset.docst) { const D = STATE.settings.docs, e2 = D.ents.find(x => x.id === t.dataset.docst); D.st = Object.assign({}, D.st, {[e2.id]: docAtivo(e2) ? "vendido" : "atual"}); Store.saveSettings(); return render(); }
+  if (t.dataset.docst) { if (!DOCUI.segurou) toast("Segure o botão por 3 segundos para mudar."); DOCUI.segurou = false; return; }
+  if (t.dataset.docstno) { DOCUI.stConf = null; return render(); }
+  if (t.dataset.docstok) { if (Date.now() - (DOCUI.confEm || 0) < 600) return; const D = STATE.settings.docs, e2 = D.ents.find(x => x.id === t.dataset.docstok); DOCUI.stConf = null; D.st = Object.assign({}, D.st, {[e2.id]: docAtivo(e2) ? "vendido" : "atual"}); Store.saveSettings(); toast(docAtivo(e2) ? "Voltou para a garagem." : "Retirado da garagem."); return render(); }
 });
+let docHold = null;
+const docHoldFim = () => { if (docHold) { clearTimeout(docHold.t); docHold.b.classList.remove("segurando"); docHold = null; } };
+document.addEventListener("pointerdown", e => {
+  const b = e.target.closest && e.target.closest("[data-docst]"); if (!b || STATE.module !== "docs") return;
+  docHoldFim(); b.classList.add("segurando");
+  docHold = {b, t: setTimeout(() => { const id = b.dataset.docst; docHold = null; DOCUI.segurou = true; DOCUI.stConf = id; DOCUI.confEm = Date.now(); if (navigator.vibrate) try { navigator.vibrate(30); } catch (er) {} render(); }, 3000)};
+});
+["pointerup", "pointercancel", "pointerleave"].forEach(ev => document.addEventListener(ev, e => { if (docHold && (ev !== "pointerleave" || e.target === docHold.b)) docHoldFim(); }, true));
+document.addEventListener("contextmenu", e => { if (e.target.closest && e.target.closest("[data-docst]")) e.preventDefault(); });
 document.addEventListener("input", e => {
   if (!e.target.dataset || !e.target.dataset.docq) return;
   DOCUI.q = e.target.value; const pos = e.target.selectionStart; render();
