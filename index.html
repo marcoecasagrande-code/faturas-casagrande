@@ -3053,7 +3053,7 @@ function renderDocs(v) {
   if (q) {
     corpo = bloco("Pessoas", ents.filter(e => (e.k === "p" && e.g !== "outros") || e.k === "e")) + bloco("Imóveis", ents.filter(e => e.k === "i")) + bloco("Veículos", ents.filter(e => e.k === "v"));
   } else if (DOCUI.tab === "p") {
-    const ord = ["Marco", "Moema", "Alice", "Cindy"], fam = ents.filter(e => e.k === "p" && (e.g === "familia" || e.g === "pet")).sort((a, b) => ord.findIndex(x => a.nome.startsWith(x)) - ord.findIndex(x => b.nome.startsWith(x)));
+    const ord = ["Marco", "Moema", "Alice"], fam = ents.filter(e => e.k === "p" && (e.g === "familia" || e.g === "pet")).sort((a, b) => (a.g === "pet") - (b.g === "pet") || ord.findIndex(x => a.nome.startsWith(x)) - ord.findIndex(x => b.nome.startsWith(x)));
     corpo = vencimentosPanel(ents) + bloco("Família", fam) + bloco("Parentes", ents.filter(e => e.k === "p" && e.g === "parentes")) + bloco("Funcionárias domésticas", ents.filter(e => e.k === "e"));
   } else if (DOCUI.tab === "v") {
     const vs = ents.filter(e => e.k === "v");
