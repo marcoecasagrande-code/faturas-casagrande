@@ -2586,7 +2586,7 @@ document.addEventListener("click", e => {
   if (t.dataset.accdel) { STATE.settings.patAssets = (STATE.settings.patAssets || []).filter(x => x.id !== t.dataset.accdel); Store.saveSettings(); render(); toast("Conta excluída."); return; }
   if (t.dataset.act === "newPat") return openPat();
   if (t.dataset.qwho != null || t.dataset.qmode != null) { STATE.q = Object.assign({who: "all", mode: "sum", semViagem: true}, STATE.q); if (t.dataset.qwho != null) STATE.q.who = t.dataset.qwho; else STATE.q.mode = t.dataset.qmode; render(); return; }
-  if (t.dataset.fold) { STATE.fold = Object.assign({}, STATE.fold); STATE.fold[t.dataset.fold] = !STATE.fold[t.dataset.fold]; saveUi(); render(); return; }
+  if (t.dataset.fold) { const fk = t.dataset.fold, abre = !STATE.fold[fk]; STATE.fold = Object.assign({}, STATE.fold); if (abre && fk.startsWith("doc:") && fk !== "doc:venc") Object.keys(STATE.fold).forEach(k => { if (k.startsWith("doc:") && k !== "doc:venc") delete STATE.fold[k]; }); STATE.fold[fk] = abre; saveUi(); render(); if (abre && fk.startsWith("doc:")) { const el = document.querySelector(`[data-fold="${fk}"]`); if (el) el.closest("section").scrollIntoView({block: "nearest", behavior: "smooth"}); } return; }
   if (t.dataset.act === "metaEdit") { STATE.editMeta = true; render(); const i = $("#metaIn"); if (i) i.focus(); return; }
   if (t.dataset.act === "metaCancel") { STATE.editMeta = false; return render(); }
   if (t.dataset.act === "metaSave") { const v2 = parseNum($("#metaIn").value); if (!(v2 > 0)) { toast("Digite o valor da meta."); return; }
