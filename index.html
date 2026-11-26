@@ -99,6 +99,11 @@ a.dk:hover{outline:1px solid var(--line)}
 .doclist .dy{margin-left:auto;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;flex:none;white-space:nowrap}
 .doclist .sub{display:block;font-size:11.5px;color:var(--muted)}
 .doclist .old a{color:var(--muted)}
+.vtag{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:1px 8px;margin-right:6px;background:var(--surface-2);color:var(--muted);vertical-align:1px;white-space:nowrap}
+.vtag.bad{background:#FDE2E2;color:#B42318}.vtag.warn{background:#FFF1C2;color:#8A5A00}
+.foldhead .vtag{font-size:11.5px;margin:0}
+.modsw button{position:relative}
+.modbadge{position:absolute;top:-7px;right:-7px;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:#D14343;color:#fff;font:700 11.5px/20px var(--f-body,inherit);text-align:center;box-shadow:0 0 0 2px var(--bg)}
 .doclist .fold a::before{content:"📁 "}
 .docmore{background:none;border:0;padding:6px 0 0;color:var(--orange);font:inherit;font-size:13px;font-weight:600;cursor:pointer}
 .docst{border:1px solid var(--line);background:var(--surface);border-radius:999px;font:inherit;font-size:12px;padding:3px 10px;cursor:pointer;color:var(--muted);margin-left:auto}
@@ -650,7 +655,7 @@ textarea{width:100%;min-height:110px;font-family:var(--f-num);font-size:12px}
       <button type="button" role="tab" data-mod="cartoes" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6.5 15h4" stroke-linecap="round"/></svg>Cartões</button>
       <button type="button" role="tab" data-mod="patrimonio" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 20h18M4 10h16M12 3l9 5H3l9-5zM6 10v7M10 10v7M14 10v7M18 10v7"/></svg>Patrimônio</button>
       <button type="button" role="tab" data-mod="ir" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6M10 9h2"/></svg><span>Imposto<span class="irlong"> de renda</span></span></button>
-      <button type="button" role="tab" data-mod="docs" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M8 13h8M8 16.5h5"/></svg>Documentos</button>
+      <button type="button" role="tab" data-mod="docs" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M8 13h8M8 16.5h5"/></svg>Documentos<span class="modbadge" id="docBadge" hidden></span></button>
     </div>
     <div class="improw"><span class="impwrap"><span class="dots" aria-hidden="true"><svg viewBox="0 0 300 330"><defs><pattern id="dotp" width="9" height="9" patternUnits="userSpaceOnUse"><circle cx="4.5" cy="4.5" r="2.1"/></pattern><mask id="dolm"><text x="150" y="282" text-anchor="middle" font-size="340" font-weight="700" font-family="Bricolage Grotesque, Inter, Arial, sans-serif" fill="#fff">$</text></mask></defs><rect width="300" height="330" fill="url(#dotp)" mask="url(#dolm)"/></svg></span><button class="btn primary" id="btnImport" type="button">+ Importar fatura</button></span></div>
     <nav class="tabs" role="tablist" id="tabs">
@@ -1078,6 +1083,7 @@ function render() {
   const isIR = STATE.module === "ir";
   $("#tabs").hidden = isPat || isIR; $("#btnImport").textContent = isPat ? "+ Registrar patrimônio" : "+ Importar fatura";
   const isDoc = STATE.module === "docs";
+  if (typeof docBadge === "function") docBadge();
   document.querySelector(".improw").hidden = isIR || isDoc;
   if (isDoc) {
     $("#tabs").hidden = true; $("#filters").hidden = true; $("#bannerArea").innerHTML = "";
@@ -1640,7 +1646,7 @@ async function importBackup(file) {
         if (Array.isArray(J.notas)) { const ids = new Set(ir.notas.map(c => c.id)); ir.notas = ir.notas.concat(J.notas.filter(c => c && c.id && !ids.has(c.id))); }
         ["historico", "decl", "done", "items", "hide", "prazos", "recibos"].forEach(k => { if (J[k] && typeof J[k] === "object") ir[k] = Object.assign({}, ir[k], J[k]); });
         irImportado = (J.comprovantes || []).length + Object.keys(J.historico || {}).length; }
-      if (j.settings.docs && Array.isArray(j.settings.docs.ents)) { const st = (STATE.settings.docs || {}).st || {}; STATE.settings.docs = Object.assign({}, j.settings.docs, {st: Object.assign({}, j.settings.docs.st || {}, st)}); irImportado = -1; }
+      if (j.settings.docs && Array.isArray(j.settings.docs.ents)) { const st = (STATE.settings.docs || {}).st || {}; const oc0 = (STATE.settings.docs || {}).oc || []; STATE.settings.docs = Object.assign({}, j.settings.docs, {st: Object.assign({}, j.settings.docs.st || {}, st), oc: [...new Set(oc0.concat(j.settings.docs.oc || []))]}); irImportado = -1; }
       Store.saveSettings();
     }
     render(); toast(irImportado === -1 ? "Catálogo de documentos importado." : irImportado && !sts.length ? "Dados do imposto de renda importados." : sts.length + " fatura" + (sts.length === 1 ? "" : "s") + " importada" + (sts.length === 1 ? "" : "s") + ".");
@@ -2992,13 +2998,14 @@ function docCard(e, q) {
   const ativo = e.k === "v" ? docAtivo(e) : true;
   const lista = ordem.map(c => {
     const arr = cats[c], lim = DOCUI.mais[e.id + "|" + c] || q ? 999 : 6, atual = docAtual(e, c);
-    return `<div class="doccat">${esc(c)} · ${arr.length}</div><ul class="doclist">${arr.slice(0, lim).map(f => `<li class="${atual && atual !== f && f.v ? "old" : ""}"><a href="${esc(docQ(e, f))}" target="_blank" rel="noopener">${esc(f.n)}${f.s ? `<span class="sub">${esc(f.s)}</span>` : ""}</a><span class="dy">${f.v ? esc(vencInfo(f.v).txt) : f.y || ""}</span></li>`).join("")}</ul>${arr.length > lim ? `<button class="docmore" type="button" data-docmais="${esc(e.id + "|" + c)}">Ver mais ${arr.length - lim}</button>` : ""}`;
+    return `<div class="doccat">${esc(c)} · ${arr.length}</div><ul class="doclist">${arr.slice(0, lim).map(f => `<li class="${atual && atual !== f && f.v ? "old" : ""}"><a href="${esc(docQ(e, f))}" target="_blank" rel="noopener">${esc(f.n)}${f.s ? `<span class="sub">${esc(f.s)}</span>` : ""}</a><span class="dy">${f.v && f === atual && vencInfo(f.v).cls !== "ok" ? `<span class="vtag ${vencInfo(f.v).cls}">${vencInfo(f.v).cls === "bad" ? "Vencido" : "Vence em breve"}</span>` : f.v && atual !== f ? '<span class="vtag">substituído</span>' : ""}${f.v ? esc(vencInfo(f.v).txt) : f.y || ""}</span></li>`).join("")}</ul>${arr.length > lim ? `<button class="docmore" type="button" data-docmais="${esc(e.id + "|" + c)}">Ver mais ${arr.length - lim}</button>` : ""}`;
   }).join("") + (cx.length ? `<div class="doccat">Pastas · ${cx.length}</div><ul class="doclist">${cx.map(c => `<li class="fold"><a href="${esc(docLink(c.n.split("/").pop()))}" target="_blank" rel="noopener">${esc(c.n)}</a><span class="dy">${c.q ? c.q + (c.t === "fotos" ? " fotos" : " arquivos") : "pasta"}</span></li>`).join("")}</ul>` : "");
   const nPastas = e.cx.reduce((a, c) => a + (c.q || 0), 0), resumo = e.f.length + (e.f.length === 1 ? " documento" : " documentos") + (nPastas ? " · +" + nPastas.toLocaleString("pt-BR") + " em pastas" : "");
-  const hd = foldHead(k, esc(e.nome), resumo).replace(/aria-expanded="(true|false)"/, `aria-expanded="${aberto}"`);
+  const venc = docVencidos(e), alerta = venc.length ? `<span class="vtag bad" title="${esc(venc.map(x => x.c).join(", "))}">⚠ ${venc.length} vencido${venc.length > 1 ? "s" : ""}</span>` : "";
+  const hd = foldHead(k, esc(e.nome), resumo + alerta).replace(/aria-expanded="(true|false)"/, `aria-expanded="${aberto}"`);
   return `<section class="panel doccard foldpanel${aberto ? " aberto" : ""}${ativo ? "" : " vendido"}">${hd}
     <div class="dockeys">${docKeys(e)}${e.k === "v" ? `<button class="docst" type="button" data-docst="${esc(e.id)}" aria-pressed="${ativo}" title="Tocar para trocar">${ativo ? "Na garagem" : "Vendido"}</button>` : ""}</div>
-    <div class="foldbody"${aberto ? "" : " hidden"}>${lista || '<p class="empty">Nada aqui.</p>'}<p class="note" style="margin:10px 0 0"><a class="linkbtn" href="${esc(docLink(e.nome))}" target="_blank" rel="noopener">Abrir a pasta no Drive</a></p></div></section>`;
+    <div class="foldbody"${aberto ? "" : " hidden"}>${lista || '<p class="empty">Nada aqui.</p>'}<p class="note" style="margin:10px 0 0"><a class="linkbtn" href="${esc(docLink(e.nome))}" target="_blank" rel="noopener">Abrir a pasta no Drive</a> · <button class="docmore" type="button" data-dococ="${esc(e.id)}">${DOCUI.conf === e.id ? "Confirmar: tirar do app" : "Tirar do app"}</button></p></div></section>`;
 }
 function vencimentosPanel(ents) {
   const linhas = [];
@@ -3012,12 +3019,20 @@ function vencimentosPanel(ents) {
     <div class="tablewrap"><table class="venctab"><tbody>${linhas.map(l => `<tr><td><span class="dk ${l.vi.cls}"><i></i>${esc(l.vi.txt)}</span></td><td><b>${esc(l.c)}</b></td><td>${esc(l.e.nome.split(" ")[0])}</td><td class="r"><a class="linkbtn" href="${esc(docQ(l.e, l.f))}" target="_blank" rel="noopener">abrir</a></td></tr>`).join("")}</tbody></table></div>
     <p class="note" style="margin:8px 0 0">As datas vêm do nome dos arquivos ("Vencimento 2031"). Ao renovar um documento, salve o novo com a validade no nome.</p></div></section>`;
 }
+function docVencidos(e) {
+  return [...new Set(e.f.filter(f => f.v).map(f => f.c))].map(c => ({c, f: docAtual(e, c)})).filter(x => x.f && x.f.v && vencInfo(x.f.v).cls === "bad");
+}
+function docBadge() {
+  const b = $("#docBadge"); if (!b) return;
+  const D = STATE.settings && STATE.settings.docs, n = D ? D.ents.filter(e => e.k === "p" && e.g === "familia" && !(D.oc || []).includes(e.id)).reduce((a, e) => a + docVencidos(e).length, 0) : 0;
+  b.hidden = !n; b.textContent = n; b.title = n + (n > 1 ? " documentos vencidos" : " documento vencido");
+}
 function renderDocs(v) {
   const D = STATE.settings.docs;
   const head = `<div class="panel dochead"><div><h2>Documentos</h2><p class="hint">${D ? `Pasta <b>${esc(D.raiz || "Documentos")}</b> · lida em ${fmtDate(D.gerado)} · cada item abre a busca no seu Google Drive.` : "Importe o catálogo para ver os documentos da família por pessoa, imóvel e veículo."}</p></div>
     <div class="docbar">${D ? `<input type="search" placeholder="Buscar documento…" value="${esc(DOCUI.q)}" data-docq="1" aria-label="Buscar documento">` : ""}<button class="btn small${D ? "" : " primary"}" type="button" data-irimp="1">Importar catálogo (.json)</button></div></div>`;
   if (!D) { v.innerHTML = head; return; }
-  const ents = D.ents, q = norm(DOCUI.q.trim());
+  const oc = new Set(D.oc || []), ents = D.ents.filter(e => !oc.has(e.id)), q = norm(DOCUI.q.trim());
   const cnt = t => ents.filter(e => t === "p" ? e.k === "p" || e.k === "e" : e.k === t).length;
   const seg = `<div class="docseg" role="tablist">${[["p", "Pessoas"], ["i", "Imóveis"], ["v", "Veículos"]].map(([t, n]) => `<button type="button" data-doctab="${t}" aria-pressed="${DOCUI.tab === t}">${n}<b>${cnt(t)}</b></button>`).join("")}</div>`;
   const bloco = (titulo, arr) => { const h = arr.map(e => docCard(e, q)).join(""); return h ? `<div class="docsec">${titulo}</div><div class="docgrid">${h}</div>` : ""; };
@@ -3035,7 +3050,8 @@ function renderDocs(v) {
 }
 document.addEventListener("click", e => {
   if (STATE.module !== "docs") return;
-  const t = e.target.closest("[data-doctab],[data-docmais],[data-docst],[data-irimp]"); if (!t) return;
+  const t = e.target.closest("[data-doctab],[data-docmais],[data-docst],[data-irimp],[data-dococ]"); if (!t) return;
+  if (t.dataset.dococ) { const id = t.dataset.dococ; if (DOCUI.conf !== id) { DOCUI.conf = id; return render(); } DOCUI.conf = null; const D = STATE.settings.docs; D.oc = [...new Set((D.oc || []).concat(id))]; Store.saveSettings(); toast("Removido da aba Documentos. Os arquivos continuam no Drive."); return render(); }
   if (t.dataset.irimp) { irJson.click(); return; }
   if (t.dataset.doctab) { DOCUI.tab = t.dataset.doctab; return render(); }
   if (t.dataset.docmais) { DOCUI.mais[t.dataset.docmais] = 1; return render(); }
