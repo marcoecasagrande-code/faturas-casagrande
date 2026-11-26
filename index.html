@@ -114,7 +114,7 @@ header.top{position:relative;isolation:isolate;padding-top:20px}
   .modsw{margin:0 0 10px}
   .modsw button{padding:11px 10px;font-size:16px}
   .improw{margin:0 0 12px}
-  .improw .impwrap{justify-self:stretch}
+  .improw .impwrap{justify-self:stretch;grid-column:1 / -1}
   .improw .impwrap .btn{width:100%;justify-content:center;padding:10px 12px;box-shadow:0 4px 14px color-mix(in srgb,var(--accent) 30%,transparent)}
   .improw .impwrap .dots{display:none}
 }
@@ -156,6 +156,50 @@ header.top{position:relative;isolation:isolate;padding-top:20px}
 #btcChip #cotBtc,#btcChip #cotBtcPct{transition:opacity .25s,transform .25s}
 #btcChip.troca #cotBtc,#btcChip.troca #cotBtcPct{opacity:0;transform:translateY(-3px)}
 #cotBtc{min-width:7.6ch;display:inline-block}
+.irlong{display:inline}
+@media (max-width:560px){.irlong{display:none}.modsw button{font-size:14.5px;gap:6px;padding:11px 4px}.modsw button svg{width:17px;height:17px}}
+@media (max-width:400px){.modsw button svg{display:none}}
+.irhead{margin-bottom:14px}
+.irhead{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap}
+.irhead h2{margin:0}.irhead .hint{margin:4px 0 0}
+.irano{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--muted)}
+.irano select{font:inherit;color:var(--fg);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:7px 10px}
+.irprazo,.ircheck{align-self:start}
+.irbig{display:flex;align-items:baseline;gap:12px;margin:14px 0 10px;padding:14px 16px;border-radius:12px;background:color-mix(in srgb,#F6A06A 12%,var(--surface-2));border:1.5px solid color-mix(in srgb,#F6A06A 60%,transparent)}
+.irbig b{font-size:40px;line-height:1;color:var(--orange)}.irbig span{color:var(--muted);font-weight:600}
+.irmarcos{list-style:none;margin:0;padding:0}
+.irmarcos li{display:grid;grid-template-columns:minmax(0,1fr) auto 64px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.irmarcos li .note{text-align:right}.irmarcos li.pass{opacity:.5}
+.irdet{margin-top:10px;font-size:13px;color:var(--muted)}.irdet summary{cursor:pointer}
+.irdates{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px}.irdates label{display:flex;flex-direction:column;gap:4px}
+.irdates input,.irnf input,.irnf select,.iradd input{font:inherit;color:var(--fg);background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:7px 9px;min-width:0}
+.irprog{font-weight:700;font-size:18px;color:var(--orange)}
+.irbar{height:8px;border-radius:99px;background:var(--surface-2);overflow:hidden;margin:2px 0 6px}.irbar i{display:block;height:100%;background:linear-gradient(90deg,#FDBA87,#F6A06A);border-radius:99px}
+.irgh{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px}
+.irlist{list-style:none;margin:0;padding:0}
+.irlist li{display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line)}
+.irlist label{flex:1;display:flex;gap:10px;align-items:flex-start;padding:8px 0;cursor:pointer;font-size:13.5px;min-width:0}
+.irlist input{margin-top:2px;accent-color:#F6A06A;width:16px;height:16px;flex:none}
+.irlist li.ok span{color:var(--muted);text-decoration:line-through}
+.irx{border:0;background:none;color:var(--muted);font-size:18px;line-height:1;padding:4px 6px;border-radius:6px;cursor:pointer}.irx:hover{background:var(--surface-2);color:var(--fg)}
+.iradd{display:flex;gap:8px;margin-top:12px}.iradd input{flex:1}
+.linkbtn{border:0;background:none;color:var(--accent);font:inherit;font-size:12.5px;padding:8px 0 0;cursor:pointer}
+.irppl{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin-bottom:14px}
+.irpp{background:color-mix(in srgb,var(--surface-2) 55%,transparent);border-radius:12px;padding:12px 14px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px 10px}
+.irpp .irpn{grid-column:1 / -1;font-weight:700;display:flex;align-items:center;gap:7px}.irpp .irpn i{width:9px;height:9px;border-radius:50%}
+.irpp>div{display:flex;flex-direction:column;gap:1px;min-width:0}.irpp b{font-size:15px}
+.irtab td,.irtab th{font-size:13px}.irtab tr.irno td{color:var(--muted)}
+.irtab input{accent-color:#F6A06A;width:16px;height:16px}
+.irdisc{max-width:520px;white-space:normal;line-height:1.35}
+.irtag{display:inline-block;font-size:11.5px;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.irtag.ok{background:color-mix(in srgb,var(--pos,#2E9E6A) 16%,transparent);color:var(--fg)}.irtag.no{background:var(--surface-2);color:var(--muted)}
+.irbtns{display:flex;gap:8px;flex-wrap:wrap}
+.irsum{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:10px 0 12px}
+.irsum>div{background:color-mix(in srgb,var(--surface-2) 55%,transparent);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}.irsum b{font-size:17px}
+.irnf{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:14px;border:1.5px dashed var(--line);border-radius:12px;margin-bottom:12px}
+.irnf label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted);min-width:0}
+.irnfb{grid-column:1 / -1;display:flex;gap:8px}
+@media (max-width:760px){.irnf{grid-template-columns:repeat(2,minmax(0,1fr))}.irpp{grid-template-columns:1fr 1fr}.irbig b{font-size:34px}}
 .status{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:6px}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
 .dot.ok{background:var(--down)} .dot.warn{background:var(--warn)}
@@ -167,8 +211,8 @@ header.top{position:relative;isolation:isolate;padding-top:20px}
 .btn.small{padding:4px 9px;font-size:13px}
 .btn:disabled{opacity:.5;cursor:not-allowed}
 [hidden]{display:none!important}
-.modsw{position:relative;z-index:1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:2px 0 12px}
-.improw{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:-2px 0 14px}.improw .impwrap{grid-column:2;justify-self:center}
+.modsw{position:relative;z-index:1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:2px 0 12px}
+.improw{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:-2px 0 14px}.improw .impwrap{grid-column:2;justify-self:center}
 .modsw button{display:flex;align-items:center;justify-content:center;gap:10px;padding:12px 14px;border-radius:14px;border:1.5px solid var(--line);background:var(--surface);color:var(--muted);font-family:var(--f-display);font-weight:700;font-size:17px;letter-spacing:-.01em}
 .modsw button svg{width:22px;height:22px;flex:none}
 .modsw button:hover{border-color:var(--accent);color:var(--fg)}
@@ -345,8 +389,8 @@ main{padding-bottom:56px}
 .panel .hint{color:var(--muted);font-size:13px;margin:0 0 12px}
 .ph{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}
 .ph>div:first-child{margin-right:auto;min-width:0}
-.c12{grid-column:span 12}.c8{grid-column:span 8}.c4{grid-column:span 4}.c6{grid-column:span 6}.c3{grid-column:span 3}
-@media (max-width:900px){.c8,.c4,.c6{grid-column:span 12}}
+.c12{grid-column:span 12}.c8{grid-column:span 8}.c4{grid-column:span 4}.c6{grid-column:span 6}.c3{grid-column:span 3}.c5{grid-column:span 5}.c7{grid-column:span 7}
+@media (max-width:900px){.c8,.c4,.c6,.c5,.c7{grid-column:span 12}}
 
 /* faixa de resumo (como o Viagens) */
 .strip{box-shadow:var(--cardsh);grid-column:span 12;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
@@ -553,6 +597,7 @@ textarea{width:100%;min-height:110px;font-family:var(--f-num);font-size:12px}
     <div class="modsw" role="tablist" aria-label="Área do app">
       <button type="button" role="tab" data-mod="cartoes" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6.5 15h4" stroke-linecap="round"/></svg>Cartões</button>
       <button type="button" role="tab" data-mod="patrimonio" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 20h18M4 10h16M12 3l9 5H3l9-5zM6 10v7M10 10v7M14 10v7M18 10v7"/></svg>Patrimônio</button>
+      <button type="button" role="tab" data-mod="ir" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6M10 9h2"/></svg><span>Imposto<span class="irlong"> de renda</span></span></button>
     </div>
     <div class="improw"><span class="impwrap"><span class="dots" aria-hidden="true"><svg viewBox="0 0 300 330"><defs><pattern id="dotp" width="9" height="9" patternUnits="userSpaceOnUse"><circle cx="4.5" cy="4.5" r="2.1"/></pattern><mask id="dolm"><text x="150" y="282" text-anchor="middle" font-size="340" font-weight="700" font-family="Bricolage Grotesque, Inter, Arial, sans-serif" fill="#fff">$</text></mask></defs><rect width="300" height="330" fill="url(#dotp)" mask="url(#dolm)"/></svg></span><button class="btn primary" id="btnImport" type="button">+ Importar fatura</button></span></div>
     <nav class="tabs" role="tablist" id="tabs">
@@ -784,7 +829,7 @@ const Store = {
     this.col.onSnapshot(snap => {
       const sts = [], pats = [], st = {rules: {}, customCats: [], cards: {}};
       snap.docs.forEach(d => { const b = d.data(); if (!b) return; if (b.kind === "statement") sts.push(b); else if (b.kind === "patrimonio") pats.push(b); else if (b.kind === "settings") Object.assign(st, b); });
-      STATE.statements = sts; STATE.pats = pats; STATE.settings = {rules: st.rules || {}, customCats: st.customCats || [], cards: st.cards || {}, patMetas: st.patMetas || {}, ignoredGaps: st.ignoredGaps || [], patAssets: st.patAssets || [], patArch: st.patArch || []};
+      STATE.statements = sts; STATE.pats = pats; STATE.settings = {rules: st.rules || {}, customCats: st.customCats || [], cards: st.cards || {}, patMetas: st.patMetas || {}, ignoredGaps: st.ignoredGaps || [], patAssets: st.patAssets || [], patArch: st.patArch || [], ir: st.ir || {}};
       if (!snap.metadata.fromCache) { first = false; clearTimeout(timer); }
       STATE.mode = "cloud"; setStatus("ok", this.family ? "Salvo para a família" : "Salvo na sua conta (privado)");
       render();
@@ -824,7 +869,7 @@ const Store = {
   },
   saveSettings() {
     if (this.local) return this.persistLocal();
-    const body = {kind: "settings", rules: STATE.settings.rules, customCats: STATE.settings.customCats, cards: STATE.settings.cards || {}, patMetas: STATE.settings.patMetas || {}, ignoredGaps: STATE.settings.ignoredGaps || [], patAssets: STATE.settings.patAssets || [], patArch: STATE.settings.patArch || []};
+    const body = {kind: "settings", rules: STATE.settings.rules, customCats: STATE.settings.customCats, cards: STATE.settings.cards || {}, patMetas: STATE.settings.patMetas || {}, ignoredGaps: STATE.settings.ignoredGaps || [], patAssets: STATE.settings.patAssets || [], patArch: STATE.settings.patArch || [], ir: STATE.settings.ir || {}};
     this.enqueue("settings", () => this.col.doc("settings").set(body));
   },
 };
@@ -972,7 +1017,15 @@ function render() {
   if (typeof cotacaoHoje === "function") { cotacaoHoje(); selicHoje(); }
   const isPat = STATE.module === "patrimonio";
   document.querySelectorAll(".modsw button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.mod === STATE.module)));
-  $("#tabs").hidden = isPat; $("#btnImport").textContent = isPat ? "+ Registrar patrimônio" : "+ Importar fatura";
+  const isIR = STATE.module === "ir";
+  $("#tabs").hidden = isPat || isIR; $("#btnImport").textContent = isPat ? "+ Registrar patrimônio" : "+ Importar fatura";
+  document.querySelector(".improw").hidden = isIR;
+  if (isIR) {
+    $("#filters").hidden = true; $("#bannerArea").innerHTML = "";
+    const v = $("#view");
+    if (STATE.mode === "loading") { v.innerHTML = '<div class="panel empty">Carregando…</div>'; return; }
+    return renderIR(v);
+  }
   if (isPat) {
     $("#filters").hidden = true; $("#bannerArea").innerHTML = "";
     const v = $("#view");
@@ -2546,6 +2599,220 @@ $("#newsTema").addEventListener("click", e => { const b = e.target.closest("butt
 $("#newsPer").addEventListener("click", e => { const b = e.target.closest("button[data-p]"); if (!b) return; NEWS.dias = +b.dataset.p; renderNews(); });
 
 document.addEventListener("change", e => { if (e.target.matches && e.target.matches("[data-qsv]")) { STATE.q = Object.assign({who: "all", mode: "sum", semViagem: true}, STATE.q); STATE.q.semViagem = e.target.checked; render(); } });
+/* ======================= IMPOSTO DE RENDA ======================= */
+const IRUI = {ano: null, notaForm: false};
+const irS = () => { const s = STATE.settings; if (!s.ir) s.ir = {}; const ir = s.ir; ["done", "items", "hide", "prazos", "recibos", "decl"].forEach(k => { if (!ir[k] || typeof ir[k] !== "object") ir[k] = {}; }); if (!Array.isArray(ir.notas)) ir.notas = []; return ir; };
+const irSave = () => { Store.saveSettings(); render(); };
+const anoBasePadrao = () => { const d = new Date(); return d.getMonth() < 5 ? d.getFullYear() - 1 : d.getFullYear(); };
+const iso = (y, m, d) => y + "-" + pad(m) + "-" + pad(d);
+function ultimoDiaUtil(y, m) { const d = new Date(y, m, 0); while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() - 1); return iso(y, m, d.getDate()); }
+const IR_OFICIAL = {2026: {ini: "2026-03-23", fim: "2026-05-29", lotes: ["2026-05-29", "2026-06-30", "2026-07-31", "2026-08-28"]}};
+function irPrazos(anoBase) {
+  const Y = anoBase + 1, ov = irS().prazos[Y] || {}, of = IR_OFICIAL[Y];
+  const ini = ov.ini || (of && of.ini) || iso(Y, 3, 16), fim = ov.fim || (of && of.fim) || ultimoDiaUtil(Y, 5);
+  const lotes = (of && of.lotes) || [5, 6, 7, 8].map(m => ultimoDiaUtil(Y, m));
+  return {Y, ini, fim, lotes, oficial: !!(ov.ini || of), informes: ultimoDiaUtil(Y, 2)};
+}
+const diasAte = d => Math.round((new Date(d + "T12:00:00") - new Date(todayISO() + "T12:00:00")) / 864e5);
+const dataLonga = d => new Date(d + "T12:00:00").toLocaleDateString("pt-BR", {day: "2-digit", month: "long", year: "numeric"});
+
+function irItensPadrao() {
+  syncAssets();
+  const out = [], seen = new Set();
+  PAT_ASSETS.filter(a => !isArch(a)).forEach(a => {
+    if (a.inst === "Bitcoin") { if (!seen.has("btc")) { seen.add("btc"); out.push({id: "btc", txt: "Bitcoin: quantidade e custo de aquisição em 31/12", grupo: "Informes e saldos"}); } return; }
+    const k = "inf-" + a.inst + "-" + a.who; if (seen.has(k)) return; seen.add(k);
+    out.push({id: k, txt: "Informe de rendimentos " + a.inst + " · " + a.who, grupo: "Informes e saldos"});
+  });
+  ["Marco", "Moema"].forEach(p => out.push({id: "trab-" + p, txt: "Informe de rendimentos do trabalho ou pró-labore · " + p, grupo: "Informes e saldos"}));
+  [["saude-plano", "Plano de saúde: informe anual de pagamentos"], ["saude-recibos", "Recibos de médicos, dentistas, psicólogos e exames (com CPF/CNPJ)"], ["edu", "Escola e faculdade: declaração de pagamentos do ano"], ["prev", "Previdência privada (PGBL/VGBL): informe anual"], ["doacoes", "Doações e pensão alimentícia, se houver"]].forEach(([id, txt]) => out.push({id, txt, grupo: "Deduções"}));
+  [["notas", "Notas de corretagem do ano (bolsa e conta internacional)"], ["darf", "DARFs pagos (ganho de capital, day trade, exterior)"], ["bens", "Compra ou venda de imóveis e veículos: escrituras e recibos"], ["anterior", "Recibo e declaração do ano anterior"]].forEach(([id, txt]) => out.push({id, txt, grupo: "Outros documentos"}));
+  return out;
+}
+
+function renderIR(v) {
+  const ir = irS();
+  const anos = [...new Set(STATE.statements.map(s => +s.month.slice(0, 4)).concat([anoBasePadrao()], Object.keys(ir.decl).map(Number)))].filter(Boolean).sort((a, b) => b - a);
+  const ano = IRUI.ano && anos.includes(IRUI.ano) ? IRUI.ano : anoBasePadrao(); IRUI.ano = ano;
+  const P = irPrazos(ano);
+  // prazos
+  const dIni = diasAte(P.ini), dFim = diasAte(P.fim);
+  const big = dIni > 0 ? {n: dIni, t: "dias para abrir a entrega"} : dFim >= 0 ? {n: dFim, t: dFim === 1 ? "dia para o fim do prazo" : "dias para o fim do prazo"} : {n: "✓", t: "prazo encerrado"};
+  const marcos = [["Informes de rendimento devem chegar", P.informes], ["Abertura da entrega", P.ini], ["Último dia para entregar", P.fim]].concat(P.lotes.map((d, i) => [(i + 1) + "º lote de restituição", d]));
+  const prazos = `<div class="panel c5 irprazo"><h2>Prazos · declaração ${P.Y}</h2><p class="hint">Ano-base ${ano}${P.oficial ? " · datas oficiais da Receita" : " · <b>previsão</b>: a Receita costuma divulgar o calendário em março"}</p>
+    <div class="irbig"><b class="num">${big.n}</b><span>${big.t}</span></div>
+    <ul class="irmarcos">${marcos.map(([t, d]) => { const n = diasAte(d); return `<li class="${n < 0 ? "pass" : ""}"><span>${t}</span><span class="num">${fmtDate(d)}</span><span class="note">${n < 0 ? "passou" : n === 0 ? "hoje" : "em " + n + " d"}</span></li>`; }).join("")}</ul>
+    <details class="irdet"><summary>Ajustar datas quando a Receita divulgar</summary><div class="irdates"><label>Abertura <input type="date" data-irprazo="ini" value="${P.ini}"></label><label>Fim <input type="date" data-irprazo="fim" value="${P.fim}"></label></div></details></div>`;
+  // checklist
+  const hide = ir.hide[ano] || [], done = ir.done[ano] || {};
+  const itens = irItensPadrao().filter(i => !hide.includes(i.id)).concat((ir.items[ano] || []).map(i => Object.assign({grupo: "Seus itens"}, i)));
+  const nDone = itens.filter(i => done[i.id]).length;
+  const grupos = [...new Set(itens.map(i => i.grupo))];
+  const check = `<div class="panel c7 ircheck"><div class="ph"><div><h2>Checklist de documentos</h2><p class="hint">Marque o que já chegou. Fica salvo para a família.</p></div><span class="irprog num">${nDone}/${itens.length}</span></div>
+    <div class="irbar"><i style="width:${itens.length ? nDone / itens.length * 100 : 0}%"></i></div>
+    ${grupos.map(g => `<h3 class="irgh">${esc(g)}</h3><ul class="irlist">${itens.filter(i => i.grupo === g).map(i => `<li class="${done[i.id] ? "ok" : ""}"><label><input type="checkbox" data-irdone="${esc(i.id)}" ${done[i.id] ? "checked" : ""}><span>${esc(i.txt)}</span></label><button type="button" class="irx" data-irdel="${esc(i.id)}" aria-label="Remover item" title="Remover">×</button></li>`).join("")}</ul>`).join("")}
+    <form class="iradd" data-iradd="1"><input type="text" name="txt" placeholder="Adicionar documento…" maxlength="120"><button class="btn small" type="submit">Adicionar</button></form>
+    ${hide.length ? `<button type="button" class="linkbtn" data-irreset="1">Mostrar ${hide.length} item${hide.length > 1 ? "s" : ""} removido${hide.length > 1 ? "s" : ""}</button>` : ""}</div>`;
+  // despesas dedutíveis (pela fatura do ano: é quando o pagamento aconteceu)
+  const tx = allTx().filter(t => !STATE.demo && t.amount > 0 && t.month && +t.month.slice(0, 4) === ano && (t.c === "Saúde" || t.c === "Educação"));
+  const FARMA = /DROGA|FARMA|RAIA|PANVEL|PACHECO|PAGUE ?MENOS|ARAUJO|VENANCIO|PHARMA|OTICA/;
+  const ACAD = /ACADEMIA|SMART ?FIT|BLUEFIT|BODYTECH|SELFIT|GYM|CROSSFIT|PILATES/;
+  const tipo = t => t.c === "Educação" ? (/ESCOLA|COLEGIO|FACULDADE|UNIVERSIDADE|MENSALIDADE|ENSINO|EDUCACIONAL/.test(norm(t.desc)) ? "edu" : "edux") : FARMA.test(norm(t.desc)) || ACAD.test(norm(t.desc)) ? "saudex" : "saude";
+  const pessoas = [...new Set(tx.map(t => t.who || "Sem titular"))].sort();
+  const rec = ir.recibos[ano] || {};
+  const grp = {}; tx.forEach(t => { const k = merchantKey(t.desc) + "|" + (t.who || ""); const g = grp[k] || (grp[k] = {k, nome: merchantKey(t.desc) || t.desc, who: t.who || "—", tipo: tipo(t), total: 0, n: 0}); g.total += t.amount; g.n++; });
+  const lista = Object.values(grp).sort((a, b) => b.total - a.total);
+  const soma = (p, tp) => lista.filter(g => (p == null || g.who === p) && g.tipo === tp).reduce((a, g) => a + g.total, 0);
+  const TIPO = {saude: ["Saúde dedutível", "ok"], edu: ["Educação (limite)", "ok"], saudex: ["Farmácia/academia: não deduz", "no"], edux: ["Cursos/livros: não deduz", "no"]};
+  const desp = `<div class="panel c12 irdesp"><div class="ph"><div><h2>Despesas dedutíveis · ${ano}</h2><p class="hint">Gastos de Saúde e Educação pagos nas faturas de ${ano}. O cartão não serve de comprovante: a Receita pede o recibo com CPF ou CNPJ de quem prestou o serviço.</p></div></div>
+    ${!tx.length ? `<p class="empty">Nenhum gasto de Saúde ou Educação nas faturas de ${ano}${STATE.demo ? " (os dados de exemplo não entram aqui)" : ""}.</p>` : `
+    <div class="irppl">${pessoas.map(p => { const s = soma(p, "saude"), e = soma(p, "edu"); return `<div class="irpp"><span class="irpn"><i style="background:${personColor(p)}"></i>${esc(p)}</span>
+      <div><span class="note">Saúde dedutível</span><b class="num">${BRL.format(s)}</b><span class="note">sem limite</span></div>
+      <div><span class="note">Educação</span><b class="num">${BRL.format(Math.min(e, 3561.5))}</b><span class="note">${e > 3561.5 ? "de " + BRL.format(e) + " · limite R$ 3.561,50 por aluno" : "limite R$ 3.561,50 por aluno"}</span></div>
+      <div><span class="note">Não deduz</span><b class="num">${BRL.format(soma(p, "saudex") + soma(p, "edux"))}</b><span class="note">farmácia, academia, cursos livres</span></div></div>`; }).join("")}</div>
+    <div class="tablewrap"><table class="irtab"><thead><tr><th>Recibo</th><th>Estabelecimento</th><th>Pessoa</th><th>Tipo</th><th class="r">Pago no ano</th></tr></thead><tbody>
+    ${lista.map(g => `<tr class="${TIPO[g.tipo][1] === "no" ? "irno" : ""}"><td>${TIPO[g.tipo][1] === "no" ? '<span class="note">—</span>' : `<input type="checkbox" data-irrec="${esc(g.k)}" ${rec[g.k] ? "checked" : ""} aria-label="Recibo guardado">`}</td><td>${esc(g.nome)} <span class="note">· ${g.n}×</span></td><td>${esc(g.who)}</td><td><span class="irtag ${TIPO[g.tipo][1]}">${TIPO[g.tipo][0]}</span></td><td class="r num">${BRL.format(g.total)}</td></tr>`).join("")}
+    </tbody></table></div><p class="note" style="margin:8px 0 0">O limite de educação vale por aluno (titular ou dependente), não por cartão. Psicólogo, dentista, exames e plano de saúde deduzem sem limite. Regras do IRPF 2026; confira se mudarem.</p>`}</div>`;
+  // notas de corretagem
+  const notas = ir.notas.filter(n => (n.data || "").slice(0, 4) === String(ano)).sort((a, b) => b.data.localeCompare(a.data));
+  const tN = k => notas.reduce((a, n) => a + (+n[k] || 0), 0);
+  const notasP = `<div class="panel c12 irnotas"><div class="ph"><div><h2>Notas de corretagem · ${ano}</h2><p class="hint">Registre cada nota para ter o resumo do ano. As notas do BTG Pactual US não vêm anexadas no e-mail: baixe no app do BTG em Contas Internacionais › Documentos › Confirmação de negociação.</p></div>
+      <div class="irbtns"><button class="btn small" type="button" data-irnota="pdf">Ler PDF da nota</button><button class="btn small" type="button" data-irnota="form">+ Nota manual</button></div></div>
+    ${IRUI.notaForm ? `<form class="irnf" data-irnf="1"><label>Data do pregão<input type="date" name="data" required value="${IRUI.notaDraft && IRUI.notaDraft.data || ""}"></label>
+      <label>Corretora<input name="corretora" list="irCorr" required value="${esc(IRUI.notaDraft && IRUI.notaDraft.corretora || "")}" placeholder="BTG Pactual US"></label>
+      <label>Pessoa<select name="pessoa">${["Marco", "Moema", "Alice"].map(p => `<option ${IRUI.notaDraft && IRUI.notaDraft.pessoa === p ? "selected" : ""}>${p}</option>`).join("")}</select></label>
+      <label>Moeda<select name="moeda"><option value="BRL">R$</option><option value="USD" ${IRUI.notaDraft && IRUI.notaDraft.moeda === "USD" ? "selected" : ""}>US$</option></select></label>
+      <label>Operações<input name="desc" value="${esc(IRUI.notaDraft && IRUI.notaDraft.desc || "")}" placeholder="Compra 10 AAPL"></label>
+      <label>Valor líquido<input name="valor" inputmode="decimal" value="${IRUI.notaDraft && IRUI.notaDraft.valor != null ? String(IRUI.notaDraft.valor).replace(".", ",") : ""}" placeholder="0,00"></label>
+      <label>Taxas<input name="taxas" inputmode="decimal" value="${IRUI.notaDraft && IRUI.notaDraft.taxas != null ? String(IRUI.notaDraft.taxas).replace(".", ",") : ""}" placeholder="0,00"></label>
+      <label>IR retido<input name="irrf" inputmode="decimal" value="${IRUI.notaDraft && IRUI.notaDraft.irrf != null ? String(IRUI.notaDraft.irrf).replace(".", ",") : ""}" placeholder="0,00"></label>
+      <div class="irnfb"><button class="btn small primary" type="submit">Salvar nota</button><button class="btn small" type="button" data-irnota="cancel">Cancelar</button></div>
+      <datalist id="irCorr"><option>BTG Pactual US</option><option>BTG Pactual</option><option>XP Investimentos</option><option>Itaú Corretora</option></datalist></form>` : ""}
+    ${!notas.length ? '<p class="empty">Nenhuma nota registrada neste ano.</p>' : `<div class="irsum"><div><span class="note">Notas</span><b class="num">${notas.length}</b></div><div><span class="note">Taxas pagas</span><b class="num">${notas.map(n => n.moeda).every(m => m === "USD") ? "US$ " + tN("taxas").toLocaleString("pt-BR", {minimumFractionDigits: 2}) : BRL.format(tN("taxas"))}</b></div><div><span class="note">IR retido</span><b class="num">${BRL.format(tN("irrf"))}</b></div></div>
+    <div class="tablewrap"><table class="irtab"><thead><tr><th>Data</th><th>Corretora</th><th>Pessoa</th><th>Operações</th><th class="r">Valor líquido</th><th class="r">Taxas</th><th class="r">IR retido</th><th></th></tr></thead><tbody>
+    ${notas.map(n => { const f = x => x == null || x === "" ? "—" : (n.moeda === "USD" ? "US$ " + (+x).toLocaleString("pt-BR", {minimumFractionDigits: 2}) : BRL.format(+x)); return `<tr><td class="num">${fmtDate(n.data)}</td><td>${esc(n.corretora)}</td><td>${esc(n.pessoa || "")}</td><td>${esc(n.desc || "")}</td><td class="r num">${f(n.valor)}</td><td class="r num">${f(n.taxas)}</td><td class="r num">${f(n.irrf)}</td><td><button type="button" class="irx" data-irnotadel="${esc(n.id)}" aria-label="Apagar nota">×</button></td></tr>`; }).join("")}
+    </tbody></table></div>`}</div>`;
+  // declaração enviada
+  const dc = ir.decl[ano];
+  const recs = patSorted();
+  const alvo = iso(ano, 12, 31);
+  const r31 = recs.filter(r => r.date <= alvo).slice(-1)[0] || null;
+  const declP = `<div class="panel c12 irdecl"><div class="ph"><div><h2>Declaração entregue · ano-base ${ano}</h2><p class="hint">Envie o PDF da declaração (o arquivo que o programa da Receita gera ao imprimir). O app lê os Bens e direitos e o resumo e compara com o seu Patrimônio.</p></div>
+      <div class="irbtns"><button class="btn small ${dc ? "" : "primary"}" type="button" data-irdecl="up">${dc ? "Trocar arquivo" : "Enviar declaração (PDF)"}</button>${dc ? '<button class="btn small" type="button" data-irdecl="del">Apagar</button>' : ""}</div></div>
+    ${!dc ? '<p class="empty">Nenhuma declaração deste ano-base ainda.</p>' : (() => {
+      const bens = dc.bens || [], tA = bens.reduce((a, b) => a + (b.ant || 0), 0), tB = bens.reduce((a, b) => a + (b.atual || 0), 0), pt = r31 ? patTotal(r31) : null;
+      const R = dc.resumo || {};
+      const res = [["Rendimentos tributáveis", R.rendTrib], ["Imposto devido", R.devido], ["Imposto a restituir", R.restituir], ["Saldo a pagar", R.pagar]].filter(x => x[1] != null);
+      return `<p class="note">Arquivo: ${esc(dc.arquivo || "declaração.pdf")} · lido em ${fmtDate(dc.em)}${dc.exercicio ? " · exercício " + dc.exercicio : ""}</p>
+      ${res.length ? `<div class="irsum">${res.map(([t, x]) => `<div><span class="note">${t}</span><b class="num">${BRL.format(x)}</b></div>`).join("")}</div>` : ""}
+      <div class="irsum"><div><span class="note">Bens em 31/12/${ano - 1}</span><b class="num">${BRL.format(tA)}</b></div><div><span class="note">Bens em 31/12/${ano}</span><b class="num">${BRL.format(tB)}</b></div>
+        <div><span class="note">Patrimônio no app${r31 ? " (" + fmtDate(r31.date) + ")" : ""}</span><b class="num">${pt != null ? BRL.format(pt) : "sem registro"}</b>${pt != null ? `<span class="note">${pt > tB ? "+" : ""}${BRL0.format(pt - tB)} vs declaração · o app usa valor de mercado; a declaração, custo de aquisição</span>` : ""}</div></div>
+      ${bens.length ? `<div class="tablewrap"><table class="irtab"><thead><tr><th>Grupo/código</th><th>Discriminação</th><th class="r">31/12/${ano - 1}</th><th class="r">31/12/${ano}</th></tr></thead><tbody>
+      ${bens.map(b => `<tr><td class="num">${esc([b.grupo, b.codigo].filter(Boolean).join("/") || "—")}</td><td class="irdisc">${esc(b.disc || "")}</td><td class="r num">${BRL.format(b.ant || 0)}</td><td class="r num">${BRL.format(b.atual || 0)}</td></tr>`).join("")}</tbody></table></div>` : `<p class="empty">Não consegui identificar os Bens e direitos neste PDF. Me mande o arquivo pelo chat que eu ajusto o leitor.</p>`}`;
+    })()}</div>`;
+  v.innerHTML = `<div class="panel c12 irhead"><div><h2>Imposto de renda</h2><p class="hint">Organize a declaração ${P.Y} da família: prazos, documentos, despesas dedutíveis, notas de corretagem e a declaração entregue.</p></div>
+    <label class="irano">Ano-base <select data-irano="1">${anos.map(a => `<option value="${a}" ${a === ano ? "selected" : ""}>${a} (declaração ${a + 1})</option>`).join("")}</select></label></div>
+    <div class="grid">${prazos}${check}${desp}${notasP}${declP}</div>`;
+}
+
+/* leitor da declaração (PDF gerado pelo programa IRPF) */
+function lerDeclaracao(lines) {
+  const txt = lines.join("\n"), up = norm(txt);
+  const MON = /(\d{1,3}(?:\.\d{3})*,\d{2})/g;
+  const ex = /EXERC[IÍ]CIO\s*:?\s*(\d{4})/i.exec(txt), ac = /ANO[- ]CALEND[AÁ]RIO\s*:?\s*(\d{4})/i.exec(txt);
+  const valApos = re => { const m = re.exec(up); if (!m) return null; const rest = up.slice(m.index + m[0].length, m.index + m[0].length + 120); const v = /(\d{1,3}(?:\.\d{3})*,\d{2})/.exec(rest); return v ? parseAmount(v[1]) : null; };
+  const resumo = {rendTrib: valApos(/TOTAL DE RENDIMENTOS TRIBUTAVEIS|RENDIMENTOS TRIBUTAVEIS\s*$/m), devido: valApos(/IMPOSTO DEVIDO(?! I| II)/), restituir: valApos(/IMPOSTO A RESTITUIR/), pagar: valApos(/SALDO DE IMPOSTO A PAGAR/)};
+  const nl = lines.map(l => norm(l));
+  let a = nl.findIndex(l => /^\s*BENS E DIREITOS/.test(l)), b = -1;
+  if (a < 0) a = nl.findIndex(l => /BENS E DIREITOS/.test(l));
+  if (a >= 0) b = nl.findIndex((l, i) => i > a && /DIVIDAS E ONUS|^\s*DOACOES|ESPOLIO|^\s*RESUMO/.test(l));
+  const sec = a >= 0 ? lines.slice(a + 1, b > a ? b : undefined) : [];
+  const bens = []; let cur = null, buf = [];
+  sec.forEach(l => {
+    const u = norm(l);
+    if (/^\s*(GRUPO|CODIGO|DISCRIMINACAO|SITUACAO|PAGINA|NOME:|CPF:|DECLARACAO DE AJUSTE|IMPOSTO SOBRE A RENDA|EXERCICIO)/.test(u) && !/\d,\d{2}\s*$/.test(u)) {
+      const g = /GRUPO\s*:?\s*(\d{2})/.exec(u), c = /CODIGO\s*:?\s*(\d{2})/.exec(u);
+      if (g || c) { cur = {grupo: g ? g[1] : null, codigo: c ? c[1] : null}; }
+      return;
+    }
+    if (/^\s*TOTAL/.test(u)) return;
+    const vals = l.match(MON) || [];
+    const fim = /(\d{1,3}(?:\.\d{3})*,\d{2})\s+(\d{1,3}(?:\.\d{3})*,\d{2})\s*$/.exec(l);
+    if (fim) {
+      let resto = l.slice(0, fim.index).trim();
+      let grupo = cur && cur.grupo, codigo = cur && cur.codigo;
+      const lead = /^(\d{2})\s+(\d{2})\s+/.exec(resto) || /^(\d{2})\s+/.exec(resto);
+      if (lead && lead[2]) { grupo = lead[1]; codigo = lead[2]; resto = resto.slice(lead[0].length); } else if (lead && !grupo) { codigo = lead[1]; resto = resto.slice(lead[0].length); }
+      const disc = buf.concat(resto ? [resto] : []).join(" ").replace(/\s+/g, " ").trim();
+      bens.push({grupo, codigo, disc: disc.slice(0, 300), ant: parseAmount(fim[1]), atual: parseAmount(fim[2])});
+      buf = []; cur = null; return;
+    }
+    if (vals.length === 0 && l.trim()) buf.push(l.trim());
+    if (buf.length > 8) buf = buf.slice(-8);
+  });
+  return {exercicio: ex ? +ex[1] : null, anoBase: ac ? +ac[1] : (ex ? +ex[1] - 1 : null), resumo, bens};
+}
+function lerNota(lines) {
+  const txt = lines.join("\n"), up = norm(txt);
+  const d = /(\d{2})\/(\d{2})\/(\d{4})/.exec(txt);
+  const v = re => { const m = re.exec(up); if (!m) return null; const w = /(-?\d{1,3}(?:[.,]\d{3})*[.,]\d{2})/.exec(up.slice(m.index + m[0].length, m.index + m[0].length + 80)); return w ? parseAmount(w[1]) : null; };
+  const usd = /US\$|USD|BTG PACTUAL US|NET AMOUNT|COMMISSION/.test(up);
+  return {data: d ? d[3] + "-" + d[2] + "-" + d[1] : "", corretora: /BTG PACTUAL US/.test(up) ? "BTG Pactual US" : /BTG/.test(up) ? "BTG Pactual" : /XP INVESTIMENTOS|XP INC/.test(up) ? "XP Investimentos" : /ITAU/.test(up) ? "Itaú Corretora" : "",
+    moeda: usd ? "USD" : "BRL", valor: v(/LIQUIDO PARA|VALOR LIQUIDO|NET AMOUNT|TOTAL LIQUIDO/), taxas: (v(/TAXA DE LIQUIDACAO/) || 0) + (v(/EMOLUMENTOS/) || 0) + (v(/CORRETAGEM|COMMISSION/) || 0) || null, irrf: v(/I\.?R\.?R\.?F\.?|IR SOBRE|IMPOSTO RETIDO/)};
+}
+async function irLerArquivo(kind, file) {
+  const buf = await file.arrayBuffer();
+  let r;
+  try { r = await pdfLinesAuto(buf); }
+  catch (e) {
+    if (e && e.name === "PasswordException") { toast("Este PDF tem senha. Cadastre a senha em Importar fatura › Senhas de PDF e tente de novo."); return; }
+    toast("Não consegui ler este PDF."); return;
+  }
+  const ir = irS();
+  if (kind === "decl") {
+    const d = lerDeclaracao(r.lines); const ab = d.anoBase || IRUI.ano;
+    ir.decl[ab] = Object.assign(d, {arquivo: file.name, em: todayISO()});
+    IRUI.ano = ab; Store.saveSettings(); render();
+    toast(d.bens.length ? `Declaração ${ab + 1} lida: ${d.bens.length} bens.` : "Declaração salva, mas não achei os Bens e direitos. Me mande o PDF pelo chat para eu ajustar.");
+  } else {
+    IRUI.notaDraft = Object.assign({pessoa: "Marco"}, lerNota(r.lines)); IRUI.notaForm = true; render();
+    toast("Confira os campos lidos da nota e salve.");
+  }
+}
+const irFile = document.createElement("input"); irFile.type = "file"; irFile.accept = "application/pdf,.pdf"; irFile.hidden = true; document.body.appendChild(irFile);
+irFile.addEventListener("change", () => { const f = irFile.files[0]; const k = irFile.dataset.kind; irFile.value = ""; if (f) irLerArquivo(k, f); });
+const numBR = s => { s = String(s || "").trim(); if (!s) return null; const n = parseAmount(s); return n == null ? null : n; };
+
+document.addEventListener("click", e => {
+  if (STATE.module !== "ir") return;
+  const t = e.target.closest("[data-irdel],[data-irreset],[data-irnota],[data-irnotadel],[data-irdecl]"); if (!t) return;
+  const ir = irS(), ano = IRUI.ano;
+  if (t.dataset.irdel) { const id = t.dataset.irdel; const mine = ir.items[ano] || []; if (mine.some(i => i.id === id)) ir.items[ano] = mine.filter(i => i.id !== id); else ir.hide[ano] = [...new Set((ir.hide[ano] || []).concat([id]))]; return irSave(); }
+  if (t.dataset.irreset) { ir.hide[ano] = []; return irSave(); }
+  if (t.dataset.irnota === "form") { IRUI.notaForm = true; IRUI.notaDraft = null; return render(); }
+  if (t.dataset.irnota === "cancel") { IRUI.notaForm = false; IRUI.notaDraft = null; return render(); }
+  if (t.dataset.irnota === "pdf") { irFile.dataset.kind = "nota"; return irFile.click(); }
+  if (t.dataset.irnotadel) { ir.notas = ir.notas.filter(n => n.id !== t.dataset.irnotadel); return irSave(); }
+  if (t.dataset.irdecl === "up") { irFile.dataset.kind = "decl"; return irFile.click(); }
+  if (t.dataset.irdecl === "del") { const old = ir.decl[ano]; delete ir.decl[ano]; Store.saveSettings(); render(); toast("Declaração apagada.", "Desfazer", () => { irS().decl[ano] = old; irSave(); }); }
+});
+document.addEventListener("change", e => {
+  if (STATE.module !== "ir") return;
+  const t = e.target, ir = irS(), ano = IRUI.ano;
+  if (t.dataset.irano) { IRUI.ano = +t.value; return render(); }
+  if (t.dataset.irdone) { ir.done[ano] = Object.assign({}, ir.done[ano], {[t.dataset.irdone]: t.checked}); return irSave(); }
+  if (t.dataset.irrec) { ir.recibos[ano] = Object.assign({}, ir.recibos[ano], {[t.dataset.irrec]: t.checked}); Store.saveSettings(); return; }
+  if (t.dataset.irprazo && t.value) { const Y = ano + 1; ir.prazos[Y] = Object.assign({}, ir.prazos[Y], {[t.dataset.irprazo]: t.value}); return irSave(); }
+});
+document.addEventListener("submit", e => {
+  if (STATE.module !== "ir") return;
+  const f = e.target, ir = irS(), ano = IRUI.ano;
+  if (f.dataset.iradd) { e.preventDefault(); const txt = f.txt.value.trim(); if (!txt) return; ir.items[ano] = (ir.items[ano] || []).concat([{id: "u" + uid(), txt}]); return irSave(); }
+  if (f.dataset.irnf) { e.preventDefault(); const fd = new FormData(f);
+    ir.notas.push({id: uid(), data: fd.get("data"), corretora: fd.get("corretora").trim(), pessoa: fd.get("pessoa"), moeda: fd.get("moeda"), desc: fd.get("desc").trim(), valor: numBR(fd.get("valor")), taxas: numBR(fd.get("taxas")), irrf: numBR(fd.get("irrf"))});
+    IRUI.notaForm = false; IRUI.notaDraft = null; IRUI.ano = +String(fd.get("data")).slice(0, 4) || ano; irSave(); toast("Nota salva."); }
+});
+
 render();
 Store.init();
 })();
