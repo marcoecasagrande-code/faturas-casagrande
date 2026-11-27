@@ -71,7 +71,7 @@ header.top{position:relative;isolation:isolate;padding-top:20px}
 .brand .logo{flex:none;width:40px;height:40px;border-radius:10px;display:block}
 .brand h1{font:inherit;margin:0}
 .brand .b2{color:var(--orange)}
-.dochead{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.dochead{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap;margin:22px 0 0}
 .dochead h2{margin:0}.dochead .hint{margin:4px 0 0}
 .docbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .docbar input[type=search]{font:inherit;font-size:14px;color:var(--fg);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:8px 12px;min-width:0;width:240px;max-width:100%}
@@ -3093,7 +3093,7 @@ function renderDocs(v) {
     const vs = ents.filter(e => e.k === "v");
     corpo = bloco("Na garagem", vs.filter(docAtivo)) + bloco("Vendidos e antigos", vs.filter(e => !docAtivo(e)));
   } else corpo = bloco("Imóveis", ents.filter(e => e.k === "i"));
-  v.innerHTML = head + (q ? "" : seg) + (corpo || '<div class="panel empty">Nada encontrado.</div>');
+  v.innerHTML = (q ? "" : seg) + (corpo || '<div class="panel empty">Nada encontrado.</div>') + head;
 }
 document.addEventListener("click", e => {
   if (STATE.module !== "docs") return;
